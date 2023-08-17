@@ -51,6 +51,20 @@ void Diago_LCAO_Matrix::using_HPSEPS_complex(const int &ik, Local_Orbital_wfc &l
 
 	this->diago_complex_begin(ik, lowf, this->LM->Hloc2.data(), this->LM->Sloc2.data(), this->LM->Sdiag2.data(), GlobalC::wf.ekb[ik]);
 
+	int t = 0;
+	for(int i=0; i<GlobalV::NLOCAL; i++)
+	{
+		for(int j=0; j<GlobalV::NLOCAL; j++)
+		{
+			//out hc and sc
+			std::cout << std::setw(6) << i<<" "<<j<< " "<<this->LM->Hloc2[t]<< " "<<this->LM->Sloc2[t]<<std::endl;
+			t++;
+		}
+	}
+	for(int i=0; i<GlobalV::NBANDS; i++)
+	{
+		std::cout<<"eigenvalue["<<i<<"]: "  <<GlobalC::wf.ekb[ik][i]<<std::endl;
+	}
 	//added by zhengdy-soc, rearrange the wfc_k_grid from [up,down,up,down...] to [up,up...down,down...],
 	if(GlobalV::NSPIN==4)
 	{
@@ -102,6 +116,16 @@ void Diago_LCAO_Matrix::using_LAPACK_complex(const int &ik, std::complex<double>
 
 	ModuleBase::ComplexMatrix hvec(GlobalV::NLOCAL, GlobalV::NBANDS);
 	GlobalC::hm.diagH_LAPACK(GlobalV::NLOCAL, GlobalV::NBANDS, Htmp, Stmp, GlobalV::NLOCAL, en, hvec);
+	int t = 0;
+	for(int i=0; i<GlobalV::NLOCAL; i++)
+	{
+		for(int j=0; j<GlobalV::NLOCAL; j++)
+		{
+			//out hc and sc
+			std::cout << std::setw(6) << i<<" "<<j<< " "<<Htmp(i, j)<< " "<<Stmp(i, j)<<std::endl;
+			t++;
+		}
+	}
 
 	wfc_k.create(GlobalV::NBANDS,GlobalV::NLOCAL);
 	if(GlobalV::NSPIN!=4)

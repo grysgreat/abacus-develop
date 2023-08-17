@@ -192,7 +192,18 @@ void Hamilt_PW::diagH_subspace(
 
 	// after generation of H and S matrix, diag them
     GlobalC::hm.diagH_LAPACK(nstart, n_band, hc, sc, nstart, en, hvec);
-
+for(int i=0; i<nstart; i++)
+{
+	for(int j=0; j<nstart; j++)
+	{
+		//out hc and sc
+		std::cout << std::setw(6) << i<<" "<<j<< " "<<hc(i,j)<< " "<<sc(i,j)<<std::endl;
+	}
+}
+for(int i=0; i<n_band; i++)
+{
+	std::cout<<"en["<<i<<"]="<<en[i]<<std::endl;
+}
 
 	// Peize Lin add 2019-03-09
 #ifdef __LCAO

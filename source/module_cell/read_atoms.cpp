@@ -520,7 +520,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 			}
 			else
 #else
-			if(GlobalV::BASIS_TYPE == "pw")
+			if(GlobalV::BASIS_TYPE == "pw" || GlobalV::BASIS_TYPE == "pw_in_lcao")
 #endif
 			{
 				this->atoms[it].nw = 0;
@@ -530,6 +530,7 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 				if ( lmaxmax != 2 )
 				{
 					this->atoms[it].nwl = lmaxmax;
+					std::cout<<"lmaxmax = "<<lmaxmax<<std::endl;
 				}
 				delete[] this->atoms[it].l_nchi;
 				this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
@@ -542,6 +543,8 @@ bool UnitCell_pseudo::read_atom_positions(std::ifstream &ifpos, std::ofstream &o
 					ss << "L=" << L << ", number of zeta";
 					ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atoms[it].l_nchi[L]);
 				}
+				std::cout<<"atoms[it].nwl = "<<atoms[it].nwl<<std::endl;
+				
 			} // end basis type
 #endif
 

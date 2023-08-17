@@ -275,6 +275,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 		{
 			std::complex<double> *sk = GlobalC::wf.get_sk(ik, it, ia);
 			int ic=0;
+			std::cout<<__FILE__<<__LINE__<<" "<<GlobalC::ucell.atoms[it].nwl<<std::endl;
 			for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
 				std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, L); //mohan 2010-04-19
@@ -290,8 +291,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 
 					if(GlobalV::NSPIN==4)
 					{
-/*						for(int is_N = 0; is_N < 2; is_N++)*/  //for rotate base
-						for(int is_N = 0; is_N < 1; is_N++)
+						for(int is_N = 0; is_N < 2; is_N++)  //for rotate base
+						//for(int is_N = 0; is_N < 1; is_N++)
 						{
 							if(L==0 && is_N==1) continue;
 							if(GlobalC::ucell.atoms[it].has_so)
@@ -322,7 +323,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 									std::complex<double> fup,fdown;
                               		//int nc;
                               		//This routine creates two functions only in the case j=l+1/2 or exit in the other case
-									if(fabs(j-L+0.5<1e-4)) continue;
+									std::cout<<__FILE__<<__LINE__<<" "<<j<<" "<<L<<std::endl;
+									if(fabs(j-L+0.5)<1e-4) continue;
 									delete[] chiaux;
 									chiaux = new double [npw];
                               		//Find the functions j= l- 1/2
@@ -332,6 +334,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 									}
 									else
 									{
+										std::cout<<__FILE__<<__LINE__<<" "<<iwall<<std::endl;
 										/*for(int ib = 0;ib < GlobalC::ucell.atoms[it].nchi;ib++)
 										{
 											if((GlobalC::ucell.atoms[it].lchi[ib] == L)&&(fabs(GlobalC::ucell.atoms[it].jjj[ib]-L+0.5)<1e-4))
@@ -349,16 +352,19 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 											chiaux[ig] += flq[ig] * (L+1.0) ;
 											chiaux[ig] *= 1/(2.0*L+1.0);
 										}
+										std::cout<<__FILE__<<__LINE__<<" "<<iwall<<std::endl;
 									}
 									//and construct the starting wavefunctions as in the noncollinear case.
 									//alpha = GlobalC::ucell.magnet.angle1_[it];
 									//gamma = -1 * GlobalC::ucell.magnet.angle2_[it] + 0.5 * ModuleBase::PI;
 									alpha = GlobalC::ucell.atoms[it].angle1[ia];
 									gamma = -1 * GlobalC::ucell.atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
+									std::cout<<__FILE__<<__LINE__<<" "<<iwall<<std::endl;
 									for(int m = 0;m<2*L+1;m++)
 									{
 										const int lm = L*L +m;
-										if(iwall+2*L+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
+										std::cout<<__FILE__<<__LINE__<<" "<<iwall<<" "<<GlobalC::ucell.natomwfc<<std::endl;
+										//if(iwall+2*L+1>GlobalC::ucell.natomwfc) ModuleBase::WARNING_QUIT("GlobalC::wf.atomic_wfc()","error: too many wfcs");
 										for(int ig = 0;ig<npw;ig++)
 										{
 											aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
@@ -380,8 +386,10 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 											psi(iwall+2*L+1,ig+ GlobalC::wf.npwx) = (cos(0.5*gamma) - ModuleBase::IMAG_UNIT*sin(0.5*gamma))*fdown;
 										}
 										iwall++;
+										std::cout<<__FILE__<<__LINE__<<" "<<iwall<<std::endl;
 									}
 									iwall += 2*L +1;
+									std::cout<<__FILE__<<__LINE__<<" "<<iwall<<" "<<L<<std::endl;
 								} // end else INPUT.starting_spin_angle || !GlobalV::DOMAG
 							} // end if GlobalC::ucell.atoms[it].has_so
 							else
@@ -440,6 +448,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int &ik,ModuleBase::Complex
 			delete[] sk;
 		} // end for ia
 	} // end for it
+	std::cout<<__FILE__<<__LINE__<<" "<<iwall<<" "<<GlobalV::NLOCAL<<std::endl;
 	assert(iwall == GlobalV::NLOCAL);
 	delete[] flq;
 	delete[] aux;
@@ -542,7 +551,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 									std::complex<double> fup,fdown;
 									//int nc;
 									//This routine creates two functions only in the case j=l+1/2 or exit in the other case
-									if(fabs(j-L+0.5<1e-4)) continue;
+									if(fabs(j-L+0.5)<1e-4) continue;
 									delete[] chiaux;
 									chiaux = new double [npw];
 									//Find the functions j= l- 1/2
@@ -662,7 +671,7 @@ void Wavefunc_in_pw::produce_local_basis_q_in_pw(const int &ik, ModuleBase::Comp
 			delete[] skq;
 		}
 	}
-
+	std::cout<<__FILE__<<__LINE__<<" "<<iwall<<" "<<GlobalV::NLOCAL<<std::endl;
 	assert(iwall == GlobalV::NLOCAL);
 	delete[] flq;
 	delete[] aux;
