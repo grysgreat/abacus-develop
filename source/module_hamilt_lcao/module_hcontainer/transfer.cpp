@@ -5,6 +5,10 @@
 #ifdef __MPI
 #include <mpi.h>
 
+
+/**
+ * @brief Struct to get MPI_datatype
+*/
 template<typename T>
 struct MPITraits;
 
@@ -22,10 +26,14 @@ template<>
 struct MPITraits<std::complex<double>> {
   static constexpr MPI_Datatype datatype() { return MPI_DOUBLE_COMPLEX; }
 };
-#endif
+
 
 namespace hamilt
 {
+
+// ------------------------------------------------
+// HTransPara
+// ------------------------------------------------
 
 template<typename T>
 HTransPara<T>::HTransPara(int n_processes, HContainer<T>* hr_in)
@@ -545,3 +553,5 @@ template class HTransSerial<double>;
 template class HTransSerial<std::complex<double>>;
 
 } // end namespace hamilt
+
+#endif

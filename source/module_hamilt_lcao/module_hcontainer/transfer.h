@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 
+#ifdef __MPI
 namespace hamilt
 {
 
@@ -138,6 +139,8 @@ private:
     
 };
 
-}
+} // namespace hamilt
+
+#endif
 
 #endif
