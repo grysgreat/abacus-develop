@@ -4,6 +4,7 @@
 #include <chrono>
 #ifdef __MPI
 #include <mpi.h>
+#include "../hcontainer_funcs.h"
 #endif
 
 // test_size is the number of atoms in the unitcell
@@ -86,9 +87,6 @@ TEST_F(TransferTest, serialToPara)
 {
 // get rank of process
 #ifdef __MPI
-    int my_rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     hamilt::HContainer<double>* HR_serial = nullptr;
 
@@ -115,10 +113,12 @@ TEST_F(TransferTest, serialToPara)
             }
         }
     }
+
+    /*
     hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
     hamilt::HTransPara<double> trans_p(dsize, HR_para);
     // plan indexes
-    for(int i=0; i<size;++i)
+    for(int i=0; i<dsize;++i)
     {
         if(i != 0 && my_rank != 0) continue;
         if(i != my_rank)
@@ -150,7 +150,7 @@ TEST_F(TransferTest, serialToPara)
     }
 
     // send data
-    for(int i=0; i<size;++i)
+    for(int i=0; i<dsize;++i)
     {
         if(i != 0 && my_rank != 0) continue;
         if(i != my_rank)
@@ -170,7 +170,8 @@ TEST_F(TransferTest, serialToPara)
             trans_s.pack_data(i, &tmp_values);
             trans_p.receive_data(i, &tmp_values);
         }
-    }
+    }*/
+    hamilt::transferSerial2Parallel(*HR_serial, HR_para, 0);
 
     // check data in HR_para
     for(int i = 0; i < HR_para->size_atom_pairs(); i++)
@@ -203,9 +204,6 @@ TEST_F(TransferTest, paraToSerial)
 {
     // get rank of process
 #ifdef __MPI
-    int my_rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     hamilt::HContainer<double>* HR_serial = nullptr;
 
@@ -237,11 +235,11 @@ TEST_F(TransferTest, paraToSerial)
         HR_serial = new hamilt::HContainer<double>(ucell);
     }
 
-    hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
+    /*hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
     hamilt::HTransPara<double> trans_p(dsize, HR_para);
 
     // plan indexes
-    for(int i=0; i<size;++i)
+    for(int i=0; i<dsize;++i)
     {
         if(i != 0 && my_rank != 0) continue;
         if(i != my_rank)
@@ -271,7 +269,7 @@ TEST_F(TransferTest, paraToSerial)
     }
 
     // send data
-    for(int i=0; i<size;++i)
+    for(int i=0; i<dsize;++i)
     {
         if(i != 0 && my_rank != 0) continue;
         if(i != my_rank)
@@ -291,7 +289,8 @@ TEST_F(TransferTest, paraToSerial)
             trans_p.pack_data(i, &tmp_values);
             trans_s.receive_data(i, &tmp_values);
         }
-    }
+    }*/
+    hamilt::transferParallel2Serial(*HR_para, HR_serial, 0);
 
     // check data in HR_serial
     if(my_rank == 0)
