@@ -91,10 +91,14 @@ TEST_F(TransferTest, serialToPara)
     hamilt::HContainer<double>* HR_serial = nullptr;
 
 // initialize HR_serial
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     // if the master process, calculate the value of HR_serial and send to other processes
     if (my_rank == 0)
     {
         HR_serial = new hamilt::HContainer<double>(ucell);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for(int i = 0; i < HR_serial->size_atom_pairs(); i++)
         {
             hamilt::AtomPair<double>& atom_pair = HR_serial->get_atom_pair(i);
@@ -113,6 +117,8 @@ TEST_F(TransferTest, serialToPara)
             }
         }
     }
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
     /*
     hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
@@ -171,9 +177,16 @@ TEST_F(TransferTest, serialToPara)
             trans_p.receive_data(i, &tmp_values);
         }
     }*/
+    start_time = std::chrono::high_resolution_clock::now();
     hamilt::transferSerial2Parallel(*HR_serial, HR_para, 0);
-
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    
+    start_time = std::chrono::high_resolution_clock::now();
     // check data in HR_para
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for(int i = 0; i < HR_para->size_atom_pairs(); i++)
     {
         hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
@@ -193,10 +206,14 @@ TEST_F(TransferTest, serialToPara)
             }
         }
     }
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     if(my_rank == 0)
     {
         delete HR_serial;
     }
+
+    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_s2p time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
 #endif
 }
 
@@ -207,7 +224,11 @@ TEST_F(TransferTest, paraToSerial)
 
     hamilt::HContainer<double>* HR_serial = nullptr;
 
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     // initialize HR_para
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for(int i = 0; i < HR_para->size_atom_pairs(); i++)
     {
         hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
@@ -234,6 +255,8 @@ TEST_F(TransferTest, paraToSerial)
     {
         HR_serial = new hamilt::HContainer<double>(ucell);
     }
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
     /*hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
     hamilt::HTransPara<double> trans_p(dsize, HR_para);
@@ -290,11 +313,18 @@ TEST_F(TransferTest, paraToSerial)
             trans_s.receive_data(i, &tmp_values);
         }
     }*/
+    start_time = std::chrono::high_resolution_clock::now();
     hamilt::transferParallel2Serial(*HR_para, HR_serial, 0);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
+    start_time = std::chrono::high_resolution_clock::now();
     // check data in HR_serial
     if(my_rank == 0)
     {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
         for(int i = 0; i < HR_serial->size_atom_pairs(); i++)
         {
             hamilt::AtomPair<double>& atom_pair = HR_serial->get_atom_pair(i);
@@ -312,8 +342,11 @@ TEST_F(TransferTest, paraToSerial)
                 }
             }
         }
+        delete HR_serial;
     }
-    delete HR_serial;
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_p2s time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
 #endif
 }
 
