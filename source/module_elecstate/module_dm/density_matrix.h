@@ -94,9 +94,19 @@ class DensityMatrix
     TK* get_DMK_pointer(const int ik) const;
 
     /**
+     * @brief get pointer of paraV
+     */
+    const Parallel_Orbitals* get_paraV_pointer() const;
+
+    /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
      */
     void cal_DMR();
+
+    /**
+     * @brief merge density matrix DMR with different spin
+     */
+    void sum_DMR_spin();
 
     /**
      * @brief write density matrix dm(ik) into *.dmk
