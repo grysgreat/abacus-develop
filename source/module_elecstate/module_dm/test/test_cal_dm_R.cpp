@@ -247,6 +247,7 @@ TEST_F(DMTest, cal_DMR_blas_complex)
     }
     // merge DMR
     DM.sum_DMR_spin();
+    
     // compare the result for spin-up after sum
     for (int i = 0; i < DM.get_DMR_pointer(1)->size_atom_pairs(); i++)
     {
