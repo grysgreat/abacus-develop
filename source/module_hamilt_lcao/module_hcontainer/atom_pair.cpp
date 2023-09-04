@@ -497,10 +497,18 @@ void AtomPair<T>::merge_to_gamma()
     this->R_index.resize(3, 0);
     // merge all values to first BaseMatrix
     BaseMatrix<T> tmp(this->row_size, this->col_size);
-    tmp.allocate(true);
+    bool empty = true;
     for (int i = 0; i < this->values.size(); i++)
     {
-        tmp.add_array(this->values[i].get_pointer());
+        if(this->values[i].get_pointer() != nullptr)
+        {
+            if(empty)
+            {
+                tmp.allocate(true);
+                empty = false;
+            }
+            tmp.add_array(this->values[i].get_pointer());
+        }
     }
     this->values.clear();
     this->values.push_back(tmp);

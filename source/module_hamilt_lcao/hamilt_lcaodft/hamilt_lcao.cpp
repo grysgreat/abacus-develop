@@ -80,9 +80,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     // code block to construct Operator Chains
     if(std::is_same<TK, double>::value)
     {
-        // fix HR and SR to gamma case
+        // fix HR to gamma case, where SR will be fixed in Overlap Operator
         this->hR->fix_gamma();
-        this->sR->fix_gamma();
         // initial operator for Gamma_only case
         // overlap term (<psi|psi>) is indispensable
         // in Gamma_only case, target SR is LCAO_Matrix::Sloc, which is same as SK

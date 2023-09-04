@@ -481,6 +481,11 @@ void HContainer<T>::insert_pair(const AtomPair<T>& atom_ij)
         else
         { //insert atom_ij, and set paraV pointer for HContainer if atom_ij has paraV pointer
             this->atom_pairs.push_back(atom_ij);
+            //if gamma_only case, merge atom_ij to gamma_only
+            if(this->gamma_only)
+            {
+                this->atom_pairs.back().merge_to_gamma();
+            }
             // update sparse_ap
             int index = it - this->sparse_ap[atom_i].begin();
             if(it != this->sparse_ap[atom_i].end())
