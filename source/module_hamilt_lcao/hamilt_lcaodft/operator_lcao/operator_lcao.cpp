@@ -238,6 +238,8 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 template<typename TK, typename TR>
 void OperatorLCAO<TK, TR>::contributeHk(int ik)
 {
+    ModuleBase::TITLE("OperatorLCAO", "contributeHk");
+    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
     {
         const int nrow = this->LM->ParaV->get_row_size();
@@ -248,6 +250,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik)
         const int ncol = this->LM->ParaV->get_col_size();
         hamilt::folding_HR(*this->hR, this->hK->data(), this->kvec_d[ik], ncol, 0);
     }
+    ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
 }
 
 template class OperatorLCAO<double, double>;
