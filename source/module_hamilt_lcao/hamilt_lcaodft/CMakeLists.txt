@@ -1,6 +1,5 @@
-add_subdirectory(operator_lcao)
-
 if(ENABLE_LCAO)
+    add_subdirectory(operator_lcao)
     list(APPEND objects
         hamilt_lcao.cpp
         operator_lcao/operator_lcao.cpp
