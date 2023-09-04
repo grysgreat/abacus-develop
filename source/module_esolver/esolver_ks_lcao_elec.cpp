@@ -152,7 +152,8 @@ namespace ModuleESolver
             // Gamma_only case
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                this->p_hamilt = new hamilt::HamiltLCAO<double>(&(this->UHM.GG),
+                this->p_hamilt = new hamilt::HamiltLCAO<double, double>(&(this->UHM.GG),
+                                                                nullptr,
                                                                 &(this->UHM.genH),
                                                                 &(this->LM),
                                                                 &(this->LOC),
@@ -162,12 +163,26 @@ namespace ModuleESolver
             // multi_k case
             else
             {
-                this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>>(&(this->UHM.GK),
+                if(GlobalV::NSPIN < 4)
+                {
+                    this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(nullptr,
+                                                                              &(this->UHM.GK),
                                                                               &(this->UHM.genH),
                                                                               &(this->LM),
                                                                               &(this->LOC),
                                                                               this->pelec->pot,
                                                                               this->kv);
+                }
+                else
+                {
+                    this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(nullptr,
+                                                                                              &(this->UHM.GK),
+                                                                                              &(this->UHM.genH),
+                                                                                              &(this->LM),
+                                                                                              &(this->LOC),
+                                                                                              this->pelec->pot,
+                                                                                              this->kv);
+                }
             }
         }
 
@@ -468,24 +483,39 @@ namespace ModuleESolver
 				this->exc->read_Hexxs(file_name_exx);
 
             // This is a temporary fix
-            if(GlobalV::GAMMA_ONLY_LOCAL)
+            if (GlobalV::GAMMA_ONLY_LOCAL)
             {
+                hamilt::HamiltLCAO<double, double>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_hamilt);
                 hamilt::Operator<double>* exx
-                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double>>(&LM,
-                                                                            nullptr, // no explicit call yet
-                                                                            &(LM.Hloc),
-                                                                            this->kv);
-                p_hamilt->opsd->add(exx);
+                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>>(&this->LM,
+                                                                            hamilt_lcao->getHR(), 
+                                                                            &(hamilt_lcao->getHk(&this->LM)),
+                                                                            kv);
+                hamilt_lcao->getOperator()->add(exx);
             }
             else
             {
-                hamilt::Operator<std::complex<double>>* exx
-                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>>>(
-                        &LM,
-                        nullptr, // no explicit call yet
-                        &(LM.Hloc2),
-                        this->kv);
-                p_hamilt->ops->add(exx);
+                hamilt::Operator<std::complex<double>>* exx;
+                if(GlobalV::NSPIN < 4)
+                {
+                    hamilt::HamiltLCAO<std::complex<double>, double>* hamilt_lcao = 
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_hamilt);
+                    exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, double>>(&this->LM,
+                                                                                        hamilt_lcao->getHR(), 
+                                                                                        &(hamilt_lcao->getHk(&this->LM)),
+                                                                                        kv);
+                    hamilt_lcao->getOperator()->add(exx);
+                }
+                else
+                {
+                    hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* hamilt_lcao = 
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_hamilt);
+                    exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&this->LM,
+                                                                                                hamilt_lcao->getHR(), 
+                                                                                                &(hamilt_lcao->getHk(&this->LM)),
+                                                                                                kv);
+                    hamilt_lcao->getOperator()->add(exx);
+                }
             }
         }
 #endif // __MPI

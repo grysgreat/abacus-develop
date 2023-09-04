@@ -4,16 +4,20 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 
 template <typename TK, typename TR>
-hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::OverlapNew(LCAO_Matrix* LM_in,
+hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(LCAO_Matrix* LM_in,
                                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                                             hamilt::HContainer<TR>* hR_in,
+                                                             std::vector<TK>* hK_in,
                                                              hamilt::HContainer<TR>* SR_in,
-                                                             TK* SK_pointer_in,
+                                                             std::vector<TK>* SK_pointer_in,
                                                              const UnitCell* ucell_in,
                                                              Grid_Driver* GridD_in,
                                                              const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK>(LM_in, kvec_d_in)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
 {
     this->cal_type = lcao_overlap;
     this->ucell = ucell_in;
@@ -30,8 +34,10 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::OverlapNew(LCAO_Matrix* LM_in,
 
 // initialize_SR()
 template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::initialize_SR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
+    ModuleBase::TITLE("OverlapNew", "initialize_SR");
+    ModuleBase::timer::tick("OverlapNew", "initialize_SR");
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -62,11 +68,14 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::initialize_SR(Grid_Driver
     }
     // allocate the memory of BaseMatrix in SR, and set the new values to zero
     SR->allocate(true);
+    ModuleBase::timer::tick("OverlapNew", "initialize_SR");
 }
 
 template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::calculate_SR()
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::calculate_SR()
 {
+    ModuleBase::TITLE("OverlapNew", "calculate_SR");
+    ModuleBase::timer::tick("OverlapNew", "calculate_SR");
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -86,11 +95,18 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::calculate_SR()
             this->cal_SR_IJR(iat1, iat2, paraV, dtau, data_pointer);
         }
     }
+    // if TK == double, then SR should be fixed to gamma case
+    // judge type of TK equal to double
+    if (std::is_same<TK, double>::value)
+    {
+        this->SR->fix_gamma();
+    }
+    ModuleBase::timer::tick("OverlapNew", "calculate_SR");
 }
 
 // cal_SR_IJR()
 template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(const int& iat1,
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat1,
                                                                   const int& iat2,
                                                                   const Parallel_Orbitals* paraV,
                                                                   const ModuleBase::Vector3<double>& dtau,
@@ -172,7 +188,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::cal_SR_IJR(const int& iat
 
 // contributeHR()
 template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     if (this->SR_fixed_done)
     {
@@ -184,12 +200,43 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
 
 // contributeHk()
 template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK>, TR>::contributeHk(int ik)
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
-    hamilt::folding_HR(*this->SR, this->SK_pointer, this->kvec_d[ik], ncol, 0);
+    // if k vector is not changed, then do nothing and return
+    if (this->kvec_d[ik] == this->kvec_d_old)
+    {
+        return;
+    }
+    ModuleBase::TITLE("OverlapNew", "contributeHk");
+    ModuleBase::timer::tick("OverlapNew", "contributeHk");
+    // set SK to zero and then calculate SK for each k vector
+    ModuleBase::GlobalFunc::ZEROS(this->SK_pointer->data(), this->SK_pointer->size());
+    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    {
+        const int nrow = this->SR->get_atom_pair(0).get_paraV()->get_row_size();
+        hamilt::folding_HR(*this->SR, this->SK_pointer->data(), this->kvec_d[ik], nrow, 1);
+    }
+    else
+    {
+        const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
+        hamilt::folding_HR(*this->SR, this->SK_pointer->data(), this->kvec_d[ik], ncol, 0);
+    }
+    // update kvec_d_old
+    this->kvec_d_old = this->kvec_d[ik];
+
+    ModuleBase::timer::tick("OverlapNew", "contributeHk");
 }
 
-template class hamilt::OverlapNew<hamilt::OperatorLCAO<double>, double>;
-template class hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>>, double>;
-template class hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>>;
+template<typename TK, typename TR>
+TK* getSk()
+{
+    if(this->SK_pointer != nullptr)
+    {
+        return this->SK_pointer->data();
+    }
+    return nullptr;
+}
+
+template class hamilt::OverlapNew<hamilt::OperatorLCAO<double, double>>;
+template class hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
+template class hamilt::OverlapNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

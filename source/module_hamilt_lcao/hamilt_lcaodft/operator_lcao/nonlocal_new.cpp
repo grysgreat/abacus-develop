@@ -4,26 +4,24 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 
 template <typename TK, typename TR>
-hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::NonlocalNew(
+hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
     LCAO_Matrix* LM_in,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-    hamilt::HContainer<TR>* HR_in,
-    TK* HK_pointer_in,
+    hamilt::HContainer<TR>* hR_in,
+    std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
     const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK>(LM_in, kvec_d_in)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
 {
     this->cal_type = lcao_fixed;
     this->ucell = ucell_in;
-    this->HR = HR_in;
-    this->HK_pointer = HK_pointer_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
-    assert(this->HR != nullptr);
-    assert(this->HK_pointer != nullptr);
 #endif
     // initialize HR to allocate sparse Nonlocal matrix memory
     this->initialize_HR(GridD_in, paraV);
@@ -31,7 +29,7 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::NonlocalNew(
 
 // destructor
 template <typename TK, typename TR>
-hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::~NonlocalNew()
+hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::~NonlocalNew()
 {
     if (this->allocated)
     {
@@ -41,9 +39,12 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::~NonlocalNew()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Driver* GridD,
+void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD,
                                                                       const Parallel_Orbitals* paraV)
 {
+    ModuleBase::TITLE("NonlocalNew", "initialize_HR");
+    ModuleBase::timer::tick("NonlocalNew", "initialize_HR");
+
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
@@ -93,17 +94,22 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::initialize_HR(Grid_Drive
                                          R_index2.y - R_index1.y,
                                          R_index2.z - R_index1.z,
                                          paraV);
-                HR->insert_pair(tmp);
+                this->hR->insert_pair(tmp);
             }
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    HR->allocate(true);
+    this->hR->allocate(true);
+
+    ModuleBase::timer::tick("NonlocalNew", "initialize_HR");
 }
 
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
+void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
+    ModuleBase::TITLE("NonlocalNew", "calculate_HR");
+    ModuleBase::timer::tick("NonlocalNew", "calculate_HR");
+
     const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
     // 1. calculate <psi|beta> for each pair of atoms
@@ -186,11 +192,13 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::calculate_HR()
             }
         }
     }
+
+    ModuleBase::timer::tick("NonlocalNew", "calculate_HR");
 }
 
 // cal_HR_IJR()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(
+void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const int& iat1,
     const int& iat2,
     const int& T0,
@@ -250,7 +258,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::cal_HR_IJR(
 
 // set_HR_fixed()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::set_HR_fixed(void* HR_fixed_in)
+void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* HR_fixed_in)
 {
     this->HR_fixed = static_cast<hamilt::HContainer<TR>*>(HR_fixed_in);
     this->allocated = false;
@@ -258,24 +266,26 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::set_HR_fixed(void* HR_fi
 
 // contributeHR()
 template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
+void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
+    ModuleBase::TITLE("NonlocalNew", "contributeHR");
+    ModuleBase::timer::tick("NonlocalNew", "contributeHR");
     if (!this->HR_fixed_done)
     {
         // if this Operator is the first node of the sub_chain, then HR_fixed is nullptr
         if (this->HR_fixed == nullptr)
         {
-            this->HR_fixed = new hamilt::HContainer<TR>(*this->HR);
+            this->HR_fixed = new hamilt::HContainer<TR>(*this->hR);
             this->allocated = true;
         }
         else
         {
-            this->HR_fixed->shape_synchron( *this->HR);
+            this->HR_fixed->shape_synchron( *this->hR);
         }
         if(this->next_sub_op != nullptr)
         {
             // pass pointer of HR_fixed to the next node
-            static_cast<OperatorLCAO<TK>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
+            static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
         }
         // calculate the values in HR_fixed
         this->calculate_HR();
@@ -284,26 +294,12 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::contributeHR()
     // last node of sub-chain, add HR_fixed into HR
     if(this->next_sub_op == nullptr)
     {
-        this->HR->add(*(this->HR_fixed));
+        this->hR->add(*(this->HR_fixed));
     }
+    ModuleBase::timer::tick("NonlocalNew", "contributeHR");
     return;
 }
 
-// contributeHk()
-template <typename TK, typename TR>
-void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK>, TR>::contributeHk(int ik)
-{
-    if (!this->is_first_node)
-    {
-        return;
-    }
-    else
-    {
-        const int ncol = this->HR->get_atom_pair(0).get_paraV()->get_col_size();
-        hamilt::folding_HR(*this->HR, this->HK_pointer, this->kvec_d[ik], ncol, 0);
-    }
-}
-
-template class hamilt::NonlocalNew<hamilt::OperatorLCAO<double>, double>;
-template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>>, double>;
-template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>>, std::complex<double>>;
+template class hamilt::NonlocalNew<hamilt::OperatorLCAO<double, double>>;
+template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
+template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

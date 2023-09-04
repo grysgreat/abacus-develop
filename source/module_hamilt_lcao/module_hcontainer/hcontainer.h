@@ -291,9 +291,10 @@ class HContainer
      *   3. get_size_for_loop_R() and loop_R() can not be used
      *   4. get_AP_size() can be used
      *   5. data(i, j) can be used to get pointer of target atom-pair with R = 0, 0, 0 , data(i,j,R) can not be used
-     *   6. insert_pair() can be used, but the R index will be ignored
-     *   7. get_atom_pair(), find_atom_pair() can be used
+     *   6. insert_pair() can be safely used, but the R index will be ignored
+     *   7. find_matrix() can be safely used, but the R index will be ignored
      *   8. operator() can be used, but the R index will be ignored
+     *   9. get_atom_pair(), find_atom_pair() can be used, be careful that AtomPair::get_HR_values() is dangerous in this mode.
      */
     void fix_gamma();
 

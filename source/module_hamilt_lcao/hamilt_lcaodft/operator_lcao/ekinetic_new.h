@@ -17,7 +17,7 @@ namespace hamilt
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
-template <class T, typename TR>
+template <class T>
 class EkineticNew : public T
 {
 };
@@ -32,16 +32,16 @@ class EkineticNew : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class EkineticNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
+class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
     /**
      * @brief Construct a new EkineticNew object
      */
-    EkineticNew<OperatorLCAO<TK>, TR>(LCAO_Matrix* LM_in,
+    EkineticNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      hamilt::HContainer<TR>* HR_in,
-                                      TK* HK_pointer_in,
+                                      HContainer<TR>* hR_in,
+                                      std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
                                       Grid_Driver* GridD_in,
                                       const Parallel_Orbitals* paraV);
@@ -49,7 +49,7 @@ class EkineticNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
     /**
      * @brief Destroy the EkineticNew object
      */
-    ~EkineticNew<OperatorLCAO<TK>, TR>();
+    ~EkineticNew<OperatorLCAO<TK, TR>>();
 
     /**
      * @brief contributeHR() is used to calculate the HR matrix
@@ -57,26 +57,14 @@ class EkineticNew<OperatorLCAO<TK>, TR> : public OperatorLCAO<TK>
      */
     virtual void contributeHR() override;
 
-    /**
-     * @brief contributeHk() is used to calculate the HK matrix
-     * <phi_{\mu, k}|-\Nabla^2|phi_{\nu, k}> = \sum_{R} e^{ikR} HR
-     * in this class, TR has been added into total HR, skip this step.
-     * @param ik: index of k-point
-     */
-    virtual void contributeHk(int ik) override;
-
     virtual void set_HR_fixed(void*) override;
 
   private:
     const UnitCell* ucell = nullptr;
 
-    hamilt::HContainer<TR>* HR = nullptr;
-
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
     bool allocated = false;
-
-    TK* HK_pointer = nullptr;
 
     bool HR_fixed_done = false;
 

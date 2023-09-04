@@ -2,7 +2,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hsolver/hsolver_lcao.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
@@ -12,7 +12,7 @@ namespace hamilt
 {
 
 template<>
-void OperatorLCAO<double>::get_hs_pointers()
+void OperatorLCAO<double, double>::get_hs_pointers()
 {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->LM->Hloc.data();
@@ -34,28 +34,42 @@ void OperatorLCAO<double>::get_hs_pointers()
 }
 
 template<>
-void OperatorLCAO<std::complex<double>>::get_hs_pointers()
+void OperatorLCAO<std::complex<double>, double>::get_hs_pointers()
 {
     this->hmatrix_k = this->LM->Hloc2.data();
     this->smatrix_k = this->LM->Sloc2.data();
 }
 
 template<>
-void OperatorLCAO<double>::refresh_h()
+void OperatorLCAO<std::complex<double>, std::complex<double>>::get_hs_pointers()
+{
+    this->hmatrix_k = this->LM->Hloc2.data();
+    this->smatrix_k = this->LM->Sloc2.data();
+}
+
+template<>
+void OperatorLCAO<double, double>::refresh_h()
 {
     // Set the matrix 'H' to zero.
     this->LM->zeros_HSgamma('H');
 }
 
 template<>
-void OperatorLCAO<std::complex<double>>::refresh_h()
+void OperatorLCAO<std::complex<double>, double>::refresh_h()
 {
     // Set the matrix 'H' to zero.
     this->LM->zeros_HSk('H');
 }
 
 template<>
-void OperatorLCAO<double>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+void OperatorLCAO<std::complex<double>, std::complex<double>>::refresh_h()
+{
+    // Set the matrix 'H' to zero.
+    this->LM->zeros_HSk('H');
+}
+
+template<>
+void OperatorLCAO<double, double>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
     ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
@@ -65,17 +79,14 @@ void OperatorLCAO<double>::folding_fixed(const int ik, const std::vector<ModuleB
 }
 
 template<>
-void OperatorLCAO<std::complex<double>>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+void OperatorLCAO<std::complex<double>, double>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
     ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
     //-----------------------------------------
-    // folding matrix here: S(k) (SlocR->Sloc2)
     // folding matrix here: T(k)+Vnl(k)
     // (Hloc_fixed->Hloc_fixed2)
     //-----------------------------------------
-    this->LM->zeros_HSk('S');
-    this->LM->zeros_HSk('T');
     this->LM->folding_fixedH(ik, kvec_d);
 
     //------------------------------------------
@@ -86,32 +97,68 @@ void OperatorLCAO<std::complex<double>>::folding_fixed(const int ik, const std::
     ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
 }
 
-template<typename T>
-void OperatorLCAO<T>::init(const int ik_in)
+template<>
+void OperatorLCAO<std::complex<double>, std::complex<double>>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+{
+    ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
+    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
+
+    //------------------------------------------
+    // Add T(k)+Vnl(k)+Vlocal(k)
+    // (Hloc2 += Hloc_fixed2), (std::complex matrix)
+    //------------------------------------------
+	this->LM->update_Hloc2(ik);
+    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
+}
+
+template<typename TK, typename TR>
+void OperatorLCAO<TK, TR>::init(const int ik_in)
 {
     ModuleBase::TITLE("OperatorLCAO", "init");
     ModuleBase::timer::tick("OperatorLCAO", "init");
     if(this->is_first_node)
     {
+        // refresh HK
         this->refresh_h();
+        // refresh HR
+        this->hR->set_zero();
     }
     switch(this->cal_type)
     {
+        case lcao_overlap:
+        {
+            //cal_type=lcao_overlap refer to overlap matrix operators, which are only rely on stucture, and not changed during SCF
+
+            //update SR first
+            //in cal_type=lcao_overlap, SR should be updated by each sub-chain nodes
+            OperatorLCAO<TK, TR>* last = this;
+            while(last != nullptr)
+            {
+                last->contributeHR();
+                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+            }
+
+            //update SK next
+            //in cal_type=lcao_overlap, SK should be update here
+            this->contributeHk(ik_in);
+
+            break;
+        }
         case lcao_fixed:
         {
             //cal_type=lcao_fixed refer to fixed matrix operators, which are only rely on stucture, and not changed during SCF
 
             //update HR first
             //in cal_type=lcao_fixed, HR should be updated by each sub-chain nodes
-            OperatorLCAO<T>* last = this;
+            OperatorLCAO<TK, TR>* last = this;
             while(last != nullptr)
             {
                 last->contributeHR();
-                last = dynamic_cast<OperatorLCAO<T>*>(last->next_sub_op);
+                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
             }
 
             //update HK next
-            //in cal_type=lcao_fixed, HK only need to update together in folding_fixed()
+            //in cal_type=lcao_fixed, HK will update in the last node with OperatorLCAO::contributeHk()
 
             break;
         }
@@ -120,7 +167,7 @@ void OperatorLCAO<T>::init(const int ik_in)
             //cal_type=lcao_gint refer to grid integral operators, which are relied on stucture and potential based on real space grids
             //and should be updated each SCF steps
 
-            OperatorLCAO<T>* last = this;
+            OperatorLCAO<TK, TR>* last = this;
             while(last != nullptr)
             {
                 //update HR first
@@ -131,7 +178,7 @@ void OperatorLCAO<T>::init(const int ik_in)
                 //in cal_type=lcao_gint, HK should be updated by every sub-node.
                 last->contributeHk(ik_in);
 
-                last = dynamic_cast<OperatorLCAO<T>*>(last->next_sub_op);
+                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
             }
 
             break;
@@ -153,11 +200,7 @@ void OperatorLCAO<T>::init(const int ik_in)
         {
             //only HK should be updated when cal_type=lcao_dftu
             //in cal_type=lcao_dftu, HK only need to update from one node
-            //dftu is a special operator, it should be the last node of chain
-            //Overlap matrix for ik is used by it, do folding first and then return
-            this->folding_fixed(ik_in, this->kvec_d);
             this->contributeHk(ik_in);
-            return;
 
             break;
         }
@@ -183,13 +226,31 @@ void OperatorLCAO<T>::init(const int ik_in)
     {//it is not the last node, loop next init() function
         this->next_op->init(ik_in);
     }
-    else
-    {//it is the last node, do folding process together
-        this->folding_fixed(ik_in, this->kvec_d);
+    else 
+    {//it is the last node, update HK with the current total HR
+        OperatorLCAO<TK, TR>::contributeHk(ik_in);
     }
 
     ModuleBase::timer::tick("OperatorLCAO", "init");
 }
-template class OperatorLCAO<double>;
-template class OperatorLCAO<std::complex<double>>;
+
+// contributeHk()
+template<typename TK, typename TR>
+void OperatorLCAO<TK, TR>::contributeHk(int ik)
+{
+    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    {
+        const int nrow = this->LM->ParaV->get_row_size();
+        hamilt::folding_HR(*this->hR, this->hK->data(), this->kvec_d[ik], nrow, 1);
+    }
+    else
+    {
+        const int ncol = this->LM->ParaV->get_col_size();
+        hamilt::folding_HR(*this->hR, this->hK->data(), this->kvec_d[ik], ncol, 0);
+    }
+}
+
+template class OperatorLCAO<double, double>;
+template class OperatorLCAO<std::complex<double>, double>;
+template class OperatorLCAO<std::complex<double>, std::complex<double>>;
 }  // namespace hamilt

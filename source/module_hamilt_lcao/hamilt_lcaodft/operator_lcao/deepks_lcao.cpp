@@ -10,12 +10,14 @@
 namespace hamilt
 {
 
-template class DeePKS<OperatorLCAO<double>>;
+template class DeePKS<OperatorLCAO<double, double>>;
 
-template class DeePKS<OperatorLCAO<std::complex<double>>>;
+template class DeePKS<OperatorLCAO<std::complex<double>, double>>;
+
+template class DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
 template<>
-void DeePKS<OperatorLCAO<double>>::contributeHR()
+void DeePKS<OperatorLCAO<double, double>>::contributeHR()
 {
     ModuleBase::TITLE("DeePKS", "contributeHR");
 #ifdef __DEEPKS
@@ -41,7 +43,40 @@ void DeePKS<OperatorLCAO<double>>::contributeHR()
 }
 
 template<>
-void DeePKS<OperatorLCAO<std::complex<double>>>::contributeHR()
+void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
+{
+#ifdef __DEEPKS
+    ModuleBase::TITLE("DeePKS", "contributeHR");
+    // if DM_K changed, HR of DeePKS need to refresh.
+    // the judgement is based on the status of HR in GlobalC::ld
+    // this operator should be informed that DM_K has changed and HR need to recalculate.
+    if(GlobalC::ld.get_hr_cal())
+    {
+        ModuleBase::timer::tick("DeePKS", "contributeHR");
+
+        GlobalC::ld.cal_projected_DM_k(this->loc->dm_k,
+            GlobalC::ucell,
+            GlobalC::ORB,
+            GlobalC::GridD,
+            this->nks,
+            this->kvec_d);
+        GlobalC::ld.cal_descriptor();
+        // calculate dE/dD
+        GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+
+        // calculate H_V_deltaR from saved <alpha(0)|psi(R)>
+        GlobalC::ld
+            .add_v_delta_k(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
+        
+        GlobalC::ld.set_hr_cal(false);
+        
+        ModuleBase::timer::tick("DeePKS", "contributeHR");
+    } 
+
+#endif
+}
+template<>
+void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
 {
 #ifdef __DEEPKS
     ModuleBase::TITLE("DeePKS", "contributeHR");
@@ -75,7 +110,7 @@ void DeePKS<OperatorLCAO<std::complex<double>>>::contributeHR()
 }
 
 template<>
-void DeePKS<OperatorLCAO<double>>::contributeHk(int ik)
+void DeePKS<OperatorLCAO<double, double>>::contributeHk(int ik)
 {
 #ifdef __DEEPKS	//caoyu add 2021-07-26 for DeePKS
 
@@ -94,7 +129,13 @@ void DeePKS<OperatorLCAO<double>>::contributeHk(int ik)
 }
 
 template<>
-void DeePKS<OperatorLCAO<std::complex<double>>>::contributeHk(int ik)
+void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
+{
+    //has been done in folding_fixedH()
+}
+
+template<>
+void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
 {
     //has been done in folding_fixedH()
 }

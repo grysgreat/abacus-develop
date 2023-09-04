@@ -164,7 +164,14 @@ const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, 
     }
     else
     {
-        return tmp->find_matrix(rx, ry, rz);
+        if(this->gamma_only)
+        {
+            return tmp->find_matrix(0, 0, 0);
+        }
+        else
+        {
+            return tmp->find_matrix(rx, ry, rz);
+        }
     }
 }
 
@@ -178,7 +185,14 @@ BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry
     }
     else
     {
-        return tmp->find_matrix(rx, ry, rz);
+        if(this->gamma_only)
+        {
+            return tmp->find_matrix(0, 0, 0);
+        }
+        else
+        {
+            return tmp->find_matrix(rx, ry, rz);
+        }
     }
 }
 

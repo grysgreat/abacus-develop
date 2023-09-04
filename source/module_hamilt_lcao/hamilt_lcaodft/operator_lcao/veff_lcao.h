@@ -20,40 +20,39 @@ class Veff : public T
 
 #endif
 
-template <typename T>
-class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
+template <typename TK, typename TR>
+class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    Veff<OperatorLCAO<T>>(Gint_k* GK_in,
+    Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
-                          std::vector<double>* HR_pointer_in,
-                          std::vector<T>* HK_pointer_in)
+                          hamilt::HContainer<TR>* hR_in,
+                          std::vector<TK>* hK_in)
         : GK(GK_in),
           loc(loc_in),
           pot(pot_in),
-          HR_pointer(HR_pointer_in),
-          HK_pointer(HK_pointer_in),
-          OperatorLCAO<T>(LM_in, kvec_d_in)
+          OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
     }
-    Veff<OperatorLCAO<T>>(Gint_Gamma* GG_in,
+    Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
-                          std::vector<double>* HR_pointer_in,
-                          std::vector<T>* HK_pointer_in,
-                          std::vector<ModuleBase::Vector3<double>> kvec_d_in)
-        : GG(GG_in), loc(loc_in), pot(pot_in), HR_pointer(HR_pointer_in), HK_pointer(HK_pointer_in), 
-        OperatorLCAO<T>(LM_in, std::vector<ModuleBase::Vector3<double>>{ModuleBase::Vector3<double>(0,0,0)})
+                          hamilt::HContainer<TR>* hR_in,
+                          std::vector<TK>* hK_in
+                          )
+        : GG(GG_in), loc(loc_in), pot(pot_in),
+        OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
     }
 
-    ~Veff<OperatorLCAO<T>>();
+    ~Veff<OperatorLCAO<TK, TR>>();
 
     virtual void contributeHR() override;
 
@@ -69,13 +68,7 @@ class Veff<OperatorLCAO<T>> : public OperatorLCAO<T>
     // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
     Local_Orbital_Charge* loc = nullptr;
 
-    std::vector<double>* HR_pointer = nullptr;
-
-    std::vector<T>* HK_pointer = nullptr;
-
     elecstate::Potential* pot = nullptr;
-
-    bool allocated_pvpR = false;
 };
 
 } // namespace hamilt
