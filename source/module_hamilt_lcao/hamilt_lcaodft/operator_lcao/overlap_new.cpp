@@ -228,7 +228,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 }
 
 template<typename TK, typename TR>
-TK* getSk()
+TK* hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::getSk()
 {
     if(this->SK_pointer != nullptr)
     {
