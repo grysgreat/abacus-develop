@@ -189,10 +189,6 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
             //in cal_type=lcao_deepks, HR should be updated
             this->contributeHR();
 
-            //update HK next
-            //in cal_type=lcao_deepks, HK should be updated
-            this->contributeHk(ik_in);
-
             break;
 
         }

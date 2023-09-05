@@ -172,6 +172,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                                         kv_in.kvec_d,
                                                                         this->hR, // no explicit call yet
                                                                         &(this->getHk(LM_in)),
+                                                                        &GlobalC::ucell,
+                                                                        &GlobalC::GridD,
                                                                         kv_in.nks);
             this->getOperator()->add(deepks);
         }
@@ -293,8 +295,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 = new DeePKS<OperatorLCAO<TK, TR>>(loc_in,
                                                     LM_in,
                                                     kv_in.kvec_d,
-                                                    nullptr, // no explicit call yet
+                                                    hR,
                                                     &(this->getHk(LM_in)),
+                                                    &GlobalC::ucell,
+                                                    &GlobalC::GridD,
                                                     kv_in.nks);
             this->getOperator()->add(deepks);
         }

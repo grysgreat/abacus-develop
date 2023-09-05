@@ -77,8 +77,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /**
      * @brief calculate the electronic kinetic matrix with specific <I,J,R> atom-pairs
-     * nearest neighbor atoms don't need to be calculated again
-     * loop the atom-pairs in HR and calculate the electronic kinetic matrix
+     * use the adjs_all to calculate the HR matrix
      */
     void calculate_HR();
 
@@ -91,6 +90,7 @@ class EkineticNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const ModuleBase::Vector3<double>& dtau,
                     TR* data_pointer);
 
+    /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;
 };
 

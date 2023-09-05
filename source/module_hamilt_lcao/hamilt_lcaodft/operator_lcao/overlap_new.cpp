@@ -202,8 +202,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 template <typename TK, typename TR>
 void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    // if k vector is not changed, then do nothing and return
-    if (this->kvec_d[ik] == this->kvec_d_old)
+    // if k vector is not changed, then do nothing and return, only for gamma_only case
+    if (this->kvec_d[ik] == this->kvec_d_old && std::is_same<TK, double>::value)
     {
         return;
     }

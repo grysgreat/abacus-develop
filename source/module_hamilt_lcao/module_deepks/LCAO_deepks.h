@@ -77,6 +77,9 @@ public:
     int get_hr_cal(){ return this->hr_cal; }
     void set_hr_cal(bool cal){ this->hr_cal = cal; }
 
+    // temporary add two getters for inl_index and gedm
+    int get_inl(const int& T0, const int& I0, const int& L0, const int& N0) { return inl_index[T0](I0, L0, N0); }
+    const double* get_gedms(const int& inl){ return gedm[inl]; }
 //-------------------
 // private variables
 //-------------------
