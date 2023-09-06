@@ -13,12 +13,6 @@ template class Veff<OperatorLCAO<std::complex<double>, double>>;
 template class Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
 template<typename TK, typename TR>
-Veff<OperatorLCAO<TK, TR>>::~Veff()
-{
-    //do nothing
-}
-
-template<typename TK, typename TR>
 void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
