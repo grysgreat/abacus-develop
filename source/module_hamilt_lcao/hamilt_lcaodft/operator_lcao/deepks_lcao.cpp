@@ -4,8 +4,8 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 namespace hamilt
 {
@@ -30,6 +30,15 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
 #ifdef __DEEPKS
     this->initialize_HR(GridD_in, LM_in->ParaV);
 #endif
+}
+
+template <typename TK, typename TR>
+DeePKS<OperatorLCAO<TK, TR>>::~DeePKS()
+{
+    if (this->H_V_delta != nullptr)
+    {
+        delete this->H_V_delta;
+    }
 }
 
 #ifdef __DEEPKS
@@ -122,9 +131,9 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
             GlobalC::GridD);
         GlobalC::ld.cal_descriptor();        
         GlobalC::ld.cal_gedm(this->ucell->nat);
-        GlobalC::ld.add_v_delta(*this->ucell,
-            GlobalC::ORB,
-            GlobalC::GridD);
+        //GlobalC::ld.add_v_delta(*this->ucell,
+        //    GlobalC::ORB,
+        //    GlobalC::GridD);
         // recalculate the H_V_delta
         this->H_V_delta->set_zero();
         this->calculate_HR();
@@ -158,10 +167,10 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
             this->kvec_d);
         GlobalC::ld.cal_descriptor();
         // calculate dE/dD
-        GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+        GlobalC::ld.cal_gedm(this->ucell->nat);
 
         // calculate H_V_deltaR from saved <alpha(0)|psi(R)>
-        GlobalC::ld.add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
+        //GlobalC::ld.add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
         
         // recalculate the H_V_delta
         this->H_V_delta->set_zero();
@@ -198,8 +207,8 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
         GlobalC::ld.cal_gedm(this->ucell->nat);
 
         // calculate H_V_deltaR from saved <alpha(0)|psi(R)>
-        GlobalC::ld
-            .add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
+        //GlobalC::ld
+        //    .add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
         
         // recalculate the H_V_delta
         this->H_V_delta->set_zero();
@@ -396,6 +405,42 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
         }
         data_pointer += (npol - 1) * col_indexes.size();
     }
+}
+
+inline void get_h_delta_k(int ik, double*& h_delta_k)
+{
+    h_delta_k = GlobalC::ld.H_V_delta.data();
+    return;
+}
+inline void get_h_delta_k(int ik, std::complex<double>*& h_delta_k)
+{
+    h_delta_k = GlobalC::ld.H_V_delta_k[ik].data();
+    return;
+}
+
+// contributeHk()
+template<typename TK, typename TR>
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
+{
+    ModuleBase::TITLE("DeePKS", "contributeHk");
+    ModuleBase::timer::tick("DeePKS", "contributeHk");
+    
+    TK* h_delta_k = nullptr;
+    get_h_delta_k(ik, h_delta_k);
+    // set SK to zero and then calculate SK for each k vector
+    ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hK->size());
+
+    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    {
+        const int nrow = this->LM->ParaV->get_row_size();
+        hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], nrow, 1);
+    }
+    else
+    {
+        const int ncol = this->LM->ParaV->get_col_size();
+        hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], ncol, 0);
+    }
+    ModuleBase::timer::tick("DeePKS", "contributeHk");
 }
 
 #endif

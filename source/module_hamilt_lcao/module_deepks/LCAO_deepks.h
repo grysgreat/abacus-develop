@@ -57,12 +57,12 @@ public:
     ModuleBase::matrix	o_delta;
 
     ///Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
-    double* H_V_delta;
+    std::vector<double> H_V_delta;
     ///Correction term to Hamiltonian, for multi-k
     ///In R space:
     double* H_V_deltaR;
     ///In k space:
-    std::complex<double>** H_V_delta_k;
+    std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
     ///(Unit: Ry/Bohr) Total Force due to the DeePKS correction term \f$E_{\delta}\f$
     ModuleBase::matrix	F_delta;

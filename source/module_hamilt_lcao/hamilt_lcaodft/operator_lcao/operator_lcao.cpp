@@ -68,49 +68,6 @@ void OperatorLCAO<std::complex<double>, std::complex<double>>::refresh_h()
     this->LM->zeros_HSk('H');
 }
 
-template<>
-void OperatorLCAO<double, double>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
-{
-    ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
-    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
-    //add T+VNL matrix.
-	this->LM->update_Hloc();
-    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
-}
-
-template<>
-void OperatorLCAO<std::complex<double>, double>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
-{
-    ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
-    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
-    //-----------------------------------------
-    // folding matrix here: T(k)+Vnl(k)
-    // (Hloc_fixed->Hloc_fixed2)
-    //-----------------------------------------
-    this->LM->folding_fixedH(ik, kvec_d);
-
-    //------------------------------------------
-    // Add T(k)+Vnl(k)+Vlocal(k)
-    // (Hloc2 += Hloc_fixed2), (std::complex matrix)
-    //------------------------------------------
-	this->LM->update_Hloc2(ik);
-    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
-}
-
-template<>
-void OperatorLCAO<std::complex<double>, std::complex<double>>::folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d)
-{
-    ModuleBase::TITLE("OperatorLCAO", "folding_fixed");
-    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
-
-    //------------------------------------------
-    // Add T(k)+Vnl(k)+Vlocal(k)
-    // (Hloc2 += Hloc_fixed2), (std::complex matrix)
-    //------------------------------------------
-	this->LM->update_Hloc2(ik);
-    ModuleBase::timer::tick("OperatorLCAO", "folding_fixed");
-}
-
 template<typename TK, typename TR>
 void OperatorLCAO<TK, TR>::init(const int ik_in)
 {
@@ -183,15 +140,20 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
             break;
         }
+#ifdef __DEEPKS
         case lcao_deepks:
         {
             //update HR first
             //in cal_type=lcao_deepks, HR should be updated
             this->contributeHR();
 
+            //update H_V_delta_k next
+            this->contributeHk(ik_in);
+
             break;
 
         }
+#endif
         case lcao_dftu:
         {
             //only HK should be updated when cal_type=lcao_dftu

@@ -105,9 +105,6 @@ class OperatorLCAO : public Operator<TK>
 
     // only used for Gamma_only case
     bool allocated_smatrix = false;
-
-    // fixed HR matrix folding to HK
-    void folding_fixed(const int ik, const std::vector<ModuleBase::Vector3<double>>& kvec_d);
     
     // if HR is calculated
     bool hr_done = false;

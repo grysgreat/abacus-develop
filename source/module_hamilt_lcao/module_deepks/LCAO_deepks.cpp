@@ -34,7 +34,6 @@ LCAO_Deepks::LCAO_Deepks()
     alpha_index = new ModuleBase::IntArray[1];
     inl_index = new ModuleBase::IntArray[1];
     inl_l = nullptr;
-    H_V_delta = nullptr;
     H_V_deltaR = nullptr;
 }
 
@@ -44,7 +43,6 @@ LCAO_Deepks::~LCAO_Deepks()
     delete[] alpha_index;
     delete[] inl_index;
     delete[] inl_l;
-    delete[] H_V_delta;
 
     //=======1. to use deepks, pdm is required==========
     //delete pdm**
@@ -266,17 +264,16 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     //initialize the H matrix H_V_delta
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
-        delete[] this->H_V_delta;
-        this->H_V_delta = new double[pv->nloc];
-        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta, pv->nloc);
+        this->H_V_delta.resize(pv->nloc);
+        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta.data(), pv->nloc);
     }
     else
     {
-        H_V_delta_k = new std::complex<double>* [nks];
+        H_V_delta_k.resize(nks);
         for(int ik=0;ik<nks;ik++)
         {
-            this->H_V_delta_k[ik] = new std::complex<double>[pv->nloc];
-            ModuleBase::GlobalFunc::ZEROS(this->H_V_delta_k[ik], pv->nloc);
+            this->H_V_delta_k[ik].resize(pv->nloc);
+            ModuleBase::GlobalFunc::ZEROS(this->H_V_delta_k[ik].data(), pv->nloc);
         }
     }
 

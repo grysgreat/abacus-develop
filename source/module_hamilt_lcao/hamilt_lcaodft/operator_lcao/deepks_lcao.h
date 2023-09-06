@@ -36,8 +36,12 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                             const UnitCell* ucell_in,
                             Grid_Driver* GridD_in,
                             const int& nks_in);
+    ~DeePKS();
 
     virtual void contributeHR() override;
+#ifdef __DEEPKS
+    virtual void contributeHk(int ik) override;
+#endif
 
   private:
     Local_Orbital_Charge* loc;

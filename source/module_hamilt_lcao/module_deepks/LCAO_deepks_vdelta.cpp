@@ -27,7 +27,7 @@ void LCAO_Deepks::add_v_delta(const UnitCell &ucell,
 {
     ModuleBase::TITLE("LCAO_DESCRIPTOR", "add_v_delta");
     ModuleBase::timer::tick ("LCAO_gen_fixedH","add_v_delta");
-    ModuleBase::GlobalFunc::ZEROS(this->H_V_delta, pv->nrow * pv->ncol); //init before calculate
+    ModuleBase::GlobalFunc::ZEROS(this->H_V_delta.data(), pv->nrow * pv->ncol); //init before calculate
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
