@@ -25,11 +25,11 @@ add_test(NAME io_input_test_para4
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-#AddTest(
-#  TARGET io_input_conv
-#  LIBS ${math_libs} base device
-#  SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
-#)
+AddTest(
+  TARGET io_input_conv
+  LIBS ${math_libs} base device
+  SOURCES input_conv_test.cpp ../input.cpp ../input_conv.cpp
+)
 
 AddTest(
   TARGET io_winput_test
