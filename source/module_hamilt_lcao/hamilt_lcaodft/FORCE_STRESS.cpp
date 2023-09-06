@@ -162,7 +162,6 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
     //  jiyy add 2019-05-18, update 2021-05-02
     ModuleBase::matrix force_vdw;
     ModuleBase::matrix stress_vdw;
-
     auto vdw_solver = vdw::make_vdw(GlobalC::ucell, INPUT);
     if (vdw_solver != nullptr)
     {
@@ -228,9 +227,11 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         }
         GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu, kv);
     }
-
     if (!GlobalV::GAMMA_ONLY_LOCAL)
-        this->flk.finish_k();
+    {
+        //this->flk.finish_k();
+        this->flk_new.finish_k_new();
+    }
 #ifdef __EXX
     // Force and Stress contribution from exx
     ModuleBase::matrix force_exx;
@@ -714,8 +715,10 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
                                                    LCAO_Hamilt& uhm,
                                                    const K_Vectors& kv)
 {
+    /*
     if (isGammaOnly)
     {
+        
         flk.ftable_gamma(isforce,
                          isstress,
                          psid,
@@ -760,6 +763,56 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
                      uhm,
                      kv);
     }
+    */
+
+    if (isGammaOnly)
+    {
+        
+        flk_new.ftable_gamma_new(isforce,
+                         isstress,
+                         psid,
+                         loc,
+                         pelec,
+                         foverlap,
+                         ftvnl_dphi,
+                         fvnl_dbeta,
+                         fvl_dphi,
+                         soverlap,
+                         stvnl_dphi,
+                         svnl_dbeta,
+#if __DEEPKS
+                         svl_dphi,
+                         svnl_dalpha,
+#else
+                         svl_dphi,
+#endif
+                         uhm);
+    }
+    else
+    {
+        flk_new.ftable_k_new(isforce,
+                     isstress,
+                     *this->RA,
+                     psi,
+                     loc,
+                     pelec,
+                     foverlap,
+                     ftvnl_dphi,
+                     fvnl_dbeta,
+                     fvl_dphi,
+                     soverlap,
+                     stvnl_dphi,
+                     svnl_dbeta,
+#if __DEEPKS
+                     svl_dphi,
+                     svnl_dalpha,
+#else
+                     svl_dphi,
+#endif
+                     uhm,
+                     kv);
+    }
+    
     return;
 }
 

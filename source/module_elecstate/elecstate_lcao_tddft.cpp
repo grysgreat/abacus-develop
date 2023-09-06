@@ -93,4 +93,6 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
     return;
 }
 
+
+
 } // namespace elecstate

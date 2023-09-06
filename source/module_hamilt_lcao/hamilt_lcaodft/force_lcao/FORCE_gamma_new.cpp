@@ -1,5 +1,4 @@
-#include "FORCE_gamma.h"
-
+#include "FORCE_gamma_new.h"
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -10,17 +9,18 @@
 #endif
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_io/write_HS.h"
+#include "module_elecstate/elecstate_lcao.h"
 
-Force_LCAO_gamma::Force_LCAO_gamma()
+Force_LCAO_gamma_new::Force_LCAO_gamma_new()
 {
 }
 
-Force_LCAO_gamma::~Force_LCAO_gamma()
+Force_LCAO_gamma_new::~Force_LCAO_gamma_new()
 {
 }
 
 // be called in force_lo.cpp
-void Force_LCAO_gamma::ftable_gamma(const bool isforce,
+void Force_LCAO_gamma_new::ftable_gamma_new(const bool isforce,
                                     const bool isstress,
                                     const psi::Psi<double>* psid,
                                     Local_Orbital_Charge& loc,
@@ -36,44 +36,43 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
                                     ModuleBase::matrix& svl_dphi,
                                     ModuleBase::matrix& svnl_dalpha,
 #else
-                                      ModuleBase::matrix& svl_dphi,
+                                    ModuleBase::matrix& svl_dphi,
 #endif
                                     LCAO_Hamilt& uhm)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "ftable");
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
 
+    // const Parallel_Orbitals* pv = loc.ParaV;
     const Parallel_Orbitals* pv = loc.ParaV;
     this->UHM = &uhm;
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate_gamma(*loc.ParaV);
+    this->allocate_gamma_new(*loc.ParaV);
 
     // calculate the 'energy density matrix' here.
-    this->cal_foverlap(isforce, isstress, psid, loc, pelec, foverlap, soverlap);
+    this->cal_foverlap_new(isforce, isstress, psid, loc, pelec, foverlap, soverlap);
 
-    this->cal_ftvnl_dphi(loc.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
-    this->cal_fvnl_dbeta_new(loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    elecstate::DensityMatrix<double,double>* DM
+    = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
 
-    this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
+    DM->sum_DMR_spin();
+    //
+    this->cal_ftvnl_dphi_new(DM, loc.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+    this->cal_fvnl_dbeta_new(DM, loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+
+    this->cal_fvl_dphi_new(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
 
     // caoyu add for DeePKS
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM(loc.dm_gamma,
-            GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::GridD);
+        GlobalC::ld.cal_projected_DM(loc.dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-        GlobalC::ld.cal_f_delta_gamma(loc.dm_gamma,
-            GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::GridD,
-            isstress,
-            svnl_dalpha);
+        GlobalC::ld
+            .cal_f_delta_gamma(loc.dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, isstress, svnl_dalpha);
 #ifdef __MPI
         Parallel_Reduce::reduce_double_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
         if (isstress)
@@ -87,9 +86,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
-            GlobalC::ld.add_v_delta(GlobalC::ucell,
-                GlobalC::ORB,
-                GlobalC::GridD);
+            GlobalC::ld.add_v_delta(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
             GlobalC::ld.check_v_delta();
 
             GlobalC::ld.cal_e_delta_band(loc.dm_gamma);
@@ -109,7 +106,6 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
         Parallel_Reduce::reduce_double_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
         Parallel_Reduce::reduce_double_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
     }
-
     if (isstress)
     {
         Parallel_Reduce::reduce_double_pool(soverlap.c, soverlap.nr * soverlap.nc);
@@ -120,13 +116,13 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
     // delete DSloc_x, DSloc_y, DSloc_z
     // delete DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->finish_ftable_gamma();
+    this->finish_ftable_gamma_new();
 
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
     return;
 }
 
-void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
+void Force_LCAO_gamma_new::allocate_gamma_new(const Parallel_Orbitals& pv)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "allocate_gamma");
     ModuleBase::timer::tick("Force_LCAO_gamma", "allocate_gamma");
@@ -208,7 +204,8 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
     {
         cal_deri = false;
         this->UHM->genH.LM->zeros_HSgamma('S');
-        this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
+        this->UHM->genH
+            .build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
         bool bit = false; // LiuXh, 2017-03-21
         ModuleIO::saving_HS(0,
                             this->UHM->genH.LM->Hloc.data(),
@@ -224,7 +221,7 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
     return;
 }
 
-void Force_LCAO_gamma::finish_ftable_gamma(void)
+void Force_LCAO_gamma_new::finish_ftable_gamma_new(void)
 {
     delete[] this->UHM->LM->DSloc_x;
     delete[] this->UHM->LM->DSloc_y;
@@ -250,7 +247,7 @@ void Force_LCAO_gamma::finish_ftable_gamma(void)
     return;
 }
 
-void Force_LCAO_gamma::test_gamma(double* mm, const std::string& name)
+void Force_LCAO_gamma_new::test_gamma_new(double* mm, const std::string& name)
 {
     std::cout << "\n PRINT " << name << std::endl;
     std::cout << std::setprecision(6) << std::endl;
@@ -274,7 +271,7 @@ void Force_LCAO_gamma::test_gamma(double* mm, const std::string& name)
 
 namespace StressTools
 {
-void stress_fill(const double& lat0_, const double& omega_, ModuleBase::matrix& stress_matrix)
+void stress_fill_new(const double& lat0_, const double& omega_, ModuleBase::matrix& stress_matrix)
 {
     assert(omega_ > 0.0);
     double weight = lat0_ / omega_;

@@ -20,6 +20,7 @@
 
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_io/dm_io.h"
+#include "module_elecstate/elecstate_lcao.h"
 
 namespace ModuleESolver
 {
@@ -300,6 +301,15 @@ namespace ModuleESolver
         
         this->beforesolver(istep);
         this->pelec->init_scf(istep, sf.strucFac);
+        // initalize DMR
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->init_DMR(this->RA,&GlobalC::ucell);
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->init_DMR(this->RA,&GlobalC::ucell);
+        }
         // the electron charge density should be symmetrized,
         // here is the initialization
         Symmetry_rho srho;

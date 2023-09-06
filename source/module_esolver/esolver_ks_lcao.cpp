@@ -94,7 +94,9 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<double>(&(chr),
                                                    &(kv),
                                                    kv.nks,
                                                    &(this->LOC),
@@ -102,6 +104,18 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
                                                    &(this->LOWF),
                                                    this->pw_rho,
                                                    pw_big);
+        }
+        else if(!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(chr),
+                                                   &(kv),
+                                                   kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF),
+                                                   this->pw_rho,
+                                                   pw_big);
+        }
     }
 
     //------------------init Basis_lcao----------------------
@@ -115,6 +129,16 @@ void ESolver_KS_LCAO::Init(Input& inp, UnitCell& ucell)
     this->UHM.genH.LM = this->UHM.LM = &this->LM;
     // pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
+
+    // init DensityMatrix
+    if (GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+    }
+    else if (!GlobalV::GAMMA_ONLY_LOCAL)
+    {
+        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+    }
 
     if (GlobalV::CALCULATION == "get_S")
     {
@@ -214,7 +238,9 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
     if (GlobalV::md_prec_level == 2)
     {
         delete this->pelec;
-        this->pelec = new elecstate::ElecStateLCAO(&(chr),
+        if (GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<double>(&(chr),
                                                    &(kv),
                                                    kv.nks,
                                                    &(this->LOC),
@@ -222,6 +248,18 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
                                                    &(this->LOWF),
                                                    this->pw_rho,
                                                    pw_big);
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->pelec = new elecstate::ElecStateLCAO<complex<double>>(&(chr),
+                                                   &(kv),
+                                                   kv.nks,
+                                                   &(this->LOC),
+                                                   &(this->UHM),
+                                                   &(this->LOWF),
+                                                   this->pw_rho,
+                                                   pw_big);
+        }
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
 
@@ -652,9 +690,13 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
 
     if (this->conv_elec)
     {
-        if (elecstate::ElecStateLCAO::out_wfc_lcao)
+        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
         {
-            elecstate::ElecStateLCAO::out_wfc_flag = 1;
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = 1;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 1;
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
@@ -672,7 +714,14 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
                 }
             }
         }
-        elecstate::ElecStateLCAO::out_wfc_flag = 0;
+        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = 0;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
+        }
     }
 
     // (9) Calculate new potential according to new Charge Density.

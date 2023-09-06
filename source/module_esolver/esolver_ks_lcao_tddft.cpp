@@ -285,9 +285,13 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 
     if (this->conv_elec)
     {
-        if (elecstate::ElecStateLCAO::out_wfc_lcao)
+        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
         {
-            elecstate::ElecStateLCAO::out_wfc_flag = 1;
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = 1;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 1;
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
@@ -305,7 +309,14 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 }
             }
         }
-        elecstate::ElecStateLCAO::out_wfc_flag = 0;
+        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = 0;
+        }
+        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        {
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
+        }
     }
 
     // Calculate new potential according to new Charge Density
