@@ -58,47 +58,28 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 
     this->UHM = &uhm;
 
-    const Parallel_Orbitals* pv = loc.ParaV;
-    this->allocate_k_new(*pv, kv.nks, kv.kvec_d);
+    elecstate::DensityMatrix<complex<double>,double>* DM
+    = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+
+    this->ParaV = DM->get_paraV_pointer();
+    const Parallel_Orbitals* pv = this->ParaV;
+    //const Parallel_Orbitals* pv = loc.ParaV;
+    this->allocate_k_new(*this->ParaV, kv.nks, kv.kvec_d);
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
     this->cal_foverlap_k_new(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec, kv.nks, kv);
 
-    // calculate the density matrix
-    double** dm2d = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        dm2d[is] = new double[pv->nnr];
-    }
-    ModuleBase::Memory::record("Force::dm2d_K", sizeof(double) * GlobalV::NSPIN * pv->nnr);
-    auto init_dm2d = [dm2d, pv](int num_threads, int thread_id) {
-        int beg, len;
-        ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, pv->nnr, 1024, beg, len);
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(dm2d[is] + beg, len);
-        }
-    };
-    ModuleBase::OMP_PARALLEL(init_dm2d);
+    //DM->sum_DMR_spin();
 
-    loc.cal_dm_R(loc.dm_k, ra, dm2d, kv);
-
-    elecstate::DensityMatrix<complex<double>,double>* DM
-    = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
-
-    //DM->init_DMR(ra,&GlobalC::ucell);
-    //DM->cal_DMR();
-    DM->sum_DMR_spin();
-
-    this->cal_ftvnl_dphi_k_new(dm2d, DM, isforce, isstress, ra, ftvnl_dphi, stvnl_dphi);
+    this->cal_ftvnl_dphi_k_new(DM, isforce, isstress, ra, ftvnl_dphi, stvnl_dphi);
 
     // ---------------------------------------
     // doing on the real space grid.
     // ---------------------------------------
     this->cal_fvl_dphi_k_new(isforce, isstress, pelec->pot, fvl_dphi, svl_dphi, loc.DM_R);
 
-    this->cal_fvnl_dbeta_k_new(dm2d, DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    this->cal_fvnl_dbeta_k_new(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
@@ -143,13 +124,6 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
         }
     }
 #endif
-
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        delete[] dm2d[is];
-    }
-    delete[] dm2d;
-
 
     //----------------------------------------------------------------
     // reduce the force according to 2D distribution of H & S matrix.
@@ -384,10 +358,9 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
 
     // cal_dm_2d
     EDM.init_DMR(ra,&GlobalC::ucell);
-
     EDM.cal_DMR();
-
     EDM.sum_DMR_spin();
+    //
     ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
     //--------------------------------------------
     // summation \sum_{i,j} E(i,j)*dS(i,j)
@@ -449,41 +422,12 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
                 hamilt::BaseMatrix<double>* tmp_matrix = EDM.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                 int row_ap = pv->atom_begin_row[iat1];
                 int col_ap = pv->atom_begin_col[iat2];
-                //
-                /*
-                for (int jj = 0; jj < atom1->nw; jj++)
-                {
-                    const int iw1_all = start1 + jj;
-
-                    // HPSEPS
-                    const int mu = pv->global2local_row(iw1_all);
-                    if (mu < 0)
-                        continue;
-
-                    for (int kk = 0; kk < atom2->nw; kk++)
-                    {
-                        const int iw2_all = start2 + kk;
-
-                        // HPSEPS
-                        const int nu = pv->global2local_col(iw2_all);
-                        if (nu < 0)
-                            continue;
-                        //==============================================================
-                        // here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
-                        // both are correct because the 'DSloc_Rx' is used in 'row' (-),
-                        // however, the 'DSloc_x' in GAMMA is used in 'col' (+),
-                        // mohan update 2011-06-16
-                        //==============================================================
-                        
-                        //for (int is = 0; is < GlobalV::NSPIN; ++is)
-                        //{
-                            //double edm2d2 = 2.0 * edm2d[is][irr];
-                            // edm2d2 from DM
-                */
+                // get DMR
                 for (int mu = 0; mu < pv->get_row_size(iat1); ++mu)
                 {
                     for (int nu = 0; nu < pv->get_col_size(iat2); ++nu)
                     {
+                        // here do not sum over spin due to EDM.sum_DMR_spin();
                         double edm2d1 = tmp_matrix->get_value(mu,nu);
                         double edm2d2 = 2.0 * edm2d1;
 
@@ -567,7 +511,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
     return;
 }
 
-void Force_LCAO_k_new::cal_ftvnl_dphi_k_new(double** dm2d,
+void Force_LCAO_k_new::cal_ftvnl_dphi_k_new(//double** dm2d,
                                     const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                                     const bool isforce,
                                     const bool isstress,
@@ -627,39 +571,24 @@ void Force_LCAO_k_new::cal_ftvnl_dphi_k_new(double** dm2d,
                 double Ry = ra.info[iat][cb][1];
                 double Rz = ra.info[iat][cb][2];
                 // get BaseMatrix
-                hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                //
-                /*
-                for (int jj = 0; jj < atom1->nw; ++jj)
+                std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
+                for (int is = 0; is < GlobalV::NSPIN; ++is)
                 {
-                    const int iw1_all = start1 + jj;
-                    const int mu = pv->global2local_row(iw1_all);
-                    if (mu < 0)
-                        continue;
-                    for (int kk = 0; kk < atom2->nw; ++kk)
-                    {
-                        const int iw2_all = start2 + kk;
-                        const int nu = pv->global2local_col(iw2_all);
-                        if (nu < 0)
-                            continue;
-                        //==============================================================
-                        // here we use 'minus', but in GlobalV::GAMMA_ONLY_LOCAL we use 'plus',
-                        // both are correct because the 'DSloc_Rx' is used in 'row' (-),
-                        // however, the 'DSloc_x' is used in 'col' (+),
-                        // mohan update 2011-06-16
-                        //==============================================================
-                        //for (int is = 0; is < GlobalV::NSPIN; ++is)
-                        //{
-                        */
-                        // get value from DM
+                    tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
+                }
+                //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                 for (int mu = 0; mu < pv->get_row_size(iat1); ++mu)
                 {
                     for (int nu = 0; nu < pv->get_col_size(iat2); ++nu)
                     {
-                        double dm2d1 = tmp_matrix->get_value(mu, nu);
+                        // get value from DM
+                        double dm2d1 = 0.0;
+                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        {
+                            dm2d1 += tmp_matrix[is]->get_value(mu, nu);
+                        }
                         double dm2d2 = 2.0 * dm2d1;
-                        //std::cout << " irr: " << irr << " dm2d1: " << dm2d1 << " ref: " << dm2d[0][irr] << std::endl;
-                        // double dm2d2 = 2.0 * dm2d[is][irr];
+                        //
                         if (isforce)
                         {
                             ftvnl_dphi_iat[0] += dm2d2 * this->UHM->LM->DHloc_fixedR_x[irr];
@@ -791,7 +720,7 @@ void Force_LCAO_k_new::test_new(double* mmm, const std::string& name)
 typedef std::tuple<int, int, int, int> key_tuple;
 
 // must consider three-center H matrix.
-void Force_LCAO_k_new::cal_fvnl_dbeta_k_new(double** dm2d,
+void Force_LCAO_k_new::cal_fvnl_dbeta_k_new(//double** dm2d,
                                         const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                                         const bool isforce,
                                         const bool isstress,
@@ -1000,8 +929,13 @@ void Force_LCAO_k_new::cal_fvnl_dbeta_k_new(double** dm2d,
                     if (is_adj)
                     {
                         // basematrix and its data pointer
-                        hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
-                        double* tmp_matrix_ptr = tmp_matrix->get_pointer();
+                        std::vector<double*> tmp_matrix_ptr;
+                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        {
+                            tmp_matrix_ptr.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2)->get_pointer());
+                        }
+                        //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
+                        //double* tmp_matrix_ptr = tmp_matrix->get_pointer();
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
                         {
                             const int T0 = adjs.ntype[ad0];
@@ -1128,15 +1062,14 @@ void Force_LCAO_k_new::cal_fvnl_dbeta_k_new(double** dm2d,
 
                                     /// only one projector for each atom force, but another projector for stress
                                     force_updated = true;
-                                    //for (int is = 0; is < GlobalV::NSPIN; ++is)
-                                    //{
-                                    double dm2d1 = tmp_matrix_ptr[nnr_inner];
+                                    // get DMR
+                                    double dm2d1 = 0.0;
+                                    for (int is = 0; is < GlobalV::NSPIN; ++is)
+                                    {  
+                                        dm2d1 += tmp_matrix_ptr[is][nnr_inner];
+                                    }
                                     double dm2d2 = 2.0 * dm2d1;
-                                    //if (abs(dm2d[0][nnr + nnr_inner]-dm2d1)<1e-10)
-                                    //{
-                                        //std::cout <<" nnr: " <<nnr << " nnr_inner: " << nnr_inner << " dm2d1: " << dm2d1 << " ref: " << dm2d[0][nnr + nnr_inner] << std::endl;
-                                    //}
-                                    //double dm2d2 = 2.0 * dm2d[is][nnr + nnr_inner];
+                                    //
                                     for (int jpol = 0; jpol < 3; jpol++)
                                     {
                                         if (isforce)

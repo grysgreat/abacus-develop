@@ -6,7 +6,7 @@
 
 void Force_LCAO_gamma_new::cal_fvnl_dbeta_new(
     const elecstate::DensityMatrix<double, double>* DM,
-	const std::vector<ModuleBase::matrix> &dm2d, 
+	//const std::vector<ModuleBase::matrix> &dm2d, 
 	const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& fvnl_dbeta, 
@@ -221,7 +221,7 @@ void Force_LCAO_gamma_new::cal_fvnl_dbeta_new(
 
 void Force_LCAO_gamma_new::cal_ftvnl_dphi_new(
     const elecstate::DensityMatrix<double, double>* DM,
-	const std::vector<ModuleBase::matrix> &dm2d, 
+	//const std::vector<ModuleBase::matrix> &dm2d, 
     const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& ftvnl_dphi, 

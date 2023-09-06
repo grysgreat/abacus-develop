@@ -43,24 +43,26 @@ void Force_LCAO_gamma_new::ftable_gamma_new(const bool isforce,
     ModuleBase::TITLE("Force_LCAO_gamma", "ftable");
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
 
-    // const Parallel_Orbitals* pv = loc.ParaV;
-    const Parallel_Orbitals* pv = loc.ParaV;
+    // get DM
+    const elecstate::DensityMatrix<double,double>* DM
+    = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
+
+    this->ParaV = DM->get_paraV_pointer();
+    //const Parallel_Orbitals* pv = loc.ParaV;
     this->UHM = &uhm;
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate_gamma_new(*loc.ParaV);
+    this->allocate_gamma_new(*this->ParaV);
 
     // calculate the 'energy density matrix' here.
-    this->cal_foverlap_new(isforce, isstress, psid, loc, pelec, foverlap, soverlap);
+    this->cal_foverlap_new(isforce, isstress, psid, pelec, foverlap, soverlap);
 
-    elecstate::DensityMatrix<double,double>* DM
-    = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
-
-    DM->sum_DMR_spin();
+    // sum up the density matrix with different spin
+    // DM->sum_DMR_spin();
     //
-    this->cal_ftvnl_dphi_new(DM, loc.dm_gamma, isforce, isstress, ftvnl_dphi, stvnl_dphi);
-    this->cal_fvnl_dbeta_new(DM, loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    this->cal_ftvnl_dphi_new(DM, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+    this->cal_fvnl_dbeta_new(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
     this->cal_fvl_dphi_new(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
 

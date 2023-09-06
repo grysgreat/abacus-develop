@@ -61,7 +61,7 @@ class Force_LCAO_gamma_new
     void cal_foverlap_new(const bool isforce,
                       const bool isstress,
                       const psi::Psi<double>* psid,
-                      Local_Orbital_Charge &loc,
+                      //Local_Orbital_Charge &loc,
                       const elecstate::ElecState* pelec,
                       ModuleBase::matrix& foverlap,
                       ModuleBase::matrix& soverlap);
@@ -70,14 +70,14 @@ class Force_LCAO_gamma_new
     // forces related to kinetic and non-local pseudopotentials
     //--------------------------------------------------------------
     void cal_ftvnl_dphi_new(const elecstate::DensityMatrix<double, double>* DM,
-                        const std::vector<ModuleBase::matrix>& dm2d,
+                        //const std::vector<ModuleBase::matrix>& dm2d,
                         const bool isforce,
                         const bool isstress,
                         ModuleBase::matrix& ftvnl_dphi,
                         ModuleBase::matrix& stvnl_dphi);
 
     void cal_fvnl_dbeta_new(const elecstate::DensityMatrix<double, double>* DM,
-                            const std::vector<ModuleBase::matrix>& dm2d,
+                            //const std::vector<ModuleBase::matrix>& dm2d,
                             const bool isforce,
                             const bool isstress,
                             ModuleBase::matrix& fvnl_dbeta,

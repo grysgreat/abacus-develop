@@ -715,59 +715,8 @@ void Force_Stress_LCAO::calForceStressIntegralPart(const bool isGammaOnly,
                                                    LCAO_Hamilt& uhm,
                                                    const K_Vectors& kv)
 {
-    /*
     if (isGammaOnly)
-    {
-        
-        flk.ftable_gamma(isforce,
-                         isstress,
-                         psid,
-                         loc,
-                         pelec,
-                         foverlap,
-                         ftvnl_dphi,
-                         fvnl_dbeta,
-                         fvl_dphi,
-                         soverlap,
-                         stvnl_dphi,
-                         svnl_dbeta,
-#if __DEEPKS
-                         svl_dphi,
-                         svnl_dalpha,
-#else
-                         svl_dphi,
-#endif
-                         uhm);
-    }
-    else
-    {
-        flk.ftable_k(isforce,
-                     isstress,
-                     *this->RA,
-                     psi,
-                     loc,
-                     pelec,
-                     foverlap,
-                     ftvnl_dphi,
-                     fvnl_dbeta,
-                     fvl_dphi,
-                     soverlap,
-                     stvnl_dphi,
-                     svnl_dbeta,
-#if __DEEPKS
-                     svl_dphi,
-                     svnl_dalpha,
-#else
-                     svl_dphi,
-#endif
-                     uhm,
-                     kv);
-    }
-    */
-
-    if (isGammaOnly)
-    {
-        
+    {       
         flk_new.ftable_gamma_new(isforce,
                          isstress,
                          psid,

@@ -282,6 +282,8 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
     {
         int ik_begin = this->_nks*(is-1); // jump this->_nks for spin_down if nspin==2
         hamilt::HContainer<TR>* tmp_DMR = this->_DMR[is-1];
+        // set zero since this function is called in every scf step
+        tmp_DMR->set_zero();
         // #ifdef _OPENMP
         // #pragma omp parallel for
         // #endif
@@ -345,6 +347,8 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
     {
         int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
+        // set zero since this function is called in every scf step
+        tmp_DMR->set_zero();
         // #ifdef _OPENMP
         // #pragma omp parallel for
         // #endif
@@ -426,6 +430,7 @@ void DensityMatrix<double, double>::cal_DMR()
         int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
         tmp_DMR->fix_gamma();
+        // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
         
 #ifdef __DEBUG

@@ -12,7 +12,7 @@ void Force_LCAO_gamma_new::cal_foverlap_new(
 	const bool isforce, 
     const bool isstress,
     const psi::Psi<double>* psid,
-    Local_Orbital_Charge &loc,
+    //Local_Orbital_Charge &loc,
     const elecstate::ElecState* pelec,
     ModuleBase::matrix& foverlap,
 	ModuleBase::matrix& soverlap)
@@ -34,11 +34,11 @@ void Force_LCAO_gamma_new::cal_foverlap_new(
     }
 
     // construct a DensityMatrix for Gamma-Only
-    const Parallel_Orbitals* pv = loc.ParaV;
+    const Parallel_Orbitals* pv = this->ParaV;
     elecstate::DensityMatrix<double, double> EDM(pv,GlobalV::NSPIN);
 
     std::vector<ModuleBase::matrix> edm_gamma(GlobalV::NSPIN);
-    elecstate::cal_dm(loc.ParaV, wgEkb,
+    elecstate::cal_dm(this->ParaV, wgEkb,
         psid[0],
         edm_gamma);
     elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psid[0], EDM);
@@ -50,14 +50,14 @@ void Force_LCAO_gamma_new::cal_foverlap_new(
         const int iat = GlobalC::ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = loc.ParaV->global2local_row(j);
-            const int nu = loc.ParaV->global2local_col(i);
+            const int mu = pv->global2local_row(j);
+            const int nu = pv->global2local_col(i);
             //const int mu = DM->get_paraV_pointer()->global2local_row(j);
             //const int nu = DM->get_paraV_pointer()->global2local_col(i);
             if(mu>=0 && nu>=0)
             {
                 //const int index = mu * DM->get_paraV_pointer()->ncol + nu;
-                const int index = mu * loc.ParaV->ncol + nu;
+                const int index = mu * pv->ncol + nu;
                 double sum = 0.0;
                 for(int is=0; is<GlobalV::NSPIN; ++is)
                 {

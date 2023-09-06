@@ -53,7 +53,7 @@ class Force_LCAO_k_new : public Force_LCAO_gamma_new
     void finish_k_new(void);
 
     // calculate the force due to < dphi | beta > < beta | phi >
-    void cal_ftvnl_dphi_k_new(double** dm2d,
+    void cal_ftvnl_dphi_k_new(//double** dm2d,
                           const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                           const bool isforce,
                           const bool isstress,
@@ -82,7 +82,7 @@ class Force_LCAO_k_new : public Force_LCAO_gamma_new
                         double** DM_R);
 
     // new method to calculate the force due to < phi | dbeta > < beta | phi > , developed by wenfei-li
-    void cal_fvnl_dbeta_k_new(double** dm2d,
+    void cal_fvnl_dbeta_k_new(//double** dm2d,
                               const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                               const bool isforce,
                               const bool isstress, 
