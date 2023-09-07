@@ -33,7 +33,7 @@ class HTransPara
      * save to this->ap_indexes[irank]
      * @param irank
      */
-    void receive_ap_indexes(int irank, const std::vector<int>* ap_indexes_in = nullptr);
+    void receive_ap_indexes(int irank, const int* ap_indexes_in = nullptr, const long& size_ap_indexes_in = 0);
 
     /**
      * @brief pack data in this->hr, and send to ith rank
@@ -60,6 +60,7 @@ class HTransPara
     void pack_data(int irank, T* values = nullptr);
 
     long get_max_size() const;
+    void get_value_size(int* out) const;
 
   private:
     std::vector<std::vector<int>> ap_indexes;
@@ -101,7 +102,7 @@ class HTransSerial
      * @brief receive Orbital_indexes from the ith rank
      * save to this->orb_indexes[irank]
      */
-    void receive_orb_indexes(int irank, const std::vector<int>* orb_indexes_in = nullptr);
+    void receive_orb_indexes(int irank, const int* orb_indexes_in = nullptr, const long& size_orb_indexes_in = 0);
 
     /**
      * @brief pack data in this->hr, and send to ith rank
@@ -122,6 +123,7 @@ class HTransSerial
     void pack_data(int irank, T* values = nullptr);
 
     long get_max_size() const;
+    void get_value_size(int* out) const;
 
   private:
     std::vector<std::vector<int>> orb_indexes;

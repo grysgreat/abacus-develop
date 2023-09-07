@@ -10,7 +10,7 @@ namespace hamilt
 {
 // transfer the HContainer from serial object to parallel object
 template <typename TR>
-void transferSerial2Parallel(const hamilt::HContainer<TR>& hR_s, hamilt::HContainer<TR>* hR_p, const int serial_rank)
+void transferSerial2Parallels(const hamilt::HContainer<TR>& hR_s, hamilt::HContainer<TR>* hR_p, const int serial_rank)
 {
     int my_rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -37,9 +37,9 @@ void transferSerial2Parallel(const hamilt::HContainer<TR>& hR_s, hamilt::HContai
         { // transfer serial_rank to serial_rank
             std::vector<int> tmp_indexes;
             trans_s->cal_ap_indexes(serial_rank, &tmp_indexes);
-            trans_p.receive_ap_indexes(serial_rank, &tmp_indexes);
+            trans_p.receive_ap_indexes(serial_rank, tmp_indexes.data(), tmp_indexes.size());
             trans_p.cal_orb_indexes(serial_rank, &tmp_indexes);
-            trans_s->receive_orb_indexes(serial_rank, &tmp_indexes);
+            trans_s->receive_orb_indexes(serial_rank, tmp_indexes.data(), tmp_indexes.size());
         }
         
         // receive indexes from other ranks
@@ -117,7 +117,7 @@ void transferSerial2Parallel(const hamilt::HContainer<TR>& hR_s, hamilt::HContai
 
 // transfer the HContainer from parallel object to serial object
 template <typename TR>
-void transferParallel2Serial(const hamilt::HContainer<TR>& hR_p, hamilt::HContainer<TR>* hR_s, const int serial_rank)
+void transferParallels2Serial(const hamilt::HContainer<TR>& hR_p, hamilt::HContainer<TR>* hR_s, const int serial_rank)
 {
     int my_rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -137,9 +137,9 @@ void transferParallel2Serial(const hamilt::HContainer<TR>& hR_p, hamilt::HContai
         { // transfer serial_rank to serial_rank
             std::vector<int> tmp_indexes;
             trans_s->cal_ap_indexes(serial_rank, &tmp_indexes);
-            trans_p.receive_ap_indexes(serial_rank, &tmp_indexes);
+            trans_p.receive_ap_indexes(serial_rank, tmp_indexes.data(), tmp_indexes.size());
             trans_p.cal_orb_indexes(serial_rank, &tmp_indexes);
-            trans_s->receive_orb_indexes(serial_rank, &tmp_indexes);
+            trans_s->receive_orb_indexes(serial_rank, tmp_indexes.data(), tmp_indexes.size());
         }
 
         // send indexes to other ranks
@@ -204,7 +204,7 @@ void transferParallel2Serial(const hamilt::HContainer<TR>& hR_p, hamilt::HContai
             trans_s->receive_data(i, &receive_values[i * max_size]);
         }
     }
-    
+
     /*end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> post_gather_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -218,19 +218,205 @@ void transferParallel2Serial(const hamilt::HContainer<TR>& hR_p, hamilt::HContai
     }
 }
 
+// transferSerials2Parallels
+template <typename TR>
+void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s, hamilt::HContainer<TR>* hR_p)
+{
+    int my_rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    hamilt::HTransSerial<TR> trans_s(size, const_cast<hamilt::HContainer<TR>*>(&hR_s));
+    hamilt::HTransPara<TR> trans_p(size, hR_p);
+    // plan indexes
+    //std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    // transfer indexes with other ranks
+
+
+    { // begin of indexes_transfer
+    // -----------------------------------
+    // int tools for MPI_alltoallv
+    std::vector<int> sendbuf, receivebuf;
+    std::vector<int> sendcounts(size), recvcounts(size), sdispls(size), rdispls(size);
+    // -----------------------------------
+    
+    for (int i = 0; i < size; ++i)
+    { // transfer in same process
+        std::vector<int> tmp_indexes;
+        trans_s.cal_ap_indexes(i, &tmp_indexes);
+        sendcounts[i] = tmp_indexes.size();
+        sdispls[i] = sendbuf.size();
+        sendbuf.insert(sendbuf.end(), tmp_indexes.begin(), tmp_indexes.end());
+    }
+
+    MPI_Alltoall(sendcounts.data(), 1, MPI_INT, recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+    // resize the receivebuf
+    long recvbuf_size = 0;
+    for (int i = 0; i < size; ++i)
+    {
+        recvbuf_size += recvcounts[i];
+    }
+    receivebuf.resize(recvbuf_size);
+    rdispls[0] = 0;
+    for (int i = 1; i < size; ++i)
+    {
+        rdispls[i] = rdispls[i - 1] + recvcounts[i - 1];
+    }
+
+    // MPI_Alltoallv to send indexes
+    MPI_Alltoallv(sendbuf.data(),
+                  sendcounts.data(),
+                  sdispls.data(),
+                  MPI_INT,
+                  receivebuf.data(),
+                  recvcounts.data(),
+                  rdispls.data(),
+                  MPI_INT,
+                  MPI_COMM_WORLD);
+
+    // receive indexes from other ranks
+    sendbuf.clear();
+    for (int i = 0; i < size; ++i)
+    {
+        trans_p.receive_ap_indexes(i, &receivebuf[rdispls[i]], recvcounts[i]);
+        std::vector<int> tmp_indexes;
+        trans_p.cal_orb_indexes(i, &tmp_indexes);
+        sendcounts[i] = tmp_indexes.size();
+        sdispls[i] = sendbuf.size();
+        std::cout<<__FILE__<<__LINE__<<" "<<i<<" "<<sendcounts[i]<<" "<<sdispls[i]<<std::endl;
+        sendbuf.insert(sendbuf.end(), tmp_indexes.begin(), tmp_indexes.end());
+        std::cout<<__FILE__<<__LINE__<<" "<<sendbuf.size()<<std::endl;
+    }
+
+    MPI_Alltoall(sendcounts.data(), 1, MPI_INT, recvcounts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
+    // resize the receivebuf
+    recvbuf_size = 0;
+    for (int i = 0; i < size; ++i)
+    {
+        recvbuf_size += recvcounts[i];
+    }
+    receivebuf.resize(recvbuf_size);
+    rdispls[0] = 0;
+    for (int i = 1; i < size; ++i)
+    {
+        rdispls[i] = rdispls[i - 1] + recvcounts[i - 1];
+    }
+
+    // MPI_Alltoallv to send indexes
+    MPI_Alltoallv(sendbuf.data(),
+                  sendcounts.data(),
+                  sdispls.data(),
+                  MPI_INT,
+                  receivebuf.data(),
+                  recvcounts.data(),
+                  rdispls.data(),
+                  MPI_INT,
+                  MPI_COMM_WORLD);
+
+    // receive indexes from other ranks
+    for (int i = 0; i < size; ++i)
+    {
+        std::cout<<__FILE__<<__LINE__<<" "<<i<<" "<<rdispls[i]<<" "<<recvcounts[i]<<std::endl;
+        trans_s.receive_orb_indexes(i, &receivebuf[rdispls[i]], recvcounts[i]);
+    }
+
+    }//end of indexes_transfer
+
+    { // begin of data_transfer
+    // -----------------------------------
+    // TR tools for MPI_alltoallv
+    std::vector<TR> sendbuf, receivebuf;
+    std::vector<int> sendcounts(size), recvcounts(size), sdispls(size), rdispls(size);
+    // -----------------------------------
+    // prepare sendbuf and sendcounts and sdispls and size of receivebuf
+
+    trans_s.get_value_size(sendcounts.data());
+    sdispls[0] = 0;
+    long sendbuf_size = sendcounts[0];
+    for (int i = 1; i < size; ++i)
+    {
+        sdispls[i] = sdispls[i - 1] + sendcounts[i - 1];
+        sendbuf_size += sendcounts[i];
+    }
+    sendbuf.resize(sendbuf_size);
+    trans_p.get_value_size(recvcounts.data());
+
+    long recvbuf_size = 0;
+    for (int i = 0; i < size; ++i)
+    {
+        rdispls[i] = recvbuf_size;
+        recvbuf_size += recvcounts[i];
+    }
+    receivebuf.resize(recvbuf_size);
+
+    /*std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    start_time = std::chrono::high_resolution_clock::now();*/
+
+    // send data
+    for (int i = 0; i < size; ++i)
+    {
+        std::cout<<__FILE__<<__LINE__<<" "<<sendbuf.size()<<" "<<sdispls[i]<<std::endl;
+        trans_s.pack_data(i, (sendbuf.data() + sdispls[i]));
+    }
+
+    /*end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> pre_scatter_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    start_time = std::chrono::high_resolution_clock::now();*/
+
+    // MPI_Alltoallv to send values
+    MPI_Alltoallv(sendbuf.data(),
+                  sendcounts.data(),
+                  sdispls.data(),
+                  MPITraits<TR>::datatype(),
+                  receivebuf.data(),
+                  recvcounts.data(),
+                  rdispls.data(),
+                  MPITraits<TR>::datatype(),
+                  MPI_COMM_WORLD);
+
+    /*end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> scatter_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    start_time = std::chrono::high_resolution_clock::now();*/
+
+    // receive data
+    for (int i = 0; i < size; ++i)
+    {
+        trans_p.receive_data(i, (receivebuf.data() + rdispls[i]));
+    }
+    } // end of data_transfer
+
+    /*end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> post_scatter_time
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << " S2P: my_rank = " << my_rank << " indexes_time = " << elapsed_time0.count()
+              << " data_trans_time = " << pre_scatter_time.count()<<" "<<scatter_time.count()
+              <<" "<<post_scatter_time.count() << std::endl;*/
+
+}
+
 // specialize for double and std::complex<double>
-template void transferSerial2Parallel(const hamilt::HContainer<double>& hR_s,
+template void transferSerial2Parallels(const hamilt::HContainer<double>& hR_s,
                                       hamilt::HContainer<double>* hR_p,
                                       const int serial_rank);
-template void transferSerial2Parallel(const hamilt::HContainer<std::complex<double>>& hR_s,
+template void transferSerial2Parallels(const hamilt::HContainer<std::complex<double>>& hR_s,
                                       hamilt::HContainer<std::complex<double>>* hR_p,
                                       const int serial_rank);
-template void transferParallel2Serial(const hamilt::HContainer<double>& hR_p,
+template void transferParallels2Serial(const hamilt::HContainer<double>& hR_p,
                                       hamilt::HContainer<double>* hR_s,
                                       const int serial_rank);
-template void transferParallel2Serial(const hamilt::HContainer<std::complex<double>>& hR_p,
+template void transferParallels2Serial(const hamilt::HContainer<std::complex<double>>& hR_p,
                                       hamilt::HContainer<std::complex<double>>* hR_s,
                                       const int serial_rank);
+template void transferSerials2Parallels(const hamilt::HContainer<double>& hR_s,
+                                        hamilt::HContainer<double>* hR_p);
+template void transferSerials2Parallels(const hamilt::HContainer<std::complex<double>>& hR_s,
+                                        hamilt::HContainer<std::complex<double>>* hR_p);
 
 } // namespace hamilt
 

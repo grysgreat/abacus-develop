@@ -89,7 +89,7 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int>* orb_indexes)
 
 // receive_ap_indexes
 template <typename T>
-void HTransPara<T>::receive_ap_indexes(int irank, const std::vector<int>* ap_indexes_in)
+void HTransPara<T>::receive_ap_indexes(int irank, const int* ap_indexes_in, const long& size_ap_indexes_in)
 {
     // sender and receiver are not same process
     if (ap_indexes_in == nullptr)
@@ -102,7 +102,7 @@ void HTransPara<T>::receive_ap_indexes(int irank, const std::vector<int>* ap_ind
     // sender and receiver are same process
     else
     {
-        this->ap_indexes[irank] = *ap_indexes_in;
+        this->ap_indexes[irank].assign(ap_indexes_in, ap_indexes_in + size_ap_indexes_in);
     }
     // calculate the size of values
     this->size_values[irank] = 0;
@@ -286,6 +286,16 @@ long HTransPara<T>::get_max_size() const
     return *std::max_element(this->size_values.begin(), this->size_values.end());
 }
 
+template <typename T>
+void HTransPara<T>::get_value_size(int* out) const
+{
+    for (int i = 0; i < this->size_values.size(); ++i)
+    {
+        out[i] = this->size_values[i];
+    }
+    return;
+}
+
 // ------------------------------------------------
 // HTransSerial
 // ------------------------------------------------
@@ -385,7 +395,7 @@ void HTransSerial<T>::send_ap_indexes(int irank, MPI_Request* request)
 
 // receive_orb_indexes
 template <typename T>
-void HTransSerial<T>::receive_orb_indexes(int irank, const std::vector<int>* orb_indexes_in)
+void HTransSerial<T>::receive_orb_indexes(int irank, const int* orb_indexes_in, const long& size_orb_indexes_in)
 {
     // sender and receiver are not same process
     if (orb_indexes_in == nullptr)
@@ -404,7 +414,7 @@ void HTransSerial<T>::receive_orb_indexes(int irank, const std::vector<int>* orb
     // sender and receiver are same process
     else
     {
-        this->orb_indexes[irank] = *orb_indexes_in;
+        this->orb_indexes[irank].assign(orb_indexes_in, orb_indexes_in + size_orb_indexes_in);
     }
     // calculate the index of row and col for each atom
     this->size_values[irank] = 0;
@@ -646,6 +656,15 @@ template <typename T>
 long HTransSerial<T>::get_max_size() const
 {
     return *std::max_element(this->size_values.begin(), this->size_values.end());
+}
+template <typename T>
+void HTransSerial<T>::get_value_size(int* out) const
+{
+    for (int i = 0; i < this->size_values.size(); ++i)
+    {
+        out[i] = this->size_values[i];
+    }
+    return;
 }
 
 template class HTransPara<double>;

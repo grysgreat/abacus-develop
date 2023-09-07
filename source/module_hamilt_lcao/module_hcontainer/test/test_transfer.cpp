@@ -119,66 +119,8 @@ TEST_F(TransferTest, serialToPara)
     }
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-
-    /*
-    hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
-    hamilt::HTransPara<double> trans_p(dsize, HR_para);
-    // plan indexes
-    for(int i=0; i<dsize;++i)
-    {
-        if(i != 0 && my_rank != 0) continue;
-        if(i != my_rank)
-        {
-            if(my_rank == 0) 
-            {
-                //trans_s.cal_ap_indexes(i);
-                trans_s.send_ap_indexes(i);
-            }
-            else
-            {
-                trans_p.receive_ap_indexes(0);
-                //trans_p.cal_orb_indexes(0);
-                trans_p.send_orb_indexes(0);
-            }
-            if(my_rank == 0) 
-            {
-                trans_s.receive_orb_indexes(i);
-            }
-        }
-        else
-        {
-            std::vector<int> tmp_indexes;
-            trans_s.cal_ap_indexes(i, &tmp_indexes);
-            trans_p.receive_ap_indexes(i, &tmp_indexes);
-            trans_p.cal_orb_indexes(i, &tmp_indexes);
-            trans_s.receive_orb_indexes(i, &tmp_indexes);
-        }
-    }
-
-    // send data
-    for(int i=0; i<dsize;++i)
-    {
-        if(i != 0 && my_rank != 0) continue;
-        if(i != my_rank)
-        {
-            if(my_rank == 0) 
-            {
-                trans_s.send_data(i);
-            }
-            else
-            {
-                trans_p.receive_data(0);
-            }
-        }
-        else
-        {
-            std::vector<double> tmp_values;
-            trans_s.pack_data(i, &tmp_values);
-            trans_p.receive_data(i, &tmp_values);
-        }
-    }*/
     start_time = std::chrono::high_resolution_clock::now();
-    hamilt::transferSerial2Parallel(*HR_serial, HR_para, 0);
+    hamilt::transferSerial2Parallels(*HR_serial, HR_para, 0);
     end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     
@@ -257,64 +199,8 @@ TEST_F(TransferTest, paraToSerial)
     }
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-
-    /*hamilt::HTransSerial<double> trans_s(dsize, HR_serial);
-    hamilt::HTransPara<double> trans_p(dsize, HR_para);
-
-    // plan indexes
-    for(int i=0; i<dsize;++i)
-    {
-        if(i != 0 && my_rank != 0) continue;
-        if(i != my_rank)
-        {
-            if(my_rank == 0) 
-            {
-                trans_s.send_ap_indexes(i);
-            }
-            else
-            {
-                trans_p.receive_ap_indexes(0);
-                trans_p.send_orb_indexes(0);
-            }
-            if(my_rank == 0) 
-            {
-                trans_s.receive_orb_indexes(i);
-            }
-        }
-        else
-        {
-            std::vector<int> tmp_indexes; 
-            trans_s.cal_ap_indexes(i, &tmp_indexes);
-            trans_p.receive_ap_indexes(i, &tmp_indexes);
-            trans_p.cal_orb_indexes(i, &tmp_indexes);
-            trans_s.receive_orb_indexes(i, &tmp_indexes);
-        }
-    }
-
-    // send data
-    for(int i=0; i<dsize;++i)
-    {
-        if(i != 0 && my_rank != 0) continue;
-        if(i != my_rank)
-        {
-            if(my_rank != 0) 
-            {
-                trans_p.send_data(0);
-            }
-            else
-            {
-                trans_s.receive_data(i);
-            }
-        }
-        else
-        {
-            std::vector<double> tmp_values;
-            trans_p.pack_data(i, &tmp_values);
-            trans_s.receive_data(i, &tmp_values);
-        }
-    }*/
     start_time = std::chrono::high_resolution_clock::now();
-    hamilt::transferParallel2Serial(*HR_para, HR_serial, 0);
+    hamilt::transferParallels2Serial(*HR_para, HR_serial, 0);
     end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
@@ -347,6 +233,73 @@ TEST_F(TransferTest, paraToSerial)
     end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_p2s time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
+#endif
+}
+
+TEST_F(TransferTest, serialAllToParaAll)
+{
+// get rank of process
+#ifdef __MPI
+
+// initialize HR_serial
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    // for each process, calculate the value of HR_serial and send to other processes
+    hamilt::HContainer<double> HR_serial(ucell);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int i = 0; i < HR_serial.size_atom_pairs(); i++)
+    {
+        hamilt::AtomPair<double>& atom_pair = HR_serial.get_atom_pair(i);
+        int atom_i = atom_pair.get_atom_i();
+        int atom_j = atom_pair.get_atom_j();
+        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
+        double* data = atom_pair.get_pointer(0);
+        for(int k = 0; k < test_nw; k++)
+        {
+            for(int l = 0; l < test_nw; l++)
+            {
+                *data = value(k, l);
+                ++data;
+            }
+        }
+    }
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    start_time = std::chrono::high_resolution_clock::now();
+    hamilt::transferSerials2Parallels(HR_serial, HR_para);
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    
+    start_time = std::chrono::high_resolution_clock::now();
+    // check data in HR_para
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for(int i = 0; i < HR_para->size_atom_pairs(); i++)
+    {
+        hamilt::AtomPair<double>& atom_pair = HR_para->get_atom_pair(i);
+        int atom_i = atom_pair.get_atom_i();
+        int atom_j = atom_pair.get_atom_j();
+        //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
+        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l)*dsize;};
+        double* data = atom_pair.get_pointer(0);
+        auto row_indexes = paraV->get_indexes_row(atom_i);
+        auto col_indexes = paraV->get_indexes_col(atom_j);
+        for(int k = 0; k < row_indexes.size(); k++)
+        {
+            for(int l = 0; l < col_indexes.size(); l++)
+            {
+                EXPECT_NEAR(*data, value(row_indexes[k], col_indexes[l]), 1e-10);
+                ++data;
+            }
+        }
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+
+    std::cout <<"rank: "<<my_rank<< " HR init time: " << elapsed_time0.count()<<" transfer_sa2pa time: "<<elapsed_time1.count()<<" check time: "<<elapsed_time2.count()<<" seconds." << std::endl;
 #endif
 }
 
