@@ -56,6 +56,15 @@ template<typename TR>
 void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s,
                              hamilt::HContainer<TR>* hR_p);
 
+/**
+ * @brief transfer the HContainer from all serial objects to all parallel objects
+ * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
+ * @param hR_s the HContainer of <I,J,R> atom pairs in serial object
+*/
+template<typename TR>
+void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p,
+                             hamilt::HContainer<TR>* hR_s);
+
 #endif // __MPI
 
 } // namespace hamilt
