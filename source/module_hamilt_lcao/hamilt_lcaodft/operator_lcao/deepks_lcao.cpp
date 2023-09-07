@@ -75,8 +75,11 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Gr
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
+            // Note: the distance of atoms should less than the cutoff radius, 
+            // When equal, the theoretical value of matrix element is zero, 
+            // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                <= orb.Phi[T1].getRcut() + orb.Alpha[0].getRcut())
+                < orb.Phi[T1].getRcut() + orb.Alpha[0].getRcut())
             {
                 is_adj[ad1] = true;
             }

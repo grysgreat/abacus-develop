@@ -57,6 +57,15 @@ class HamiltLCAO : public Hamilt<double>
     // for target K point, update consequence of hPsi() and matrix()
     virtual void updateHk(const int ik) override;
 
+    /**
+     * @brief special for LCAO, update SK only
+     * 
+     * @param ik target K point
+     * @param hk_type 0: SK is row-major, 1: SK is collumn-major
+     * @return void
+    */
+    void updateSk(const int ik, LCAO_Matrix* LM_in, const int hk_type=0);
+
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
     // void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) override;

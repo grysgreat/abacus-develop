@@ -839,7 +839,7 @@ void ESolver_KS_LCAO::afterscf(const int istep)
         // GlobalV::mulliken charge analysis
         if (GlobalV::out_mul)
         {
-            ModuleIO::out_mulliken(istep, this->UHM, this->LOC, kv);
+            ModuleIO::out_mulliken(istep, &this->LM, this->LOC, kv, this->p_hamilt);
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 

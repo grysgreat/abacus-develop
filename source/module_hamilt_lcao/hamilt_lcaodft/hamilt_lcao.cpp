@@ -20,6 +20,7 @@
 #include "operator_lcao/veff_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 namespace hamilt
 {
@@ -409,6 +410,25 @@ template <typename TK, typename TR>
 HContainer<TR>*& HamiltLCAO<TK, TR>::getSR()
 {
     return this->sR;
+}
+
+template<typename TK, typename TR>
+void HamiltLCAO<TK, TR>::updateSk(const int ik, LCAO_Matrix* LM_in, const int hk_type)
+{
+    ModuleBase::TITLE("HamiltLCAO", "updateSk");
+    ModuleBase::timer::tick("HamiltLCAO", "updateSk");
+    ModuleBase::GlobalFunc::ZEROS(this->getSk(LM_in).data(), this->getSk(LM_in).size());
+    if(hk_type == 1)// collumn-major matrix for SK
+    {
+        const int nrow = LM_in->ParaV->get_row_size();
+        hamilt::folding_HR(*this->sR, this->getSk(LM_in).data(), this->kv->kvec_d[ik], nrow, 1);
+    }
+    else if(hk_type == 0) // row-major matrix for SK
+    {
+        const int ncol = LM_in->ParaV->get_col_size();
+        hamilt::folding_HR(*this->sR, this->getSk(LM_in).data(), this->kv->kvec_d[ik], ncol, 0);
+    }
+    ModuleBase::timer::tick("HamiltLCAO", "updateSk");
 }
 
 // case for nspin<4, gamma-only k-point

@@ -21,7 +21,7 @@
 
 
 ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
-    LCAO_Hamilt &uhm
+    LCAO_Matrix *LM
 )
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken");
@@ -37,7 +37,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
     for(size_t is=0; is!=nspin; ++is)
     {
         ModuleBase::matrix mud;
-        mud.create(uhm.LM->ParaV->ncol, uhm.LM->ParaV->nrow);
+        mud.create(LM->ParaV->ncol, LM->ParaV->nrow);
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -52,23 +52,23 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
                 dm[is].c,
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc,
-                uhm.LM->Sloc.data(),
+                LM->ParaV->desc,
+                LM->Sloc.data(),
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc,
+                LM->ParaV->desc,
                 &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc);
+                LM->ParaV->desc);
         if(GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
         {
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
-                if(uhm.LM->ParaV->in_this_processor(i, i))
+                if(LM->ParaV->in_this_processor(i, i))
                 {
-                    const int ir = uhm.LM->ParaV->global2local_row(i);
-                    const int ic = uhm.LM->ParaV->global2local_col(i);
+                    const int ir = LM->ParaV->global2local_row(i);
+                    const int ic = LM->ParaV->global2local_col(i);
                     MecMulP(is, i) += mud(ic, ir);
                 }
         }
@@ -83,28 +83,28 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
                     const int j = i/2;
                     const int k1 = 2*j;
                     const int k2 = 2*j+1;
-                    if(uhm.LM->ParaV->in_this_processor(k1, k1))
+                    if(LM->ParaV->in_this_processor(k1, k1))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k1);
-                        const int ic = uhm.LM->ParaV->global2local_col(k1);
+                        const int ir = LM->ParaV->global2local_row(k1);
+                        const int ic = LM->ParaV->global2local_col(k1);
                         MecMulP(0, j) += mud(ir, ic);
                     }
-                    if(uhm.LM->ParaV->in_this_processor(k1, k2))
+                    if(LM->ParaV->in_this_processor(k1, k2))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k1);
-                        const int ic = uhm.LM->ParaV->global2local_col(k2);
+                        const int ir = LM->ParaV->global2local_row(k1);
+                        const int ic = LM->ParaV->global2local_col(k2);
                         MecMulP(1, j) += mud(ir, ic);
                     }
-                    if(uhm.LM->ParaV->in_this_processor(k2, k1))
+                    if(LM->ParaV->in_this_processor(k2, k1))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k2);
-                        const int ic = uhm.LM->ParaV->global2local_col(k1);
+                        const int ir = LM->ParaV->global2local_row(k2);
+                        const int ic = LM->ParaV->global2local_col(k1);
                         MecMulP(2, j) += mud(ir, ic);
                     }
-                    if(uhm.LM->ParaV->in_this_processor(k2, k2))
+                    if(LM->ParaV->in_this_processor(k2, k2))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k2);
-                        const int ic = uhm.LM->ParaV->global2local_col(k2);
+                        const int ir = LM->ParaV->global2local_row(k2);
+                        const int ic = LM->ParaV->global2local_col(k2);
                         MecMulP(3, j) += mud(ir, ic);
                     }
                 }
@@ -120,7 +120,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
 }
 
 ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
-    LCAO_Hamilt &uhm, const K_Vectors& kv
+    LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in
 )
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken_k");
@@ -135,11 +135,19 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
 
     for(size_t ik = 0; ik != kv.nks; ++ik)
     {
-        uhm.LM->zeros_HSk('S');
-		uhm.LM->folding_fixedH(ik, kv.kvec_d);
+        // calculate SK for current k point
+        // the target matrix is LM->Sloc2 with collumn-major
+        if(GlobalV::NSPIN == 4)
+        {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(ham_in)->updateSk(ik, LM, 0);
+        }
+        else
+        {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(ham_in)->updateSk(ik, LM, 1);
+        }
 
         ModuleBase::ComplexMatrix mud;
-        mud.create(uhm.LM->ParaV->ncol, uhm.LM->ParaV->nrow);
+        mud.create(LM->ParaV->ncol, LM->ParaV->nrow);
 
 #ifdef __MPI
         const char T_char = 'T';
@@ -155,24 +163,24 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
                 dm[ik].c,
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc,
-                uhm.LM->Sloc2.data(),
+                LM->ParaV->desc,
+                LM->Sloc2.data(),
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc,
+                LM->ParaV->desc,
                 &zero_float,
                 mud.c,
                 &one_int,
                 &one_int,
-                uhm.LM->ParaV->desc);
+                LM->ParaV->desc);
         if(GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
         {
             const int spin = kv.isk[ik];
             for(size_t i=0; i!=GlobalV::NLOCAL; ++i)
-                if(uhm.LM->ParaV->in_this_processor(i, i))
+                if(LM->ParaV->in_this_processor(i, i))
                 {
-                    const int ir = uhm.LM->ParaV->global2local_row(i);
-                    const int ic = uhm.LM->ParaV->global2local_col(i);
+                    const int ir = LM->ParaV->global2local_row(i);
+                    const int ic = LM->ParaV->global2local_col(i);
                     MecMulP(spin, i) += mud(ic, ir).real();
                 }
         }
@@ -186,31 +194,31 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
                     const int j = i/2;
                     const int k1 = 2*j;
                     const int k2 = 2*j+1;
-                    if(uhm.LM->ParaV->in_this_processor(k1, k1))
+                    if(LM->ParaV->in_this_processor(k1, k1))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k1);
-                        const int ic = uhm.LM->ParaV->global2local_col(k1);
+                        const int ir = LM->ParaV->global2local_row(k1);
+                        const int ic = LM->ParaV->global2local_col(k1);
                         MecMulP(0, j) += mud(ic, ir).real();
                         MecMulP(3, j) += mud(ic, ir).real();
                     }
-                    if(uhm.LM->ParaV->in_this_processor(k1, k2))
+                    if(LM->ParaV->in_this_processor(k1, k2))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k1);
-                        const int ic = uhm.LM->ParaV->global2local_col(k2);
+                        const int ir = LM->ParaV->global2local_row(k1);
+                        const int ic = LM->ParaV->global2local_col(k2);
                         MecMulP(1, j) += mud(ic, ir).real();
                         MecMulP(2, j) += mud(ic, ir).imag();
                     }
-                    if(uhm.LM->ParaV->in_this_processor(k2, k1))
+                    if(LM->ParaV->in_this_processor(k2, k1))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k2);
-                        const int ic = uhm.LM->ParaV->global2local_col(k1);
+                        const int ir = LM->ParaV->global2local_row(k2);
+                        const int ic = LM->ParaV->global2local_col(k1);
                         MecMulP(1, j) += mud(ic, ir).real();
                         MecMulP(2, j) -= mud(ic, ir).imag();
                     }
-                    if(uhm.LM->ParaV->in_this_processor(k2, k2))
+                    if(LM->ParaV->in_this_processor(k2, k2))
                     {
-                        const int ir = uhm.LM->ParaV->global2local_row(k2);
-                        const int ic = uhm.LM->ParaV->global2local_col(k2);
+                        const int ir = LM->ParaV->global2local_row(k2);
+                        const int ic = LM->ParaV->global2local_col(k2);
                         MecMulP(0, j) += mud(ic, ir).real();
                         MecMulP(3, j) -= mud(ic, ir).real();
                     }
@@ -251,15 +259,15 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc, const K_Vectors& kv)
+void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, Local_Orbital_Charge &loc, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
     ModuleBase::matrix orbMulP;
     if(GlobalV::GAMMA_ONLY_LOCAL)
-        orbMulP = ModuleIO::cal_mulliken(loc.dm_gamma, uhm);
+        orbMulP = ModuleIO::cal_mulliken(loc.dm_gamma, LM);
     else
-        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, uhm, kv);
+        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, LM, kv, ham_in);
 
     std::vector<std::vector<std::vector<double>>> AorbMulP = ModuleIO::convert(orbMulP);
 
