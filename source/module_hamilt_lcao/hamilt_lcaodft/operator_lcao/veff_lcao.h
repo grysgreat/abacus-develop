@@ -52,7 +52,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         this->cal_type = lcao_gint;
     }
 
-    ~Veff<OperatorLCAO<TK, TR>>();
+    ~Veff<OperatorLCAO<TK, TR>>(){};
 
     virtual void contributeHR() override;
 
