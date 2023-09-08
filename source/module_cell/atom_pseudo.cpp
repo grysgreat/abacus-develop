@@ -29,12 +29,7 @@ void Atom_pseudo::set_d_so(
 
 	this->nproj = nproj_in;
 	this->nproj_soc = nproj_in_so;
-	int spin_dimension = 1;
-
-	if(has_so)
-	{
-		spin_dimension = 4;
-	}
+	int spin_dimension = 4;
 
 	// optimize
 	for(int is=0;is<spin_dimension;is++)
@@ -49,6 +44,7 @@ void Atom_pseudo::set_d_so(
 	if(!has_so)
 	{
 		this->d_real.create(nproj_soc+1,  nproj_soc+1);
+		this->d_so.create(spin_dimension,  nproj_soc+1,  nproj_soc+1);//for noncollinear-spin only case
 
 		// calculate the number of non-zero elements in dion
 		for(int L1 =0;L1<nproj_soc;L1++)
@@ -62,6 +58,17 @@ void Atom_pseudo::set_d_so(
 					this->index1_soc[0][non_zero_count_soc[0]] = L1;
 					this->index2_soc[0][non_zero_count_soc[0]] = L2;
 					this->non_zero_count_soc[0]++;
+				}
+				//for noncollinear-spin only case
+				this->d_so(0, L1, L2) =
+					d_so_in(L1, L2);
+				this->d_so(3, L1, L2) =
+					d_so_in(L1, L2);
+				if(std::fabs(d_real(L1,L2))>1.0e-8)
+				{
+					this->index1_soc[3][non_zero_count_soc[3]] = L1;
+					this->index2_soc[3][non_zero_count_soc[3]] = L2;
+					this->non_zero_count_soc[3]++;
 				}
 			}
 		}

@@ -253,7 +253,17 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     }
     std::vector<const double*> gedms(L0_size);
 
-    // 1. calculate <psi|beta> for each pair of atoms
+    // 1. calculate <psi|alpha> for each pair of atoms
+#ifdef _OPENMP
+#pragma omp parallel
+{
+    std::unordered_set<int> atom_row_list;
+    #pragma omp for
+    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
+    {
+        atom_row_list.insert(iat0);
+    }
+#endif
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
@@ -278,9 +288,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
         nlm_tot.resize(adjs.adj_num + 1);
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
             const int T1 = adjs.ntype[ad];
@@ -291,6 +298,12 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
             const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
+#ifdef _OPENMP
+            if(atom_row_list.find(iat1) == atom_row_list.end())
+            {
+                all_indexes.clear();
+            }
+#endif
             auto col_indexes = paraV->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
@@ -315,14 +328,17 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
 // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
+#ifdef _OPENMP
+            if(atom_row_list.find(iat1) == atom_row_list.end())
+            {
+                continue;
+            }
+#endif
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
@@ -342,6 +358,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
     }
+#ifdef _OPENMP
+}
+#endif
 
     ModuleBase::timer::tick("DeePKS", "calculate_HR");
 }
