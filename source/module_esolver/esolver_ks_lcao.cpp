@@ -248,6 +248,7 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
                                                    &(this->LOWF),
                                                    this->pw_rho,
                                                    pw_big);
+            dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
         }
         else if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
@@ -259,6 +260,7 @@ void ESolver_KS_LCAO::init_after_vc(Input& inp, UnitCell& ucell)
                                                    &(this->LOWF),
                                                    this->pw_rho,
                                                    pw_big);
+            dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
         }
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);

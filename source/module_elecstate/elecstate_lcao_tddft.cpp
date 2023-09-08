@@ -1,6 +1,7 @@
 #include "elecstate_lcao_tddft.h"
 
 #include "cal_dm.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -26,6 +27,8 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
     {
         cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
+        elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
+        this->DM->cal_DMR();
     }
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")

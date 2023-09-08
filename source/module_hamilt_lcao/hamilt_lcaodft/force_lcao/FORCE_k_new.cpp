@@ -345,6 +345,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
         for (int ik = 0; ik < nks; ++ik)
         {
             edm_k[ik] = loc.edm_k_tddft[ik];
+            EDM.set_DMK_pointer(ik,loc.edm_k_tddft[ik].c);
         }
     }
     else

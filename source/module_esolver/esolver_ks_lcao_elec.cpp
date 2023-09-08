@@ -310,6 +310,7 @@ namespace ModuleESolver
         {
             dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->init_DMR(this->RA,&GlobalC::ucell);
         }
+        
         // the electron charge density should be symmetrized,
         // here is the initialization
         Symmetry_rho srho;

@@ -100,6 +100,7 @@ class DensityMatrix
      * @return TK* pointer of DMK
      */
     TK* get_DMK_pointer(const int ik) const;
+    void set_DMK_pointer(const int ik, TK* DMK_in);
 
     /**
      * @brief get pointer of paraV

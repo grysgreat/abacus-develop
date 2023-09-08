@@ -101,6 +101,9 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 
+    // init DensityMatrix
+    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+
     // init Psi, HSolver, ElecState, Hamilt
     if (this->phsol == nullptr)
     {
@@ -285,11 +288,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 
     if (this->conv_elec)
     {
-        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<double>::out_wfc_flag = 1;
-        }
-        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
+        if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
         {
             elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 1;
         }
@@ -309,14 +308,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 }
             }
         }
-        if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<double>::out_wfc_flag = 0;
-        }
-        else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
-        }
+        elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
     }
 
     // Calculate new potential according to new Charge Density
@@ -388,7 +380,9 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 
         // calculate energy density matrix for tddft
         if (istep >= (wf.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
+        {
             this->cal_edm_tddft();
+        }
     }
 
     // print "eigen value" for tddft

@@ -223,6 +223,16 @@ const Parallel_Orbitals* DensityMatrix<TK, TR>::get_paraV_pointer() const
     return this->_paraV;
 }
 
+// set DMK using a pointer
+template <typename TK, typename TR>
+void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in)
+{
+#ifdef __DEBUG
+    assert(ik < this->_nks * this->_nspin);
+#endif
+    this->_DMK[ik].assign(DMK_in, DMK_in + this->_paraV->nrow * this->_paraV->ncol);
+}
+
 // set _DMK element
 template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, const int j, const TK value)
