@@ -1,8 +1,8 @@
-#include "FORCE_gamma.h"
+#include "FORCE_gamma_new.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/timer.h"
 
-void Force_LCAO_gamma::cal_fvl_dphi(
+void Force_LCAO_gamma_new::cal_fvl_dphi_new(
 	double*** DM_in,
 	const bool isforce, 
     const bool isstress,
@@ -49,6 +49,5 @@ void Force_LCAO_gamma::cal_fvl_dphi(
             }
         }
     }
-
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvl_dphi");
 }

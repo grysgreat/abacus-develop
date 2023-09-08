@@ -32,6 +32,11 @@ if(ENABLE_LCAO)
         local_orbital_wfc.cpp
         dm_2d.cpp
         wavefunc_in_pw.cpp
+        force_lcao/FORCE_k_new.cpp
+        force_lcao/FORCE_gamma_new.cpp
+        force_lcao/FORCE_gamma_edm_new.cpp
+        force_lcao/FORCE_gamma_tvnl_new.cpp
+        force_lcao/FORCE_gamma_vl.cpp
     )
 
     add_library(

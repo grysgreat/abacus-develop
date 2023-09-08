@@ -26,6 +26,8 @@ list(APPEND objects
     fp_energy.cpp
     magnetism.cpp
     occupy.cpp
+    module_dm/density_matrix.cpp
+    module_dm/cal_dm_psi.cpp
 )
 
 if(ENABLE_LCAO)

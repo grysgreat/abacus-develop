@@ -5,6 +5,7 @@
 
 #include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 namespace elecstate
@@ -30,6 +31,7 @@ class DensityMatrix
      * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
      */
     DensityMatrix(const K_Vectors* _kv, const Parallel_Orbitals* _paraV, const int nspin);
+    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin);
 
     /**
      * @brief initialize density matrix DMR from UnitCell
@@ -37,6 +39,12 @@ class DensityMatrix
      * @param ucell pointer of UnitCell object
      */
     void init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell);
+
+    /**
+     * @brief initialize density matrix DMR from UnitCell and RA
+     * @param ucell pointer of UnitCell object
+     */
+    void init_DMR(Record_adj& ra, const UnitCell* ucell);
 
     /**
      * @brief initialize density matrix DMR from another HContainer
@@ -92,11 +100,23 @@ class DensityMatrix
      * @return TK* pointer of DMK
      */
     TK* get_DMK_pointer(const int ik) const;
+    void set_DMK_pointer(const int ik, TK* DMK_in);
+
+    /**
+     * @brief get pointer of paraV
+     */
+    const Parallel_Orbitals* get_paraV_pointer() const;
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
      */
     void cal_DMR();
+    void cal_DMR_test(); // for reference during development
+
+    /**
+     * @brief merge density matrix DMR with different spin
+     */
+    void sum_DMR_spin();
 
     /**
      * @brief write density matrix dm(ik) into *.dmk
