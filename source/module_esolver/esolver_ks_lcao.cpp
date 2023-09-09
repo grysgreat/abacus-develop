@@ -406,6 +406,22 @@ void ESolver_KS_LCAO::postprocess()
 
 void ESolver_KS_LCAO::Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell)
 {
+    // autoset NB2D first
+    if (GlobalV::NB2D == 0)
+    {
+        if (GlobalV::NLOCAL > 0)
+        {
+            GlobalV::NB2D = (GlobalV::NSPIN==4)?2:1;
+        }
+        if (GlobalV::NLOCAL > 500)
+        {
+            GlobalV::NB2D = 32;
+        }
+        if (GlobalV::NLOCAL > 1000)
+        {
+            GlobalV::NB2D = 64;
+        }
+    }
     // Set the variables first
     this->orb_con.gamma_only = GlobalV::GAMMA_ONLY_LOCAL;
     this->orb_con.nlocal = GlobalV::NLOCAL;
