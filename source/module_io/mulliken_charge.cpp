@@ -139,7 +139,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
         // the target matrix is LM->Sloc2 with collumn-major
         if(GlobalV::NSPIN == 4)
         {
-            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(ham_in)->updateSk(ik, LM, 0);
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(ham_in)->updateSk(ik, LM, 1);
         }
         else
         {
