@@ -310,7 +310,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             Operator<TK>* dftu = new OperatorDFTU<OperatorLCAO<TK, TR>>(
                 LM_in,
                 kv->kvec_d,
-                nullptr,// no explicit call yet
+                this->hR,// no explicit call yet
                 &(this->getHk(LM_in)),
                 kv_in.isk
             );

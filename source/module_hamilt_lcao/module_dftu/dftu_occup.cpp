@@ -139,7 +139,8 @@ void DFTU::mix_locale(const double& mixing_beta)
 void DFTU::cal_occup_m_k(const int iter, 
                         std::vector<ModuleBase::ComplexMatrix> &dm_k,
                         const K_Vectors& kv,
-                        const double& mixing_beta)
+                        const double& mixing_beta,
+                        hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_k");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
@@ -154,12 +155,13 @@ void DFTU::cal_occup_m_k(const int iter,
     const std::complex<double> beta(0.0,0.0), alpha(1.0,0.0);
 
     std::vector<std::complex<double>> srho(this->LM->ParaV->nloc);
-    std::vector<std::complex<double>> Sk(this->LM->ParaV->nloc);
 
     for (int ik = 0; ik < kv.nks; ik++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_k(iw,nu)
-        this->folding_matrix_k(ik, 0, 0, &Sk[0], kv.kvec_d);
+        //this->folding_matrix_k(ik, 0, 0, &Sk[0], kv.kvec_d);
+        this->folding_matrix_k_new(ik, p_ham);
+        std::complex<double>* s_k_pointer = this->LM->Sloc2.data();
 
 #ifdef __MPI
         pzgemm_(&transN,
@@ -168,7 +170,7 @@ void DFTU::cal_occup_m_k(const int iter,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &alpha,
-                &Sk[0],
+                s_k_pointer,
                 &one_int,
                 &one_int,
                 this->LM->ParaV->desc,
@@ -359,6 +361,7 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_gamma(iw,nu)
+        double* s_gamma_pointer = this->LM->Sloc.data();
 
 #ifdef __MPI
         pdgemm_(&transN,
@@ -367,7 +370,7 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &alpha,
-                this->LM->Sloc.data(),
+                s_gamma_pointer,
                 &one_int,
                 &one_int,
                 this->LM->ParaV->desc,

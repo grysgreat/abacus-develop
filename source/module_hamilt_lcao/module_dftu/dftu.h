@@ -10,6 +10,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
+#include "module_hamilt_general/hamilt.h"
 
 #include <string>
 
@@ -72,7 +73,7 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv, const double& mixing_beta);
+    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<double>* p_ham);
     void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma, const double& mixing_beta);
 
   private:
@@ -121,6 +122,12 @@ class DFTU
                         const int dim2, 
                         std::complex<double>* mat_k, 
                         std::vector<ModuleBase::Vector3<double>> kvec_d);
+    /**
+     * @brief new function of folding_S_matrix
+     * only for Hamiltonian now, for force and stress will be developed later
+     * use HContainer as input and output in mat_k
+    */
+   void folding_matrix_k_new(const int ik, hamilt::Hamilt<double>* p_ham);
 
     //=============================================================
     // In dftu_force.cpp
