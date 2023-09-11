@@ -6,6 +6,9 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#ifdef _OPENMP
+#include <unordered_set>
+#endif
 
 template <typename TK, typename TR>
 hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
