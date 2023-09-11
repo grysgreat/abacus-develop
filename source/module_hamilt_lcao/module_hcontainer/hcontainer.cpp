@@ -51,7 +51,7 @@ HContainer<T>::HContainer(int natom)
 
 // use unitcell to initialize atom_pairs
 template <typename T>
-HContainer<T>::HContainer(const UnitCell& ucell_)
+HContainer<T>::HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV)
 {
     this->gamma_only = false;
     this->current_R = -1;
@@ -65,23 +65,46 @@ HContainer<T>::HContainer(const UnitCell& ucell_)
         atom_begin_row[i+1] = begin;
         atom_begin_col[i+1] = begin;
     }
-    // initialize atom_pairs and sparse_ap
-    this->atom_pairs.resize(ucell_.nat * ucell_.nat, AtomPair<T>(0,0));
-    this->sparse_ap.resize(ucell_.nat);
-    this->sparse_ap_index.resize(ucell_.nat);
+    if(paraV == nullptr)
+    {
+        // initialize atom_pairs and sparse_ap
+        this->atom_pairs.resize(ucell_.nat * ucell_.nat, AtomPair<T>(0, 0));
+        this->sparse_ap.resize(ucell_.nat);
+        this->sparse_ap_index.resize(ucell_.nat);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i = 0; i < ucell_.nat; i++)
-    {
-        this->sparse_ap[i].resize(ucell_.nat);
-        this->sparse_ap_index[i].resize(ucell_.nat);
-        for (int j = 0; j < ucell_.nat; j++)
+        for (int i = 0; i < ucell_.nat; i++)
         {
-            //AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            this->atom_pairs[i * ucell_.nat + j] = AtomPair<T>(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
-            this->sparse_ap[i][j] = j;
-            this->sparse_ap_index[i][j] = i * ucell_.nat + j;
+            this->sparse_ap[i].resize(ucell_.nat);
+            this->sparse_ap_index[i].resize(ucell_.nat);
+            for (int j = 0; j < ucell_.nat; j++)
+            {
+                //AtomPair<T> atom_ij(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
+                this->atom_pairs[i * ucell_.nat + j] = AtomPair<T>(i, j, atom_begin_row.data(), atom_begin_col.data(), ucell_.nat);
+                this->sparse_ap[i][j] = j;
+                this->sparse_ap_index[i][j] = i * ucell_.nat + j;
+            }
+        }
+    }
+    else
+    {
+        this->paraV = paraV;
+        // initialize atom_pairs and sparse_ap
+        this->sparse_ap.resize(ucell_.nat);
+        this->sparse_ap_index.resize(ucell_.nat);
+        for (int i = 0; i < ucell_.nat; i++)
+        {
+            for (int j = 0; j < ucell_.nat; j++)
+            {
+                //check if atom_pair(i, j) is empty in this process
+                if(paraV->get_row_size(i) <= 0 || paraV->get_col_size(j) <= 0)
+                {
+                    continue;
+                }
+                AtomPair<T> atom_ij(i, j, paraV);
+                this->insert_pair(atom_ij);
+            }
         }
     }
     this->allocate(true);

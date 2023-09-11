@@ -175,7 +175,7 @@ class HContainer
     HContainer(int natom);
 
     // use unitcell to initialize atom_pairs
-    HContainer(const UnitCell& ucell_);
+    HContainer(const UnitCell& ucell_, const Parallel_Orbitals* paraV = nullptr);
 
     /**
      * @brief use 2d-block-recycle parallel case to initialize atom_pairs, mainly used now.
@@ -362,6 +362,24 @@ class HContainer
      * new <IJR> pair from read-in HContainer will be inserted into this->atom-pairs
     */
     void shape_synchron( const HContainer<T>& other);
+
+    /**
+     * @brief get sparse_ap
+     * @return std::vector<std::vector<int>>&
+    */
+    const std::vector<std::vector<int>>& get_sparse_ap() const
+    {
+        return sparse_ap;
+    }
+
+    /**
+     * @brief get sparse_ap_index
+     * @return std::vector<std::vector<int>>&
+    */
+    const std::vector<std::vector<int>>& get_sparse_ap_index() const
+    {
+        return sparse_ap_index;
+    }
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
