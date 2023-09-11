@@ -10,6 +10,7 @@ void ModuleIO::output_HS_R(const int& istep,
                            const ModuleBase::matrix& v_eff,
                            LCAO_Hamilt& UHM,
                            const K_Vectors& kv,
+                           hamilt::Hamilt<double>* p_ham,
                            const std::string& SR_filename,
                            const std::string& HR_filename_up,
                            const std::string HR_filename_down,
@@ -22,7 +23,7 @@ void ModuleIO::output_HS_R(const int& istep,
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
         // jingan add 2021-6-4, modify 2021-12-2
-        UHM.calculate_HSR_sparse(0, sparse_threshold, kv.nmp);
+        UHM.calculate_HSR_sparse(0, sparse_threshold, kv.nmp, p_ham);
     }
     else if(GlobalV::NSPIN==2)
     {
@@ -48,7 +49,7 @@ void ModuleIO::output_HS_R(const int& istep,
                     }
                 }
 
-                UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp);
+                UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
             }
         }
     }
