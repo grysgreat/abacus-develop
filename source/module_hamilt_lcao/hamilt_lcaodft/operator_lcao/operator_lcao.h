@@ -108,6 +108,7 @@ class OperatorLCAO : public Operator<TK>
     
     // if HR is calculated
     bool hr_done = false;
+    void reset_hr_done(int ik_in);
 };
 
 } // end namespace hamilt

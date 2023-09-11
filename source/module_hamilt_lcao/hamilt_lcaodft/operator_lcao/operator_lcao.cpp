@@ -69,6 +69,13 @@ void OperatorLCAO<std::complex<double>, std::complex<double>>::refresh_h()
 }
 
 template<typename TK, typename TR>
+void OperatorLCAO<TK, TR>::reset_hr_done(int ik_in)
+{
+    // since the Veff operator is not refactored to contribute HR, we can keep the status of hr_done
+    return;
+}
+
+template<typename TK, typename TR>
 void OperatorLCAO<TK, TR>::init(const int ik_in)
 {
     ModuleBase::TITLE("OperatorLCAO", "init");
@@ -77,8 +84,13 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
     {
         // refresh HK
         this->refresh_h();
-        // refresh HR
-        this->hR->set_zero();
+        // if HR should be refreshed
+        this->reset_hr_done(ik_in);
+        if(!this->hr_done)
+        {
+            // refresh HR
+            this->hR->set_zero();
+        }
     }
     switch(this->cal_type)
     {
@@ -86,13 +98,16 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
         {
             //cal_type=lcao_overlap refer to overlap matrix operators, which are only rely on stucture, and not changed during SCF
 
-            //update SR first
-            //in cal_type=lcao_overlap, SR should be updated by each sub-chain nodes
-            OperatorLCAO<TK, TR>* last = this;
-            while(last != nullptr)
+            if(!this->hr_done)
             {
-                last->contributeHR();
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                //update SR first
+                //in cal_type=lcao_overlap, SR should be updated by each sub-chain nodes
+                OperatorLCAO<TK, TR>* last = this;
+                while(last != nullptr)
+                {
+                    last->contributeHR();
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
             }
 
             //update SK next
@@ -106,12 +121,15 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
             //cal_type=lcao_fixed refer to fixed matrix operators, which are only rely on stucture, and not changed during SCF
 
             //update HR first
-            //in cal_type=lcao_fixed, HR should be updated by each sub-chain nodes
-            OperatorLCAO<TK, TR>* last = this;
-            while(last != nullptr)
+            if(!this->hr_done)
             {
-                last->contributeHR();
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                //in cal_type=lcao_fixed, HR should be updated by each sub-chain nodes
+                OperatorLCAO<TK, TR>* last = this;
+                while(last != nullptr)
+                {
+                    last->contributeHR();
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
             }
 
             //update HK next
@@ -144,8 +162,11 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
         case lcao_deepks:
         {
             //update HR first
-            //in cal_type=lcao_deepks, HR should be updated
-            this->contributeHR();
+            if(!this->hr_done)
+            {
+                //in cal_type=lcao_deepks, HR should be updated
+                this->contributeHR();
+            }
 
             //update H_V_delta_k next
             this->contributeHk(ik_in);
@@ -182,6 +203,10 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
     }
     if(this->next_op != nullptr)
     {//it is not the last node, loop next init() function
+        // pass HR status to next node and than set HR status of this node to done
+        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->hr_done = this->hr_done;
+        this->hr_done = true;
+        // call init() function of next node
         this->next_op->init(ik_in);
     }
     else 
