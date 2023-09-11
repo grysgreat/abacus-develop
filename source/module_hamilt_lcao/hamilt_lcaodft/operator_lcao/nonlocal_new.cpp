@@ -166,6 +166,21 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 // If we are calculating force, we need also to store the gradient
                 // and size of outer vector is then 4
                 // inner loop : all projectors (L0,M0)
+#ifdef USE_NEW_TWO_CENTER
+                //=================================================================
+                //          new two-center integral (temporary)
+                //=================================================================
+                int L1 = atom1->iw2l[ iw1 ];
+                int N1 = atom1->iw2n[ iw1 ];
+                int m1 = atom1->iw2m[ iw1 ];
+
+                // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+                int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
+
+                ModuleBase::Vector3<double> dtau = tau0 - tau1;
+                uot.two_center_bundle->overlap_orb_beta->snap(
+                        T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
+#else
                 uot.snap_psibeta_half(orb,
                                       this->ucell->infoNL,
                                       nlm,
@@ -177,6 +192,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                       tau0,
                                       T0,
                                       0 /*cal_deri*/); // R0,T0
+#endif
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
             }
         }
