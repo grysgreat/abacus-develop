@@ -81,6 +81,11 @@ class OperatorLCAO : public Operator<TK>
         return;
     }
 
+    /**
+     * @brief reset hr_done status
+    */
+    void set_hr_done(bool hr_done_in);
+
     // protected:
     //  Hamiltonian matrix which are stored in LCAO_Matrix and calculated in OperatorLCAO
     LCAO_Matrix* LM = nullptr;
@@ -108,7 +113,6 @@ class OperatorLCAO : public Operator<TK>
     
     // if HR is calculated
     bool hr_done = false;
-    void reset_hr_done(int ik_in);
 };
 
 } // end namespace hamilt

@@ -43,16 +43,18 @@ class HamiltLCAO : public Hamilt<double>
         delete this->sR;
     };
 
-    // get pointer of Operator<TK> , the return will be opsd or ops
+    /// get pointer of Operator<TK> , the return will be opsd or ops
     Operator<TK>*& getOperator();
-    // get hk-pointer of std::vector<TK>, the return will be LM->Hloc or LM->Hloc2
+    /// get hk-pointer of std::vector<TK>, the return will be LM->Hloc or LM->Hloc2
     std::vector<TK>& getHk(LCAO_Matrix* LM);
-    // get sk-pointer of std::vector<TK>, the return will be this->sk
+    /// get sk-pointer of std::vector<TK>, the return will be this->sk
     std::vector<TK>& getSk(LCAO_Matrix* LM);
-    // get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
+    /// get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
     HContainer<TR>*& getHR();
-    // get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
+    /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
     HContainer<TR>*& getSR();
+    /// refresh the status of HR
+    void refresh() override;
 
     // for target K point, update consequence of hPsi() and matrix()
     virtual void updateHk(const int ik) override;

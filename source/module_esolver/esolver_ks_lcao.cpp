@@ -582,6 +582,8 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
         GlobalC::ld.set_hr_cal(false);
     }
     else GlobalC::ld.set_hr_cal(true);
+    // HR in HamiltLCAO should be recalculate
+    this->p_hamilt->refresh();
 #endif
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)

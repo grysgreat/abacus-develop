@@ -345,6 +345,22 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
 }
 
+template <>
+void HamiltLCAO<double, double>::refresh()
+{
+    dynamic_cast<hamilt::OperatorLCAO<double, double>*>(this->opsd)->set_hr_done(false);
+}
+template <>
+void HamiltLCAO<std::complex<double>, double>::refresh()
+{
+    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->ops)->set_hr_done(false);
+}
+template <>
+void HamiltLCAO<std::complex<double>, std::complex<double>>::refresh()
+{
+    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->ops)->set_hr_done(false);
+}
+
 // get Operator base class pointer
 template <>
 Operator<double>*& HamiltLCAO<double, double>::getOperator()

@@ -333,7 +333,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
                 uot.two_center_bundle->overlap_orb_alpha->snap(
-                        T1, L1, N1, M1, 0, dtau * ucell.lat0, 0 /*calc_deri*/, nlm);
+                        T1, L1, N1, M1, 0, dtau * ucell->lat0, 0 /*calc_deri*/, nlm);
 #else
                 uot.snap_psialpha_half(
                         orb,
