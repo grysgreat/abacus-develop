@@ -68,7 +68,7 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_foverlap_k_new(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec, kv.nks, kv);
+    this->cal_foverlap_k_new(isforce, isstress, ra, psi, loc, DM, foverlap, soverlap, pelec, kv.nks, kv);
 
     //DM->sum_DMR_spin();
 
@@ -284,6 +284,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
                                   Record_adj& ra,
                                   const psi::Psi<std::complex<double>>* psi,
                                   Local_Orbital_Charge& loc,
+                                  const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                                   ModuleBase::matrix& foverlap,
                                   ModuleBase::matrix& soverlap,
                                   const elecstate::ElecState* pelec,
@@ -337,25 +338,25 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
     std::vector<ModuleBase::ComplexMatrix> edm_k(nks);
 
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
-    if (loc.edm_k_tddft.size())
+    if (DM->EDMK.size())
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
         for (int ik = 0; ik < nks; ++ik)
         {
-            edm_k[ik] = loc.edm_k_tddft[ik];
-            EDM.set_DMK_pointer(ik,loc.edm_k_tddft[ik].c);
+            //edm_k[ik] = loc.edm_k_tddft[ik];
+            EDM.set_DMK_pointer(ik,DM->EDMK[ik].c);
         }
     }
     else
     {
-        elecstate::cal_dm(loc.ParaV, wgEkb, psi[0], edm_k);
+        //elecstate::cal_dm(loc.ParaV, wgEkb, psi[0], edm_k);
         // cal_dm_psi
         elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psi[0], EDM);
     }
     
-    loc.cal_dm_R(edm_k, ra, edm2d, kv);
+    //loc.cal_dm_R(edm_k, ra, edm2d, kv);
 
     // cal_dm_2d
     EDM.init_DMR(ra,&GlobalC::ucell);

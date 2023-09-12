@@ -36,7 +36,7 @@ if(ENABLE_LCAO)
         force_lcao/FORCE_gamma_new.cpp
         force_lcao/FORCE_gamma_edm_new.cpp
         force_lcao/FORCE_gamma_tvnl_new.cpp
-        force_lcao/FORCE_gamma_vl.cpp
+        force_lcao/FORCE_gamma_vl_new.cpp
     )
 
     add_library(

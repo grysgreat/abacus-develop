@@ -103,11 +103,22 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
         || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
     {
-        cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
+        //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-    }
 
+#ifdef __EXX
+        //if (GlobalC::exx_info.info_global.cal_exx)
+        //{
+        const K_Vectors* kv = this->DM->get_kv_pointer();
+        this->loc->dm_k.resize(kv->nks);
+        for (int ik = 0; ik < kv->nks; ++ik){
+            this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
+        }
+        //}
+#endif
+
+    }
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
     {
         for (int ik = 0; ik < psi.get_nk(); ik++)
@@ -160,10 +171,22 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
         // psi::Psi<double> dm_gamma_2d;
         //  caution:wfc and dm
-        cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
+        //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         //
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
+        //
+
+#ifdef __EXX
+        //if (GlobalC::exx_info.info_global.cal_exx)
+        //{
+        this->loc->dm_gamma.resize(GlobalV::NSPIN);
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
+        }
+        //}
+#endif
 
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 

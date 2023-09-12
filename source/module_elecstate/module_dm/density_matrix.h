@@ -100,12 +100,14 @@ class DensityMatrix
      * @return TK* pointer of DMK
      */
     TK* get_DMK_pointer(const int ik) const;
+    std::vector<std::vector<TK>> get_DMK_vector() const;
     void set_DMK_pointer(const int ik, TK* DMK_in);
 
     /**
      * @brief get pointer of paraV
      */
     const Parallel_Orbitals* get_paraV_pointer() const;
+    const K_Vectors* get_kv_pointer() const;
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
@@ -133,6 +135,8 @@ class DensityMatrix
      * @param ik k-point index
      */
     void read_DMK(const std::string directory, const int ispin, const int ik);
+    
+    std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
 
   private:
     /**
