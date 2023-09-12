@@ -10,6 +10,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
+#include "module_elecstate/elecstate.h"
 
 #include <string>
 
@@ -72,8 +73,8 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, std::vector<ModuleBase::ComplexMatrix>& dm_k, const K_Vectors& kv, const double& mixing_beta);
-    void cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix>& dm_gamma, const double& mixing_beta);
+    void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta);
+    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
 
   private:
     // dftu can be calculated only after locale has been initialed
@@ -127,8 +128,7 @@ class DFTU
     // For calculating force and stress fomr DFT+U
     //=============================================================
   public:
-    void force_stress(std::vector<ModuleBase::matrix>& dm_gamma,
-                      std::vector<ModuleBase::ComplexMatrix>& dm_k,
+    void force_stress(const elecstate::ElecState* pelec,
                       LCAO_Matrix& lm,
                       ModuleBase::matrix& force_dftu,
                       ModuleBase::matrix& stress_dftu,

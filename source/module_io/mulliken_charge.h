@@ -11,7 +11,7 @@
 // convert to namespace, liuyu 2023-04-18
 namespace ModuleIO
 {
-	void out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc, const K_Vectors& kv);
+	void out_mulliken(const int& step, LCAO_Hamilt &uhm, const elecstate::ElecState* pelec, const K_Vectors& kv);
 
     /* 
     1. cal_mulliken:    for gamma-only

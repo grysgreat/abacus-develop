@@ -225,7 +225,7 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
         {
             stress_dftu.create(3, 3);
         }
-        GlobalC::dftu.force_stress(loc.dm_gamma, loc.dm_k, *uhm.LM, force_dftu, stress_dftu, kv);
+        GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);
     }
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {

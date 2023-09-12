@@ -251,7 +251,7 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, Local_Orbital_Charge &loc, const K_Vectors& kv)
+void ModuleIO::out_mulliken(const int& step, LCAO_Hamilt &uhm, const elecstate::ElecState* pelec, const K_Vectors& kv)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 

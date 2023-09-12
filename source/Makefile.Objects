@@ -179,6 +179,7 @@ OBJS_ELECSTAT=elecstate.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
+      density_matrix.o\
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -429,6 +430,11 @@ OBJS_LCAO=DM_gamma.o\
       record_adj.o\
       dm_2d.o\
       wavefunc_in_pw.o\
+      FORCE_gamma_new.o\
+      FORCE_gamma_edm_new.o\
+      FORCE_gamma_tvnl_new.o\
+      FORCE_gamma_vl_new.o\
+      FORCE_k_new.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o \

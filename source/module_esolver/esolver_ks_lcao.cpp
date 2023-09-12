@@ -603,9 +603,15 @@ void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)
         if (GlobalC::dftu.omc != 2)
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
-                GlobalC::dftu.cal_occup_m_gamma(iter, this->LOC.dm_gamma, this->p_chgmix->get_mixing_beta());
+            {
+                const std::vector<std::vector<double>>& tmp_dm_gamma = dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::dftu.cal_occup_m_gamma(iter, tmp_dm_gamma, this->p_chgmix->get_mixing_beta());
+            }
             else
-                GlobalC::dftu.cal_occup_m_k(iter, this->LOC.dm_k, kv, this->p_chgmix->get_mixing_beta());
+            {
+                const std::vector<std::vector<std::complex<double>>>& tmp_dm_k = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::dftu.cal_occup_m_k(iter, tmp_dm_k, kv, this->p_chgmix->get_mixing_beta());
+            }
         }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();

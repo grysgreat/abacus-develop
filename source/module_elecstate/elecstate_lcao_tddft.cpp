@@ -26,7 +26,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
         || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
     {
-        cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
+        //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
     }
