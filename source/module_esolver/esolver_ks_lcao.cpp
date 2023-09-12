@@ -982,7 +982,8 @@ ModuleIO::Output_Mat_Sparse ESolver_KS_LCAO::create_Output_Mat_Sparse(int istep)
                                        *this->LOWF.ParaV,
                                        this->UHM,
                                        this->LM,
-                                       this->kv);
+                                       this->kv,
+                                       this->p_hamilt);
 }
 
 bool ESolver_KS_LCAO::md_skip_out(std::string calculation, int istep, int interval)
