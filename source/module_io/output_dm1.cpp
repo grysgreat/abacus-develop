@@ -21,6 +21,7 @@ void Output_DM1::write()
         ModuleBase::GlobalFunc::ZEROS(dm2d[is], _LOC.ParaV->nnr);
     }
     // get DMK from DM
+    _LOC.dm_k.resize(_kv.nks);
     for (int ik = 0; ik < _kv.nks; ++ik)
     {
         _LOC.set_dm_k(ik,_DM->get_DMK_pointer(ik));

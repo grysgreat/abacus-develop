@@ -179,6 +179,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
         // get loc.dm_gamma from DM
+        this->loc->dm_gamma.resize(GlobalV::NSPIN);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
             this->loc->set_dm_gamma(is,this->DM->get_DMK_pointer(is));
