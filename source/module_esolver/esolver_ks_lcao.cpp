@@ -576,12 +576,7 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
 
 #ifdef __DEEPKS
     // the density matrixes of DeePKS have been updated in each iter
-    if(iter == 1 && istep == 0)
-    {
-        // in first electronic step, density matrix is not calculated yet
-        GlobalC::ld.set_hr_cal(false);
-    }
-    else GlobalC::ld.set_hr_cal(true);
+    GlobalC::ld.set_hr_cal(true);
     // HR in HamiltLCAO should be recalculate
     this->p_hamilt->refresh();
 #endif
