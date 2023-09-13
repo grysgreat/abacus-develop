@@ -204,7 +204,6 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
         if(!this->hr_done)
         {
             dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->hr_done = this->hr_done;
-            this->hr_done = true;
         }
         // call init() function of next node
         this->next_op->init(ik_in);
@@ -213,6 +212,9 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
     {//it is the last node, update HK with the current total HR
         OperatorLCAO<TK, TR>::contributeHk(ik_in);
     }
+
+    // set HR status of this node to done
+    this->hr_done = true;
 
     ModuleBase::timer::tick("OperatorLCAO", "init");
 }

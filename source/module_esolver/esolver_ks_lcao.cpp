@@ -578,7 +578,10 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     // the density matrixes of DeePKS have been updated in each iter
     GlobalC::ld.set_hr_cal(true);
     // HR in HamiltLCAO should be recalculate
-    this->p_hamilt->refresh();
+    if(GlobalV::deepks_scf)
+    {
+        this->p_hamilt->refresh();
+    }
 #endif
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)
