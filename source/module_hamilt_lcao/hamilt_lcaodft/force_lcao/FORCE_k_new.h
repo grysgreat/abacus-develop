@@ -67,6 +67,7 @@ class Force_LCAO_k_new : public Force_LCAO_gamma_new
                         Record_adj& ra,
                         const psi::Psi<std::complex<double>>* psi,
                         Local_Orbital_Charge& loc,
+                        const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                         ModuleBase::matrix& foverlap,
                         ModuleBase::matrix& soverlap,
                         const elecstate::ElecState* pelec,

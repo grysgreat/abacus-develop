@@ -18,9 +18,10 @@
 #include "module_base/name_angular.h"
 #include "module_base/scalapack_connector.h"
 #include "write_orb_info.h"
+#include "module_elecstate/elecstate_lcao.h"
 
 
-ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<double>> &dm,
     LCAO_Matrix *LM
 )
 {
@@ -49,7 +50,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &one_float,
-                dm[is].c,
+                dm[is].data(),
                 &one_int,
                 &one_int,
                 LM->ParaV->desc,
@@ -119,7 +120,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<ModuleBase::matrix> 
     return orbMulP;
 }
 
-ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
+ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<std::vector<std::complex<double>>> &dm,
     LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in
 )
 {
@@ -160,7 +161,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<ModuleBase::Comple
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &one_float,
-                dm[ik].c,
+                dm[ik].data(),
                 &one_int,
                 &one_int,
                 LM->ParaV->desc,
@@ -259,15 +260,23 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, Local_Orbital_Charge &loc, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in)
+void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
     ModuleBase::matrix orbMulP;
     if(GlobalV::GAMMA_ONLY_LOCAL)
-        orbMulP = ModuleIO::cal_mulliken(loc.dm_gamma, LM);
+    {
+        const std::vector<std::vector<double>>& dm_gamma = 
+                dynamic_cast<const elecstate::ElecStateLCAO<double>*> (pelec)->get_DM()->get_DMK_vector();
+        orbMulP = ModuleIO::cal_mulliken(dm_gamma, LM);
+    }
     else
-        orbMulP = ModuleIO::cal_mulliken_k(loc.dm_k, LM, kv, ham_in);
+    {
+        const std::vector<std::vector<std::complex<double>>>& dm_k = 
+                dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*> (pelec)->get_DM()->get_DMK_vector();
+        orbMulP = ModuleIO::cal_mulliken_k(dm_k, LM, kv, ham_in);
+    }
 
     std::vector<std::vector<std::vector<double>>> AorbMulP = ModuleIO::convert(orbMulP);
 

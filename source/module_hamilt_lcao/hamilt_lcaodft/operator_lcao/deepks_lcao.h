@@ -5,6 +5,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "operator_lcao.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 
 namespace hamilt
 {
@@ -35,7 +36,8 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                             std::vector<TK>* hK_in,
                             const UnitCell* ucell_in,
                             Grid_Driver* GridD_in,
-                            const int& nks_in);
+                            const int& nks_in,
+                            elecstate::DensityMatrix<TK,double>* DM_in);
     ~DeePKS();
 
     virtual void contributeHR() override;
@@ -45,6 +47,8 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
     Local_Orbital_Charge* loc;
+
+    elecstate::DensityMatrix<TK,double>* DM;
 
     const UnitCell* ucell = nullptr;
 

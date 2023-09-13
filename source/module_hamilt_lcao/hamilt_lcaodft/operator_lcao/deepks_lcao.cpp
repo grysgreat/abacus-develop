@@ -27,7 +27,8 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
     std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
-    const int& nks_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+    const int& nks_in,
+    elecstate::DensityMatrix<TK,double>* DM_in) : loc(loc_in), nks(nks_in), ucell(ucell_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), DM(DM_in)
 {
     this->cal_type = lcao_deepks;
 #ifdef __DEEPKS
@@ -138,7 +139,7 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
         const Parallel_Orbitals* pv = this->LM->ParaV;
-        GlobalC::ld.cal_projected_DM(this->loc->dm_gamma,
+        GlobalC::ld.cal_projected_DM(this->DM->get_DMK_vector(),
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD);
@@ -172,7 +173,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM_k(this->loc->dm_k,
+        GlobalC::ld.cal_projected_DM_k(this->DM->get_DMK_vector(),
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD,
@@ -213,7 +214,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM_k(this->loc->dm_k,
+        GlobalC::ld.cal_projected_DM_k(this->DM->get_DMK_vector(),
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD,

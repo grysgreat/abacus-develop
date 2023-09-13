@@ -33,7 +33,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     LCAO_Matrix* LM_in,
     Local_Orbital_Charge* loc_in,
     elecstate::Potential* pot_in,
-    const K_Vectors& kv_in)
+    const K_Vectors& kv_in,
+    elecstate::DensityMatrix<TK,double>* DM_in)
 {
     this->kv = &kv_in;
     this->classname = "HamiltLCAO";
@@ -175,7 +176,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                                         &(this->getHk(LM_in)),
                                                                         &GlobalC::ucell,
                                                                         &GlobalC::GridD,
-                                                                        kv_in.nks);
+                                                                        kv_in.nks,
+                                                                        DM_in);
             this->getOperator()->add(deepks);
         }
     #endif
@@ -300,7 +302,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                     &(this->getHk(LM_in)),
                                                     &GlobalC::ucell,
                                                     &GlobalC::GridD,
-                                                    kv_in.nks);
+                                                    kv_in.nks,
+                                                    DM_in);
             this->getOperator()->add(deepks);
         }
     #endif

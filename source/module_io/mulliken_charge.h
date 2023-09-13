@@ -7,12 +7,13 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#include "module_elecstate/elecstate.h"
 
 // by qifeng, refactor by jiyy 2023-02-25
 // convert to namespace, liuyu 2023-04-18
 namespace ModuleIO
 {
-	void out_mulliken(const int& step, LCAO_Matrix *LM, Local_Orbital_Charge &loc, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in);
+	void out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in);
 
     /* 
     1. cal_mulliken:    for gamma-only
@@ -24,11 +25,11 @@ namespace ModuleIO
             return  ModuleBase::matrix with shape (GlobalV::NSPIN, GlobalV::NLOCAL/2)
     */
 
-    ModuleBase::matrix cal_mulliken(const std::vector<ModuleBase::matrix> &dm,
+    ModuleBase::matrix cal_mulliken(const std::vector<std::vector<double>> &dm,
         LCAO_Matrix *LM
     );
 
-    ModuleBase::matrix cal_mulliken_k(const std::vector<ModuleBase::ComplexMatrix> &dm,
+    ModuleBase::matrix cal_mulliken_k(const std::vector<std::vector<std::complex<double>>> &dm,
         LCAO_Matrix *LM, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in
     );
 

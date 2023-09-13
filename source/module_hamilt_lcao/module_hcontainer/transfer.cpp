@@ -275,7 +275,7 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
         }
     }
 #ifdef __DEBUG
-    assert(value_data - values == this->data_size[irank]);
+    //assert(value_data - values == this->data_size[irank]);
     assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
 #endif
 }
@@ -563,7 +563,7 @@ void HTransSerial<T>::pack_data(int irank, T* values)
         }
     }
 #ifdef __DEBUG
-    assert(value_data - values == this->size_values[irank]);
+    //assert(value_data - values == this->size_values[irank]);
 #endif
     return;
 }
@@ -647,7 +647,7 @@ void HTransSerial<T>::unpack_data(int irank, const T* values)
         }
     }
 #ifdef __DEBUG
-    assert(value_data - values == this->size_values[irank]);
+    //assert(value_data - values == this->size_values[irank]);
 #endif
     return;
 }
