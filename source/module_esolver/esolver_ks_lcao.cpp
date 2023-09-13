@@ -747,11 +747,11 @@ void ESolver_KS_LCAO::updatepot(const int istep, const int iter)
     {
         if (GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<double>::out_wfc_lcao)
         {
-            elecstate::ElecStateLCAO<double>::out_wfc_flag = 1;
+            elecstate::ElecStateLCAO<double>::out_wfc_flag = elecstate::ElecStateLCAO<double>::out_wfc_lcao;
         }
         else if (!GlobalV::GAMMA_ONLY_LOCAL && elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
         {
-            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 1;
+            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao;
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
