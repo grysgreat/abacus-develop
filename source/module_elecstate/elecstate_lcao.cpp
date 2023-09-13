@@ -5,6 +5,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace elecstate
 {
@@ -97,25 +98,27 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
 
-    // this part for calculating dm_k in 2d-block format, not used for charge now
+    // this part for calculating DMK in 2d-block format, not used for charge now
     //    psi::Psi<std::complex<double>> dm_k_2d();
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
         || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
     {
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
+        //
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
 
 #ifdef __EXX
-        //if (GlobalC::exx_info.info_global.cal_exx)
-        //{
-        const K_Vectors* kv = this->DM->get_kv_pointer();
-        this->loc->dm_k.resize(kv->nks);
-        for (int ik = 0; ik < kv->nks; ++ik){
-            this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            const K_Vectors* kv = this->DM->get_kv_pointer();
+            this->loc->dm_k.resize(kv->nks);
+            for (int ik = 0; ik < kv->nks; ++ik)
+            {
+                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
+            }
         }
-        //}
 #endif
 
     }
@@ -178,14 +181,14 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //
 
 #ifdef __EXX
-        //if (GlobalC::exx_info.info_global.cal_exx)
-        //{
-        this->loc->dm_gamma.resize(GlobalV::NSPIN);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        if (GlobalC::exx_info.info_global.cal_exx)
         {
-            this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
+            this->loc->dm_gamma.resize(GlobalV::NSPIN);
+            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            {
+                this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));    
+            }
         }
-        //}
 #endif
 
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");

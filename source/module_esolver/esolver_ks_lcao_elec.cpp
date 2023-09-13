@@ -153,17 +153,22 @@ namespace ModuleESolver
             // Gamma_only case
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
+                elecstate::DensityMatrix<double,double>* DM
+                    = dynamic_cast<elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
                 this->p_hamilt = new hamilt::HamiltLCAO<double, double>(&(this->UHM.GG),
                                                                 nullptr,
                                                                 &(this->UHM.genH),
                                                                 &(this->LM),
                                                                 &(this->LOC),
                                                                 this->pelec->pot,
-                                                                this->kv);
+                                                                this->kv,
+                                                                DM);
             }
             // multi_k case
             else
             {
+                elecstate::DensityMatrix<std::complex<double>,double>* DM
+                    = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
                 if(GlobalV::NSPIN < 4)
                 {
                     this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(nullptr,
@@ -172,7 +177,8 @@ namespace ModuleESolver
                                                                               &(this->LM),
                                                                               &(this->LOC),
                                                                               this->pelec->pot,
-                                                                              this->kv);
+                                                                              this->kv,
+                                                                              DM);
                 }
                 else
                 {
@@ -182,7 +188,8 @@ namespace ModuleESolver
                                                                                               &(this->LM),
                                                                                               &(this->LOC),
                                                                                               this->pelec->pot,
-                                                                                              this->kv);
+                                                                                              this->kv,
+                                                                                              DM);
                 }
             }
         }
@@ -630,14 +637,18 @@ namespace ModuleESolver
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma,
+                const std::vector<std::vector<double>>& dm_gamma = 
+                    dynamic_cast<const elecstate::ElecStateLCAO<double>*> (this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::ld.cal_projected_DM(dm_gamma, //this->LOC.dm_gamma,
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD);
             }
             else
             {
-                GlobalC::ld.cal_projected_DM_k(this->LOC.dm_k,
+                const std::vector<std::vector<std::complex<double>>>& dm_k = 
+                    dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*> (this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::ld.cal_projected_DM_k(dm_k, //this->LOC.dm_k,
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD,

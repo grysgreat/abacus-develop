@@ -45,7 +45,7 @@ void Force_LCAO_gamma_new::ftable_gamma_new(const bool isforce,
 
     // get DM
     const elecstate::DensityMatrix<double,double>* DM
-    = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
+        = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
 
     this->ParaV = DM->get_paraV_pointer();
     //const Parallel_Orbitals* pv = loc.ParaV;
@@ -70,11 +70,12 @@ void Force_LCAO_gamma_new::ftable_gamma_new(const bool isforce,
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM(loc.dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+        const std::vector<std::vector<double>>& dm_gamma = DM->get_DMK_vector();
+        GlobalC::ld.cal_projected_DM(dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
         GlobalC::ld
-            .cal_f_delta_gamma(loc.dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, isstress, svnl_dalpha);
+            .cal_f_delta_gamma(dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, isstress, svnl_dalpha);
 #ifdef __MPI
         Parallel_Reduce::reduce_double_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
         if (isstress)
@@ -84,14 +85,14 @@ void Force_LCAO_gamma_new::ftable_gamma_new(const bool isforce,
 #endif
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.print_dm(loc.dm_gamma[0]);
+            GlobalC::ld.print_dm(dm_gamma[0]);
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
             GlobalC::ld.add_v_delta(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
             GlobalC::ld.check_v_delta();
 
-            GlobalC::ld.cal_e_delta_band(loc.dm_gamma);
+            GlobalC::ld.cal_e_delta_band(dm_gamma);
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");

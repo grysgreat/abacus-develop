@@ -20,15 +20,25 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
 
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
 
-    // this part for calculating dm_k in 2d-block format, not used for charge now
+    // this part for calculating DMK in 2d-block format, not used for charge now
     //    psi::Psi<std::complex<double>> dm_k_2d();
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
         || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
     {
-        //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
+#ifdef __EXX
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            const K_Vectors* kv = this->DM->get_kv_pointer();
+            this->loc->dm_k.resize(kv->nks);
+            for (int ik = 0; ik < kv->nks; ++ik)
+            {
+                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
+            }
+        }
+#endif
     }
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")

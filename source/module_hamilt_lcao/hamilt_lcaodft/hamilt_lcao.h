@@ -11,6 +11,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 
 namespace hamilt
 {
@@ -27,7 +28,8 @@ class HamiltLCAO : public Hamilt<double>
                LCAO_Matrix* LM_in,
                Local_Orbital_Charge* loc_in,
                elecstate::Potential* pot_in,
-               const K_Vectors& kv_in);
+               const K_Vectors& kv_in,
+               elecstate::DensityMatrix<TK,double>* DM_in);
 
     ~HamiltLCAO()
     {

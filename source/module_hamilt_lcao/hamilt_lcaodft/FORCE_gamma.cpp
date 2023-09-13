@@ -57,12 +57,16 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
     this->cal_fvnl_dbeta_new(loc.dm_gamma, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
     this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
-
+/*
     // caoyu add for DeePKS
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM(loc.dm_gamma,
+        // get DM
+        const elecstate::DensityMatrix<double,double>* DM
+            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
+        const std::vector<std::vector<double>>& dm_gamma = DM->get_DMK_vector();
+        GlobalC::ld.cal_projected_DM(dm_gamma,
             GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD);
@@ -83,7 +87,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 #endif
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.print_dm(loc.dm_gamma[0]);
+            GlobalC::ld.print_dm(dm_gamma[0]);
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
@@ -92,7 +96,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
                 GlobalC::GridD);
             GlobalC::ld.check_v_delta();
 
-            GlobalC::ld.cal_e_delta_band(loc.dm_gamma);
+            GlobalC::ld.cal_e_delta_band(dm_gamma);
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");
@@ -101,7 +105,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
         }
     }
 #endif
-
+*/
     if (isforce)
     {
         Parallel_Reduce::reduce_double_pool(foverlap.c, foverlap.nr * foverlap.nc);

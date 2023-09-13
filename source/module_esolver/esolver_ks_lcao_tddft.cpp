@@ -506,7 +506,6 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &GlobalV::NLOCAL,
                 &one_float,
                 tmp_dmk,
-                //this->LOC.dm_k[ik].c,
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
@@ -571,7 +570,6 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
                 &one_int,
                 this->LOC.ParaV->desc,
                 tmp_dmk,
-                //this->LOC.dm_k[ik].c,
                 &one_int,
                 &one_int,
                 this->LOC.ParaV->desc,
@@ -638,7 +636,6 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
             }
         }
         tmp_edmk = 0.5 * (Sinv * Htmp * tmp_dmk_base + tmp_dmk_base * Htmp * Sinv);
-        //this->LOC.edm_k_tddft[ik] = 0.5 * (Sinv * Htmp * this->LOC.dm_k[ik] + this->LOC.dm_k[ik] * Htmp * Sinv);
         delete[] WORK;
 #endif
     }

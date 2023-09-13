@@ -11,6 +11,7 @@
 #include "module_hamilt_general/module_vdw/vdw.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks 2021-06-03
+#include "module_elecstate/elecstate_lcao.h"
 #endif
 
 double Force_Stress_LCAO::force_invalid_threshold_ev = 0.00;
@@ -372,7 +373,9 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
 
                 if (GlobalV::GAMMA_ONLY_LOCAL)
                 {
-                    GlobalC::ld.cal_gdmx(loc.dm_gamma[0],
+                    const std::vector<std::vector<double>>& dm_gamma
+                        = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
+                    GlobalC::ld.cal_gdmx(dm_gamma[0],
                         GlobalC::ucell,
                         GlobalC::ORB,
                         GlobalC::GridD,
@@ -380,7 +383,9 @@ void Force_Stress_LCAO::getForceStress(const bool isforce,
                 }
                 else
                 {
-                    GlobalC::ld.cal_gdmx_k(loc.dm_k,
+                    const std::vector<std::vector<std::complex<double>>>& dm_k
+                        = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM()->get_DMK_vector();
+                    GlobalC::ld.cal_gdmx_k(dm_k,
                         GlobalC::ucell,
                         GlobalC::ORB,
                         GlobalC::GridD,

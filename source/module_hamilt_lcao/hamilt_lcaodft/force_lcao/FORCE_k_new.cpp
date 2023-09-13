@@ -84,11 +84,12 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM_k(loc.dm_k, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
+        const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
+        GlobalC::ld.cal_projected_DM_k(dm_k, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
-        GlobalC::ld.cal_f_delta_k(loc.dm_k,
+        GlobalC::ld.cal_f_delta_k(dm_k,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
                                   GlobalC::GridD,
@@ -105,7 +106,7 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 #endif
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.print_dm_k(kv.nks, loc.dm_k);
+            GlobalC::ld.print_dm_k(kv.nks, dm_k);
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
@@ -115,7 +116,7 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
             {
                 uhm.LM->folding_fixedH(ik, kv.kvec_d);
             }
-            GlobalC::ld.cal_e_delta_band_k(loc.dm_k, kv.nks);
+            GlobalC::ld.cal_e_delta_band_k(dm_k, kv.nks);
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");
