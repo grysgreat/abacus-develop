@@ -69,10 +69,9 @@ void OperatorLCAO<std::complex<double>, std::complex<double>>::refresh_h()
 }
 
 template<typename TK, typename TR>
-void OperatorLCAO<TK, TR>::reset_hr_done(int ik_in)
+void OperatorLCAO<TK, TR>::set_hr_done(bool hr_done_in)
 {
-    // since the Veff operator is not refactored to contribute HR, we can keep the status of hr_done
-    return;
+    this->hr_done = hr_done_in;
 }
 
 template<typename TK, typename TR>
@@ -84,8 +83,6 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
     {
         // refresh HK
         this->refresh_h();
-        // if HR should be refreshed
-        this->reset_hr_done(ik_in);
         if(!this->hr_done)
         {
             // refresh HR
@@ -204,8 +201,11 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
     if(this->next_op != nullptr)
     {//it is not the last node, loop next init() function
         // pass HR status to next node and than set HR status of this node to done
-        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->hr_done = this->hr_done;
-        this->hr_done = true;
+        if(!this->hr_done)
+        {
+            dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->hr_done = this->hr_done;
+            this->hr_done = true;
+        }
         // call init() function of next node
         this->next_op->init(ik_in);
     }

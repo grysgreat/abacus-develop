@@ -54,9 +54,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Gr
     ModuleBase::TITLE("DeePKS", "initialize_HR");
     ModuleBase::timer::tick("DeePKS", "initialize_HR");
 
-    this->H_V_delta = new HContainer<TR>(paraV);
-    if(std::is_same<TR, double>::value)
+    //this->H_V_delta = new HContainer<TR>(paraV);
+    if(std::is_same<TK, double>::value)
     {
+        this->H_V_delta = new HContainer<TR>(paraV);
         this->H_V_delta->fix_gamma();
     }
 
@@ -112,12 +113,18 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Gr
                                          R_index2.y - R_index1.y,
                                          R_index2.z - R_index1.z,
                                          paraV);
-                this->H_V_delta->insert_pair(tmp);
+                if(std::is_same<TK, double>::value)
+                {
+                    this->H_V_delta->insert_pair(tmp);
+                }
             }
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    this->H_V_delta->allocate(true);
+    if(std::is_same<TK, double>::value)
+    {
+        this->H_V_delta->allocate(true);
+    }
 
     ModuleBase::timer::tick("DeePKS", "initialize_HR");
 }
@@ -180,6 +187,10 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
         //GlobalC::ld.add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
         
         // recalculate the H_V_delta
+        if(this->H_V_delta == nullptr)
+        {
+            this->H_V_delta = new hamilt::HContainer<double>(*this->hR);
+        }
         this->H_V_delta->set_zero();
         this->calculate_HR();
 
@@ -218,6 +229,10 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
         //    .add_v_delta_k(*this->ucell, GlobalC::ORB, GlobalC::GridD, this->LM->ParaV->nnr);
         
         // recalculate the H_V_delta
+        if(this->H_V_delta == nullptr)
+        {
+            this->H_V_delta = new hamilt::HContainer<std::complex<double>>(*this->hR);
+        }
         this->H_V_delta->set_zero();
         this->calculate_HR();
 
@@ -381,7 +396,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #ifdef _OPENMP
 }
 #endif
-
     ModuleBase::timer::tick("DeePKS", "calculate_HR");
 }
 
