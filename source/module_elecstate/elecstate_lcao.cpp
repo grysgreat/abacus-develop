@@ -178,14 +178,14 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-        // get loc.dm_gamma from DM
+        // get loc.dm_gamma from DM temporarily, and will delete this after Gint Refactor
         this->loc->dm_gamma.resize(GlobalV::NSPIN);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
             this->loc->set_dm_gamma(is,this->DM->get_DMK_pointer(is));
         }
         //
-
+/* once the above is deleted, this part is opened
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -196,7 +196,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
             }
         }
 #endif
-
+*/
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
         for (int ik = 0; ik < psi.get_nk(); ++ik)
