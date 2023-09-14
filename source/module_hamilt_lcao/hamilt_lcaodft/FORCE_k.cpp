@@ -264,6 +264,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     {
         cal_deri = false;
         //this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns);
+        this->UHM->genH.LM->SlocR.resize(this->UHM->genH.LM->ParaV->nnr);
         this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns, INPUT.dmax);
         for (int ik = 0; ik < nks; ik++)
         {

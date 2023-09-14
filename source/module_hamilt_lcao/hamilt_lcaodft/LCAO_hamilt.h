@@ -24,7 +24,6 @@ class LCAO_Hamilt
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
-    void calculate_STN_R_sparse(const int &current_spin, const double &sparse_threshold);
     void calculate_HContainer_sparse_d(const int &current_spin, 
         const double &sparse_threshold, 
         const hamilt::HContainer<double>& hR, 

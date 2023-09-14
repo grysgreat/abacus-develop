@@ -76,6 +76,7 @@ void ModuleIO::output_dH_R(const int& istep,
     ModuleBase::TITLE("ModuleIO","output_dH_R"); 
     ModuleBase::timer::tick("ModuleIO","output_dH_R"); 
 
+    UHM.LM->Hloc_fixedR.resize(UHM.LM->ParaV->nnr);
     UHM.GK.allocate_pvdpR();
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {

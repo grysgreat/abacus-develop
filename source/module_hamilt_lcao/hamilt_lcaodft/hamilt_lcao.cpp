@@ -141,7 +141,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         }
 
         // nonlocal term (<psi|beta>D<beta|psi>)
-        // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc
+        // in general case, target HR is this->hR, while target HK is LCAO_Matrix::Hloc
         if(GlobalV::VNL_IN_H)
         {
             Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
@@ -284,7 +284,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         }
 
         // kinetic term (<psi|T|psi>),
-        // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2
+        // in general case, target HR is this->hR, while target HK is LCAO_Matrix::Hloc2
         if(GlobalV::T_IN_H)
         {
             Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(
@@ -300,7 +300,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         }
 
         // nonlocal term (<psi|beta>D<beta|psi>)
-        // in general case, target HR is LCAO_Matrix::Hloc_fixedR, while target HK is LCAO_Matrix::Hloc2
+        // in general case, target HR is this->hR, while target HK is LCAO_Matrix::Hloc2
         if(GlobalV::VNL_IN_H)
         {
             Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(

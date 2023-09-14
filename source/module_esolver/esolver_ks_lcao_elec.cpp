@@ -72,11 +72,6 @@ namespace ModuleESolver
         ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->UHM.LM->allocate_HS_R(pv->nnr);
-#ifdef __DEEPKS
-            GlobalC::ld.allocate_V_deltaR(pv->nnr);
-#endif
-
             // need to first calculae lgd.
             // using GridT.init.
             this->GridT.cal_nnrg(pv);
@@ -667,19 +662,6 @@ namespace ModuleESolver
             }
             GlobalC::ld.cal_descriptor(); // final descriptor
             GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                GlobalC::ld.add_v_delta(GlobalC::ucell,
-                    GlobalC::ORB,
-                    GlobalC::GridD);
-            }
-            else
-            {
-                GlobalC::ld.add_v_delta_k(GlobalC::ucell, 
-                    GlobalC::ORB,
-                    GlobalC::GridD,
-                    pv->nnr);
-            }
         }
 #endif
         return;
