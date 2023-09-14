@@ -478,10 +478,12 @@ namespace ModuleESolver
                 if(GlobalV::NSPIN < 4)
                 {
                     this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(this->UHM.genH.LM, kv);
+                    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
                 }
                 else
                 {
                     this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(this->UHM.genH.LM, kv);
+                    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)->contributeHR();
                 }
             }
             ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");

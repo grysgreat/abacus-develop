@@ -266,6 +266,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #ifdef _OPENMP
 #pragma omp parallel
 {
+#endif
     // prepair the vector of Loop-L0-N0
     // calculate the length of Loop-L0-N0
     int L0_size = 0;
@@ -278,6 +279,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     std::vector<const double*> gedms(L0_size);
 
     std::unordered_set<int> atom_row_list;
+#ifdef _OPENMP
     #pragma omp for
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
