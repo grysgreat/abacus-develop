@@ -384,8 +384,7 @@ void ESolver_KS_LCAO::postprocess()
                                        this->pelec,
                                        kv,
                                        GlobalC::ucell,
-                                       GlobalC::ORB,
-                                       GlobalC::GridD);
+                                       this->p_hamilt);
     }
 
     if (INPUT.out_dos)
@@ -402,7 +401,8 @@ void ESolver_KS_LCAO::postprocess()
                                GlobalC::Pkpoints,
                                GlobalC::ucell,
                                this->pelec->eferm,
-                               GlobalV::NBANDS);
+                               GlobalV::NBANDS,
+                               this->p_hamilt);
     }
 }
 

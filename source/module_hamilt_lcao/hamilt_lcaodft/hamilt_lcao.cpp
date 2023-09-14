@@ -26,6 +26,30 @@ namespace hamilt
 {
 
 template<typename TK, typename TR>
+HamiltLCAO<TK, TR>::HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in)
+{
+    this->classname = "HamiltLCAO";
+
+    this->kv = &kv_in;
+
+    // Real space Hamiltonian is inited with template TR
+    this->hR = new HContainer<TR>(LM_in->ParaV);
+    this->sR = new HContainer<TR>(LM_in->ParaV);
+
+    this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(
+        LM_in,
+        this->kv->kvec_d,
+        this->hR,
+        &(this->getHk(LM_in)),
+        this->sR,
+        &(this->getSk(LM_in)),
+        &GlobalC::ucell,
+        &GlobalC::GridD,
+        LM_in->ParaV
+    );
+}
+
+template<typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(
     Gint_Gamma* GG_in,
     Gint_k* GK_in,
@@ -39,7 +63,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     this->kv = &kv_in;
     this->classname = "HamiltLCAO";
 
-    // Real space Hamiltonian is inited with template HR
+    // Real space Hamiltonian is inited with template TR
     this->hR = new HContainer<TR>(LM_in->ParaV);
     this->sR = new HContainer<TR>(LM_in->ParaV);
 
@@ -89,7 +113,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         // in Gamma_only case, target SR is LCAO_Matrix::Sloc, which is same as SK
         this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(
             LM_in,
-            kv_in.kvec_d,
+            this->kv->kvec_d,
             this->hR,
             &(this->getHk(LM_in)),
             this->sR,
@@ -146,7 +170,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     GG_in,
                     loc_in,
                     LM_in,
-                    kv_in.kvec_d,
+                    this->kv->kvec_d,
                     pot_in,
                     this->hR, // no explicit call yet
                     &(this->getHk(LM_in)) // no explicit call yet
@@ -171,12 +195,12 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         {
             Operator<TK>* deepks = new DeePKS<OperatorLCAO<TK, TR>>(loc_in,
                                                                         LM_in,
-                                                                        kv_in.kvec_d,
+                                                                        this->kv->kvec_d,
                                                                         this->hR, // no explicit call yet
                                                                         &(this->getHk(LM_in)),
                                                                         &GlobalC::ucell,
                                                                         &GlobalC::GridD,
-                                                                        kv_in.nks,
+                                                                        this->kv->nks,
                                                                         DM_in);
             this->getOperator()->add(deepks);
         }
@@ -190,7 +214,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 kv->kvec_d,
                 this->hR,// no explicit call yet
                 &(this->getHk(LM_in)),
-                kv_in.isk
+                this->kv->isk
             );
             this->getOperator()->add(dftu);
         }
@@ -241,7 +265,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         // overlap term is indispensable
         Operator<TK>* overlap = new OverlapNew<OperatorLCAO<TK, TR>>(
             LM_in,
-            kv_in.kvec_d,
+            this->kv->kvec_d,
             this->hR,
             &(this->getHk(LM_in)),
             this->sR,
@@ -265,7 +289,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         {
             Operator<TK>* ekinetic = new EkineticNew<OperatorLCAO<TK, TR>>(
                 LM_in,
-                kv_in.kvec_d,
+                this->kv->kvec_d,
                 this->hR,
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell,
@@ -281,7 +305,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         {
             Operator<TK>* nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
                 LM_in,
-                kv_in.kvec_d,
+                this->kv->kvec_d,
                 this->hR,
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell,
@@ -297,12 +321,12 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             Operator<TK>* deepks
                 = new DeePKS<OperatorLCAO<TK, TR>>(loc_in,
                                                     LM_in,
-                                                    kv_in.kvec_d,
+                                                    this->kv->kvec_d,
                                                     hR,
                                                     &(this->getHk(LM_in)),
                                                     &GlobalC::ucell,
                                                     &GlobalC::GridD,
-                                                    kv_in.nks,
+                                                    this->kv->nks,
                                                     DM_in);
             this->getOperator()->add(deepks);
         }
@@ -315,7 +339,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 kv->kvec_d,
                 this->hR,// no explicit call yet
                 &(this->getHk(LM_in)),
-                kv_in.isk
+                this->kv->isk
             );
             this->getOperator()->add(dftu);
         }

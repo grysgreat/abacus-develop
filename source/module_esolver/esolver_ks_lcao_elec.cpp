@@ -473,10 +473,18 @@ namespace ModuleESolver
 
             this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
             this->UHM.genH.LM->ParaV = &this->orb_con.ParaV;
-            this->LM.allocate_HS_R(this->orb_con.ParaV.nnr);
-            this->LM.zeros_HSR('S');
-            this->UHM.genH.calculate_S_no(this->LM.SlocR.data());
-            ModuleIO::output_S_R(this->UHM,"SR.csr");
+            if(this->p_hamilt == nullptr)
+            {
+                if(GlobalV::NSPIN < 4)
+                {
+                    this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(this->UHM.genH.LM, kv);
+                }
+                else
+                {
+                    this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(this->UHM.genH.LM, kv);
+                }
+            }
+            ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");
         }
     }
 

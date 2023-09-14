@@ -581,11 +581,21 @@ void LCAO_Hamilt::calculate_STN_R_sparse_for_T(const double &sparse_threshold)
     return;
 }
 
-void LCAO_Hamilt::calculate_SR_sparse(const double &sparse_threshold)
+void LCAO_Hamilt::calculate_SR_sparse(const double &sparse_threshold, hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("LCAO_Hamilt","calculate_SR_sparse");
     set_R_range_sparse();
-    calculate_STN_R_sparse_for_S(sparse_threshold);
+    //calculate_STN_R_sparse(current_spin, sparse_threshold);
+    if(GlobalV::NSPIN!=4)
+    {
+        hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham);
+        this->calculate_HContainer_sparse_d(0, sparse_threshold, *(p_ham_lcao->getSR()), this->LM->SR_sparse);
+    }
+    else
+    {
+        hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_ham_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham);
+        this->calculate_HContainer_sparse_cd(0, sparse_threshold, *(p_ham_lcao->getSR()), this->LM->SR_soc_sparse);
+    }
 }
 
 void LCAO_Hamilt::calculate_TR_sparse(const double &sparse_threshold)

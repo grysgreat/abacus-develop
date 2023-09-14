@@ -120,6 +120,7 @@ void ModuleIO::output_dH_R(const int& istep,
 
 void ModuleIO::output_S_R(
     LCAO_Hamilt &UHM,
+    hamilt::Hamilt<double>* p_ham,
     const std::string &SR_filename,
     const bool &binary,
     const double &sparse_threshold)
@@ -127,7 +128,7 @@ void ModuleIO::output_S_R(
     ModuleBase::TITLE("ModuleIO","output_S_R");
     ModuleBase::timer::tick("ModuleIO","output_S_R"); 
 
-    UHM.calculate_SR_sparse(sparse_threshold);
+    UHM.calculate_SR_sparse(sparse_threshold, p_ham);
     ModuleIO::save_SR_sparse(*UHM.LM, sparse_threshold, binary, SR_filename);
     UHM.destroy_all_HSR_sparse();
 
