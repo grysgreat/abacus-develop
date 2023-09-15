@@ -296,6 +296,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
 
     const Parallel_Orbitals* pv = this->ParaV;
+    /*
     //--------------------------------------------
     // (1) allocate energy density matrix (nnr)
     //--------------------------------------------
@@ -314,6 +315,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
         }
     };
     ModuleBase::OMP_PARALLEL(init_edm2d);
+    */
 
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> EDM(&kv,pv,GlobalV::NSPIN);
@@ -504,13 +506,13 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong LNNR.nnr", pv->nnr);
         ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_foverlap_k", "irr!=LNNR.nnr");
     }
-
+    /*
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         delete[] edm2d[is];
     }
     delete[] edm2d;
-
+    */
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
     return;
 }
