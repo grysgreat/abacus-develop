@@ -423,6 +423,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
                 double Rz = ra.info[iat][cb][2];
                 // get BaseMatrix
                 hamilt::BaseMatrix<double>* tmp_matrix = EDM.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                if(tmp_matrix == nullptr) continue;
                 int row_ap = pv->atom_begin_row[iat1];
                 int col_ap = pv->atom_begin_col[iat2];
                 // get DMR
@@ -574,6 +575,10 @@ void Force_LCAO_k_new::cal_ftvnl_dphi_k_new(//double** dm2d,
                 double Ry = ra.info[iat][cb][1];
                 double Rz = ra.info[iat][cb][2];
                 // get BaseMatrix
+                if (pv->get_row_size(iat1) <= 0 || pv->get_col_size(iat2) <= 0)
+                {
+                    continue;
+                }
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                 for (int is = 0; is < GlobalV::NSPIN; ++is)
                 {
@@ -947,10 +952,15 @@ void Force_LCAO_k_new::cal_fvnl_dbeta_k_new(//double** dm2d,
                     if (is_adj)
                     {
                         // basematrix and its data pointer
+                        if (pv->get_row_size(iat1) <= 0 || pv->get_col_size(iat2) <= 0)
+                        {
+                            continue;
+                        }
                         std::vector<double*> tmp_matrix_ptr;
                         for (int is = 0; is < GlobalV::NSPIN; ++is)
                         {
-                            tmp_matrix_ptr.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2)->get_pointer());
+                            auto* tmp_base_matrix = DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
+                            tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
                         }
                         //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                         //double* tmp_matrix_ptr = tmp_matrix->get_pointer();
