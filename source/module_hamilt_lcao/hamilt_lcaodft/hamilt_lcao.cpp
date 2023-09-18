@@ -148,20 +148,12 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     kv_in.kvec_d,
                     pot_in,
                     this->hR, // no explicit call yet
-                    &(this->getHk(LM_in)) // no explicit call yet
+                    &(this->getHk(LM_in)),
+                    &GlobalC::ucell,
+                    &GlobalC::GridD,
+                    LM_in->ParaV // no explicit call yet
                 );
                 this->getOperator()->add(veff);
-
-                // Meta term
-                Operator<TK>* meta = new Meta<OperatorLCAO<TK, TR>>(
-                    GG_in,
-                    loc_in,
-                    LM_in,
-                    this->kv->kvec_d,
-                    this->hR, // no explicit call yet
-                    &(this->getHk(LM_in)) // no explicit call yet
-                );
-                this->getOperator()->add(meta);
             }
         }
 
@@ -213,25 +205,17 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     LM_in,
                     kv->kvec_d,
                     pot_in,
-                    this->hR, // no explicit call yet
-                    &(this->getHk(LM_in)) // no explicit call yet
+                    this->hR, 
+                    &(this->getHk(LM_in)),
+                    &GlobalC::ucell,
+                    &GlobalC::GridD,
+                    LM_in->ParaV
                 );
                 //reset spin index and real space Hamiltonian matrix
                 int start_spin = -1;
                 GK_in->reset_spin(start_spin);
                 GK_in->destroy_pvpR();
                 GK_in->allocate_pvpR();
-
-                // Meta term
-                Operator<TK>* meta = new Meta<OperatorLCAO<TK, TR>>(
-                    GK_in,
-                    loc_in,
-                    LM_in,
-                    kv->kvec_d,
-                    this->hR, // no explicit call yet
-                    &(this->getHk(LM_in)) // no explicit call yet
-                );
-                this->getOperator()->add(meta);
             }
         }
 
@@ -339,6 +323,11 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     //update global spin index
     if (GlobalV::NSPIN == 2)
     {
+        // if Veff is added and current_spin is changed, refresh HR
+        if(GlobalV::VL_IN_H && this->kv->isk[ik] != GlobalV::CURRENT_SPIN)
+        {
+            this->refresh();
+        }
         GlobalV::CURRENT_SPIN = this->kv->isk[ik];
     }
     this->getOperator()->init(ik);

@@ -10,6 +10,8 @@
 // specific operations for gamma point/multi-k calculations
 
 #include "gint_tools.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 
 class Gint
 {
@@ -87,10 +89,11 @@ class Gint
 		const int*const block_iw,					// block_iw[na_grid],	index of wave functions for each block
 		const int*const block_size, 				// block_size[na_grid],	number of columns of a band
 		const int*const block_index,				// block_index[na_grid+1], count total number of atomis orbitals
-		const bool*const*const cal_flag,			// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const int*const block_iat,                  // block_iat[na_grid], trach global atom index
+        const bool*const*const cal_flag,			// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 		const double*const*const psir_ylm,			// psir_ylm[bxyz][LD_pool]
 		const double*const*const psir_vlbr3,		// psir_vlbr3[bxyz][LD_pool]
-		double* GridVlocal);		// GridVlocal[lgd_now][lgd_now]
+		hamilt::HContainer<double>* hR);		// HContainer for storing the <phi_0 | V | phi_R> matrix element.
 
     void cal_meshball_vlocal_k(
         int na_grid,
@@ -195,11 +198,22 @@ class Gint
         double** dpsiy_dm,
         double** dpsiz_dm,
         double* rho);
+    
+    /**
+     * @brief calculate the neighbor atoms of each atom in this processor
+     * size of BaseMatrix with be the non-parallel version
+    */
+    void initialize_pvpR(
+        const UnitCell& unitcell,
+        Grid_Driver* gd
+    );
 
     // dimension: [GlobalC::LNNR.nnrg] 
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.
     bool pvpR_alloc_flag = false;
     double** pvpR_reduced = nullptr; //stores Hamiltonian in reduced format, for multi-l
+    hamilt::HContainer<double>* hRGint = nullptr; //stores Hamiltonian in sparse format
+    hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; //stores Hamiltonian in sparse format
     double** pvdpRx_reduced = nullptr;
     double** pvdpRy_reduced = nullptr;
     double** pvdpRz_reduced = nullptr;

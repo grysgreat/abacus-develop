@@ -353,3 +353,76 @@ void Gint::prep_grid(
 
 	return;
 }
+
+void Gint::initialize_pvpR(
+	const UnitCell& ucell_in,
+	Grid_Driver* gd)
+{
+	if(this->hRGint == nullptr)
+	{
+		this->hRGint = new hamilt::HContainer<double>(ucell_in.nat);
+	}
+	else
+	{
+		delete this->hRGint;
+		this->hRGint = new hamilt::HContainer<double>(ucell_in.nat);
+	}
+	if(GlobalV::GAMMA_ONLY_LOCAL)
+	{
+		this->hRGint->fix_gamma();
+	}
+	for (int T1 = 0; T1 < ucell_in.ntype; ++T1)
+	{
+		const Atom* atom1 = &(ucell_in.atoms[T1]);
+		for (int I1 = 0; I1 < atom1->na; ++I1)
+		{
+			auto& tau1 = atom1->tau[I1];
+
+			GlobalC::GridD.Find_atom(ucell_in, tau1, T1, I1);
+
+			const int iat1 = ucell_in.itia2iat(T1,I1);
+
+			// for grid integration (on FFT box),
+			// we only need to consider <phi_i | phi_j>,
+
+			// whether this atom is in this processor.
+			if(this->gridt->in_this_processor[iat1])
+			{
+				for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
+				{
+					const int T2 = GlobalC::GridD.getType(ad);
+					const int I2 = GlobalC::GridD.getNatom(ad);
+					const int iat2 = ucell_in.itia2iat(T2, I2);
+					const Atom* atom2 = &(ucell_in.atoms[T2]); 
+
+					// if the adjacent atom is in this processor.
+					if(this->gridt->in_this_processor[iat2])
+					{
+						if(iat1 > iat2) continue;
+						ModuleBase::Vector3<double> dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+						double distance = dtau.norm() * ucell_in.lat0;
+						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+
+						//if(distance < rcut)
+						// mohan reset this 2013-07-02 in Princeton
+						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// this should be consistant with LCAO_nnr::cal_nnrg function 
+						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
+						// distance = 7.0000000000000000
+						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						if(distance < rcut - 1.0e-15)
+						{
+							// calculate R index
+							auto& R_index = GlobalC::GridD.getBox(ad);
+							// insert this atom-pair into this->hRGint
+							hamilt::AtomPair<double> tmp_atom_pair(iat1, iat2, R_index.x, R_index.y, R_index.z, ucell_in.get_iat2iwt(), ucell_in.get_iat2iwt(), ucell_in.nat);
+							this->hRGint->insert_pair(tmp_atom_pair);
+						}
+					}// end iat2
+				}// end ad
+			}// end iat
+		}// end I1
+	}// end T1
+	this->hRGint->allocate(0);
+	this->pvpR_alloc_flag = true;
+}
