@@ -210,18 +210,7 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
                                 iic = mu * this->LM->ParaV->ncol + nu;
                             }
 
-                            if (dim1 == 0)
-                            {
-                                if (GlobalV::NSPIN != 4)
-                                {
-                                    mat_k[iic] += this->LM->SlocR[nnr] * kphase;
-                                }
-                                else
-                                {
-                                    mat_k[iic] += this->LM->SlocR_soc[nnr] * kphase;
-                                }
-                            }
-                            else if (dim1 <= 3)
+                            if (dim1 <= 3)
                             {
                                 mat_k[iic] += mat_ptr[nnr] * kphase;
                             }

@@ -32,6 +32,7 @@ VPATH=./src_global:\
 ./module_elecstate/kernels:\
 ./module_elecstate/potentials:\
 ./module_elecstate/module_charge:\
+./module_elecstate/module_dm:\
 ./module_psi:\
 ./module_psi/kernels:\
 ./module_hamilt_general:\
@@ -49,6 +50,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_deepks:\
 ./module_hamilt_lcao/module_dftu:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
+./module_hamilt_lcao/hamilt_lcaodft/force_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
 ./module_relax/relax_old:\
@@ -185,6 +187,8 @@ OBJS_ELECSTAT=elecstate.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
+      density_matrix.o\
+      cal_dm_psi.o\
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -421,6 +425,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_dm.o\
       output_dm1.o\
       write_dm_sparse.o\
+      sparse_matrix.o\
 
 OBJS_LCAO=DM_gamma.o\
       DM_gamma_2d_to_grid.o\
@@ -438,6 +443,11 @@ OBJS_LCAO=DM_gamma.o\
       FORCE_gamma_tvnl.o\
       FORCE_gamma_vl.o\
       FORCE_k.o\
+      FORCE_gamma_new.o\
+      FORCE_gamma_edm_new.o\
+      FORCE_gamma_tvnl_new.o\
+      FORCE_gamma_vl_new.o\
+      FORCE_k_new.o\
       LCAO_gen_fixedH.o\
       LCAO_hamilt.o\
       LCAO_matrix.o\

@@ -4,6 +4,7 @@
 #include "module_base/matrix.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+#include "module_hamilt_general/hamilt.h"
 
 namespace ModuleIO
 {
@@ -36,6 +37,7 @@ namespace ModuleIO
 
         void output_S_R(
             LCAO_Hamilt &UHM,
+            hamilt::Hamilt<double>* p_ham,
             const std::string& SR_filename = "data-SR-sparse_SPIN0.csr",
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);

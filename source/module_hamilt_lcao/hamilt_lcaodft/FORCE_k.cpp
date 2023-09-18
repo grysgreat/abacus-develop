@@ -91,11 +91,14 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     this->cal_fvl_dphi_k(isforce, isstress, pelec->pot, fvl_dphi, svl_dphi, loc.DM_R);
 
     this->cal_fvnl_dbeta_k_new(dm2d, isforce, isstress, fvnl_dbeta, svnl_dbeta);
-
+/*
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM_k(loc.dm_k,
+        elecstate::DensityMatrix<complex<double>,double>* DM
+            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+        const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
+        GlobalC::ld.cal_projected_DM_k(dm_k,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
             GlobalC::GridD,
@@ -104,7 +107,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
-        GlobalC::ld.cal_f_delta_k(loc.dm_k,
+        GlobalC::ld.cal_f_delta_k(dm_k,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
             GlobalC::GridD,
@@ -121,7 +124,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 #endif
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.print_dm_k(kv.nks, loc.dm_k);
+            GlobalC::ld.print_dm_k(kv.nks, dm_k);
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
@@ -134,7 +137,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             {
                 uhm.LM->folding_fixedH(ik, kv.kvec_d);
             }
-            GlobalC::ld.cal_e_delta_band_k(loc.dm_k,
+            GlobalC::ld.cal_e_delta_band_k(dm_k,
                 kv.nks);
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
@@ -144,7 +147,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
         }
     }
 #endif
-
+*/
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         delete[] dm2d[is];
@@ -261,6 +264,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     {
         cal_deri = false;
         //this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns);
+        this->UHM->genH.LM->SlocR.resize(this->UHM->genH.LM->ParaV->nnr);
         this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->SlocR.data(), INPUT.cal_syns, INPUT.dmax);
         for (int ik = 0; ik < nks; ik++)
         {

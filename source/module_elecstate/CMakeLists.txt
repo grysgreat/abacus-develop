@@ -27,8 +27,6 @@ list(APPEND objects
     fp_energy.cpp
     magnetism.cpp
     occupy.cpp
-    module_dm/density_matrix.cpp
-    module_dm/cal_dm_psi.cpp
 )
 
 if(ENABLE_LCAO)
@@ -36,6 +34,8 @@ if(ENABLE_LCAO)
       elecstate_lcao.cpp
       elecstate_lcao_tddft.cpp
       potentials/H_TDDFT_pw.cpp
+      module_dm/density_matrix.cpp
+      module_dm/cal_dm_psi.cpp
   )
 endif()
 

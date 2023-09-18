@@ -137,7 +137,7 @@ void DFTU::mix_locale(const double& mixing_beta)
 }
 
 void DFTU::cal_occup_m_k(const int iter, 
-                        std::vector<ModuleBase::ComplexMatrix> &dm_k,
+                        const std::vector<std::vector<std::complex<double>>>& dm_k,
                         const K_Vectors& kv,
                         const double& mixing_beta,
                         hamilt::Hamilt<double>* p_ham)
@@ -159,7 +159,6 @@ void DFTU::cal_occup_m_k(const int iter,
     for (int ik = 0; ik < kv.nks; ik++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_k(iw,nu)
-        //this->folding_matrix_k(ik, 0, 0, &Sk[0], kv.kvec_d);
         this->folding_matrix_k_new(ik, p_ham);
         std::complex<double>* s_k_pointer = this->LM->Sloc2.data();
 
@@ -174,7 +173,8 @@ void DFTU::cal_occup_m_k(const int iter,
                 &one_int,
                 &one_int,
                 this->LM->ParaV->desc,
-                dm_k[ik].c,
+                dm_k[ik].data(),
+                //dm_k[ik].c,
                 &one_int,
                 &one_int,
                 this->LM->ParaV->desc,
@@ -344,7 +344,7 @@ void DFTU::cal_occup_m_k(const int iter,
     return;
 }
 
-void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm_gamma, const double& mixing_beta)
+void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>> &dm_gamma, const double& mixing_beta)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
@@ -374,7 +374,8 @@ void DFTU::cal_occup_m_gamma(const int iter, std::vector<ModuleBase::matrix> &dm
                 &one_int,
                 &one_int,
                 this->LM->ParaV->desc,
-                dm_gamma[is].c,
+                dm_gamma[is].data(),
+                //dm_gamma[is].c,
                 &one_int,
                 &one_int,
                 this->LM->ParaV->desc,

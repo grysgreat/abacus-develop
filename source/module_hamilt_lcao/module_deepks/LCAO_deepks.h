@@ -274,11 +274,13 @@ public:
 
     ///calculate projected density matrix:
     ///pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
-    void cal_projected_DM(const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+    void cal_projected_DM(//const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+        const std::vector<std::vector<double>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD);
-    void cal_projected_DM_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
+    void cal_projected_DM_k(//const std::vector<ModuleBase::ComplexMatrix>& dm,
+        const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
@@ -288,12 +290,14 @@ public:
 
     //calculate the gradient of pdm with regard to atomic positions
     //d/dX D_{Inl,mm'}
-    void cal_gdmx(const ModuleBase::matrix& dm,
+    void cal_gdmx(//const ModuleBase::matrix& dm,
+        const std::vector<double>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
         const bool isstress);
-    void cal_gdmx_k(const std::vector<ModuleBase::ComplexMatrix>& dm,
+    void cal_gdmx_k(//const std::vector<ModuleBase::ComplexMatrix>& dm,
+        const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
@@ -335,8 +339,11 @@ public:
     void check_v_delta_k(const int nnr);
 
     ///calculate tr(\rho V_delta)
-    void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+    //void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
+    void cal_e_delta_band(const std::vector<std::vector<double>>& dm/**<[in] density matrix*/);
+    //void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+    //    const int nks);
+    void cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm/**<[in] density matrix*/,
         const int nks);
 
 //-------------------
@@ -354,14 +361,16 @@ public:
 public:
 
     //for gamma only, pulay and HF terms of force are calculated together
-    void cal_f_delta_gamma(const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+    void cal_f_delta_gamma(//const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
+        const std::vector<std::vector<double>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
         const bool isstress, ModuleBase::matrix& svnl_dalpha);
 
     //for multi-k, pulay and HF terms of force are calculated together
-    void cal_f_delta_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+    void cal_f_delta_k(//const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
+        const std::vector<std::vector<std::complex<double>>>& dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
@@ -498,8 +507,10 @@ private:
 public:
   
     ///print density matrices
-    void print_dm(const ModuleBase::matrix &dm);
-    void print_dm_k(const int nks, const std::vector<ModuleBase::ComplexMatrix>& dm);
+    //void print_dm(const ModuleBase::matrix &dm);
+    void print_dm(const std::vector<double> &dm);
+    //void print_dm_k(const int nks, const std::vector<ModuleBase::ComplexMatrix>& dm);
+    void print_dm_k(const int nks, const std::vector<std::vector<std::complex<double>>>& dm);
 
 	///----------------------------------------------------------------------
 	///The following 4 functions save the `[dm_eig], [e_base], [f_base], [grad_vx]`

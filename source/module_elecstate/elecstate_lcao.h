@@ -29,6 +29,13 @@ class ElecStateLCAO : public ElecState
         this->lowf = lowf_in;
         this->classname = "ElecStateLCAO";
     }
+
+    virtual ~ElecStateLCAO()
+    {
+        if (this->DM != nullptr)
+            delete this->DM;
+    }
+
     // void init(Charge* chg_in):charge(chg_in){} override;
 
     // interface for HSolver to calculate rho from Psi

@@ -68,7 +68,7 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_foverlap_k_new(isforce, isstress, ra, psi, loc, foverlap, soverlap, pelec, kv.nks, kv);
+    this->cal_foverlap_k_new(isforce, isstress, ra, psi, loc, DM, foverlap, soverlap, pelec, kv.nks, kv);
 
     //DM->sum_DMR_spin();
 
@@ -84,11 +84,12 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        GlobalC::ld.cal_projected_DM_k(loc.dm_k, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
+        const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
+        GlobalC::ld.cal_projected_DM_k(dm_k, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
-        GlobalC::ld.cal_f_delta_k(loc.dm_k,
+        GlobalC::ld.cal_f_delta_k(dm_k,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
                                   GlobalC::GridD,
@@ -105,7 +106,7 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
 #endif
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.print_dm_k(kv.nks, loc.dm_k);
+            GlobalC::ld.print_dm_k(kv.nks, dm_k);
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
@@ -115,7 +116,7 @@ void Force_LCAO_k_new::ftable_k_new(const bool isforce,
             {
                 uhm.LM->folding_fixedH(ik, kv.kvec_d);
             }
-            GlobalC::ld.cal_e_delta_band_k(loc.dm_k, kv.nks);
+            GlobalC::ld.cal_e_delta_band_k(dm_k, kv.nks);
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");
@@ -284,6 +285,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
                                   Record_adj& ra,
                                   const psi::Psi<std::complex<double>>* psi,
                                   Local_Orbital_Charge& loc,
+                                  const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                                   ModuleBase::matrix& foverlap,
                                   ModuleBase::matrix& soverlap,
                                   const elecstate::ElecState* pelec,
@@ -294,6 +296,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
 
     const Parallel_Orbitals* pv = this->ParaV;
+    /*
     //--------------------------------------------
     // (1) allocate energy density matrix (nnr)
     //--------------------------------------------
@@ -312,6 +315,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
         }
     };
     ModuleBase::OMP_PARALLEL(init_edm2d);
+    */
 
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> EDM(&kv,pv,GlobalV::NSPIN);
@@ -337,25 +341,25 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
     std::vector<ModuleBase::ComplexMatrix> edm_k(nks);
 
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
-    if (loc.edm_k_tddft.size())
+    if (DM->EDMK.size())
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
         for (int ik = 0; ik < nks; ++ik)
         {
-            edm_k[ik] = loc.edm_k_tddft[ik];
-            EDM.set_DMK_pointer(ik,loc.edm_k_tddft[ik].c);
+            //edm_k[ik] = loc.edm_k_tddft[ik];
+            EDM.set_DMK_pointer(ik,DM->EDMK[ik].c);
         }
     }
     else
     {
-        elecstate::cal_dm(loc.ParaV, wgEkb, psi[0], edm_k);
+        //elecstate::cal_dm(loc.ParaV, wgEkb, psi[0], edm_k);
         // cal_dm_psi
         elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psi[0], EDM);
     }
     
-    loc.cal_dm_R(edm_k, ra, edm2d, kv);
+    //loc.cal_dm_R(edm_k, ra, edm2d, kv);
 
     // cal_dm_2d
     EDM.init_DMR(ra,&GlobalC::ucell);
@@ -421,6 +425,7 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
                 double Rz = ra.info[iat][cb][2];
                 // get BaseMatrix
                 hamilt::BaseMatrix<double>* tmp_matrix = EDM.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                if(tmp_matrix == nullptr) continue;
                 int row_ap = pv->atom_begin_row[iat1];
                 int col_ap = pv->atom_begin_col[iat2];
                 // get DMR
@@ -501,13 +506,13 @@ void Force_LCAO_k_new::cal_foverlap_k_new(const bool isforce,
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong LNNR.nnr", pv->nnr);
         ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_foverlap_k", "irr!=LNNR.nnr");
     }
-
+    /*
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         delete[] edm2d[is];
     }
     delete[] edm2d;
-
+    */
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
     return;
 }
@@ -572,6 +577,10 @@ void Force_LCAO_k_new::cal_ftvnl_dphi_k_new(//double** dm2d,
                 double Ry = ra.info[iat][cb][1];
                 double Rz = ra.info[iat][cb][2];
                 // get BaseMatrix
+                if (pv->get_row_size(iat1) <= 0 || pv->get_col_size(iat2) <= 0)
+                {
+                    continue;
+                }
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                 for (int is = 0; is < GlobalV::NSPIN; ++is)
                 {
@@ -945,10 +954,15 @@ void Force_LCAO_k_new::cal_fvnl_dbeta_k_new(//double** dm2d,
                     if (is_adj)
                     {
                         // basematrix and its data pointer
+                        if (pv->get_row_size(iat1) <= 0 || pv->get_col_size(iat2) <= 0)
+                        {
+                            continue;
+                        }
                         std::vector<double*> tmp_matrix_ptr;
                         for (int is = 0; is < GlobalV::NSPIN; ++is)
                         {
-                            tmp_matrix_ptr.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2)->get_pointer());
+                            auto* tmp_base_matrix = DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
+                            tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
                         }
                         //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                         //double* tmp_matrix_ptr = tmp_matrix->get_pointer();

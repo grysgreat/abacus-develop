@@ -72,11 +72,6 @@ namespace ModuleESolver
         ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->UHM.LM->allocate_HS_R(pv->nnr);
-#ifdef __DEEPKS
-            GlobalC::ld.allocate_V_deltaR(pv->nnr);
-#endif
-
             // need to first calculae lgd.
             // using GridT.init.
             this->GridT.cal_nnrg(pv);
@@ -153,17 +148,22 @@ namespace ModuleESolver
             // Gamma_only case
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
+                elecstate::DensityMatrix<double,double>* DM
+                    = dynamic_cast<elecstate::ElecStateLCAO<double>*>(pelec)->get_DM();
                 this->p_hamilt = new hamilt::HamiltLCAO<double, double>(&(this->UHM.GG),
                                                                 nullptr,
                                                                 &(this->UHM.genH),
                                                                 &(this->LM),
                                                                 &(this->LOC),
                                                                 this->pelec->pot,
-                                                                this->kv);
+                                                                this->kv,
+                                                                DM);
             }
             // multi_k case
             else
             {
+                elecstate::DensityMatrix<std::complex<double>,double>* DM
+                    = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
                 if(GlobalV::NSPIN < 4)
                 {
                     this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(nullptr,
@@ -172,7 +172,8 @@ namespace ModuleESolver
                                                                               &(this->LM),
                                                                               &(this->LOC),
                                                                               this->pelec->pot,
-                                                                              this->kv);
+                                                                              this->kv,
+                                                                              DM);
                 }
                 else
                 {
@@ -182,7 +183,8 @@ namespace ModuleESolver
                                                                                               &(this->LM),
                                                                                               &(this->LOC),
                                                                                               this->pelec->pot,
-                                                                                              this->kv);
+                                                                                              this->kv,
+                                                                                              DM);
                 }
             }
         }
@@ -466,10 +468,20 @@ namespace ModuleESolver
 
             this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
             this->UHM.genH.LM->ParaV = &this->orb_con.ParaV;
-            this->LM.allocate_HS_R(this->orb_con.ParaV.nnr);
-            this->LM.zeros_HSR('S');
-            this->UHM.genH.calculate_S_no(this->LM.SlocR.data());
-            ModuleIO::output_S_R(this->UHM,"SR.csr");
+            if(this->p_hamilt == nullptr)
+            {
+                if(GlobalV::NSPIN < 4)
+                {
+                    this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(this->UHM.genH.LM, kv);
+                    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+                }
+                else
+                {
+                    this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(this->UHM.genH.LM, kv);
+                    dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)->contributeHR();
+                }
+            }
+            ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");
         }
     }
 
@@ -630,14 +642,18 @@ namespace ModuleESolver
         {
             if (GlobalV::GAMMA_ONLY_LOCAL)
             {
-                GlobalC::ld.cal_projected_DM(this->LOC.dm_gamma,
+                const std::vector<std::vector<double>>& dm_gamma = 
+                    dynamic_cast<const elecstate::ElecStateLCAO<double>*> (this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::ld.cal_projected_DM(dm_gamma, //this->LOC.dm_gamma,
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD);
             }
             else
             {
-                GlobalC::ld.cal_projected_DM_k(this->LOC.dm_k,
+                const std::vector<std::vector<std::complex<double>>>& dm_k = 
+                    dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*> (this->pelec)->get_DM()->get_DMK_vector();
+                GlobalC::ld.cal_projected_DM_k(dm_k, //this->LOC.dm_k,
                     GlobalC::ucell,
                     GlobalC::ORB,
                     GlobalC::GridD,
@@ -646,19 +662,6 @@ namespace ModuleESolver
             }
             GlobalC::ld.cal_descriptor(); // final descriptor
             GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                GlobalC::ld.add_v_delta(GlobalC::ucell,
-                    GlobalC::ORB,
-                    GlobalC::GridD);
-            }
-            else
-            {
-                GlobalC::ld.add_v_delta_k(GlobalC::ucell, 
-                    GlobalC::ORB,
-                    GlobalC::GridD,
-                    pv->nnr);
-            }
         }
 #endif
         return;

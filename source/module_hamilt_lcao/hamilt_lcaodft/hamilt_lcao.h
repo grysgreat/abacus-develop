@@ -11,6 +11,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 
 namespace hamilt
 {
@@ -21,13 +22,22 @@ template <typename TK, typename TR>
 class HamiltLCAO : public Hamilt<double>
 {
   public:
+    /**
+     * @brief Constructor of Hamiltonian for LCAO base
+     * HR and SR will be allocated with Operators
+    */
     HamiltLCAO(Gint_Gamma* GG_in,
                Gint_k* GK_in,
                LCAO_gen_fixedH* genH_in,
                LCAO_Matrix* LM_in,
                Local_Orbital_Charge* loc_in,
                elecstate::Potential* pot_in,
-               const K_Vectors& kv_in);
+               const K_Vectors& kv_in,
+               elecstate::DensityMatrix<TK,double>* DM_in);
+    /**
+     * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
+    */
+    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in);
 
     ~HamiltLCAO()
     {
@@ -80,7 +90,9 @@ class HamiltLCAO : public Hamilt<double>
     HContainer<TR>* hR = nullptr;
     HContainer<TR>* sR = nullptr;
 
-    std::vector<TK> sk;
+    // sk and hk will be refactored to HamiltLCAO later
+    //std::vector<TK> sk;
+    //std::vector<TK> hk;
 };
 
 } // namespace hamilt
