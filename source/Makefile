@@ -11,7 +11,7 @@ OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
 ifeq ($(OPENMP), ON)
-    ELPA_NAME = elpa
+    ELPA_NAME = elpa_openmp
 else
     ELPA_NAME = elpa
 endif
@@ -61,8 +61,7 @@ ifeq ($(INTEL), ON)
     #==========================
     # ELPA package
     #==========================
-    ELPA_LIB_DIR = /usr/lib/x86_64-linux-gnu
-    ELPA_INCLUDE_DIR = /usr/include/elpa
+    ELPA_LIB_DIR = ${ELPA_DIR}/lib
     LIBS     += -L${ELPA_LIB_DIR} -l${ELPA_NAME}  -Wl,-rpath=${ELPA_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 else
@@ -82,7 +81,7 @@ else
     #==========================
     # OPENBLAS, SCALAPACK, ELPA
     #==========================
-    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -l${ELPA_NAME} -lscalapack-openmpi -lopenblas -lgfortran\
+    LIBS     += -L${OPENBLAS_LIB_DIR} -L${SCALAPACK_LIB_DIR} -L${ELPA_DIR}/lib -l${ELPA_NAME} -lscalapack -lopenblas -lgfortran\
                 -Wl,-rpath=${ELPA_DIR}/lib -Wl,-rpath=${SCALAPACK_LIB_DIR} -Wl,-rpath=${OPENBLAS_LIB_DIR}
     INCLUDES += -I${ELPA_INCLUDE_DIR}
 endif
