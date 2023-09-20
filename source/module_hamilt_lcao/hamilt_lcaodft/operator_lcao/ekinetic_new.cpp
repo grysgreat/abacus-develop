@@ -254,11 +254,8 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         if (this->HR_fixed == nullptr)
         {
             this->HR_fixed = new hamilt::HContainer<TR>(*this->hR);
+            this->HR_fixed->set_zero();
             this->allocated = true;
-        }
-        else
-        {
-            this->HR_fixed->shape_synchron( *this->hR);
         }
         if(this->next_sub_op != nullptr)
         {

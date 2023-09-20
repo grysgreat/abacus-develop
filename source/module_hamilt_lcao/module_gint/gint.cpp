@@ -81,6 +81,7 @@ void Gint::cal_gint(Gint_inout *inout)
             //perpare auxiliary arrays to store thread-specific values
 #ifdef _OPENMP
 			double* pvpR_thread;
+			hamilt::HContainer<double>* hRGint_thread = nullptr;// auxiliary pointer for multi-threading
 			if(inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta)
 			{
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
@@ -90,8 +91,7 @@ void Gint::cal_gint(Gint_inout *inout)
                 }
                 if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
                 {
-                    pvpR_thread = new double[lgd*lgd];
-                    ModuleBase::GlobalFunc::ZEROS(pvpR_thread, lgd*lgd);
+					hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
                 }
 			}
 
@@ -173,7 +173,7 @@ void Gint::cal_gint(Gint_inout *inout)
 						if((GlobalV::GAMMA_ONLY_LOCAL && lgd>0) || !GlobalV::GAMMA_ONLY_LOCAL)
 						{
 							this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
-								pvpR_thread);
+								pvpR_thread, hRGint_thread);
 						}
 					#else
 						if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
@@ -211,7 +211,7 @@ void Gint::cal_gint(Gint_inout *inout)
 						if((GlobalV::GAMMA_ONLY_LOCAL && lgd>0) || !GlobalV::GAMMA_ONLY_LOCAL)
 						{
 							this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
-								pvpR_thread);
+								pvpR_thread, hRGint_thread);
 						}
 					#else
 						if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
@@ -256,11 +256,10 @@ void Gint::cal_gint(Gint_inout *inout)
                 if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
                 {
                     #pragma omp critical(gint_gamma)
-                    for(int i=0;i<lgd*lgd;i++)
                     {
-                        pvpR_grid[i] += pvpR_thread[i];
-                    }
-                    delete[] pvpR_thread;
+						this->hRGint->add(*hRGint_thread);
+					}
+                    delete hRGint_thread;
                 }
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
@@ -352,4 +351,106 @@ void Gint::prep_grid(
 	assert( GlobalC::ucell.omega > 0.0);
 
 	return;
+}
+
+void Gint::initialize_pvpR(
+	const UnitCell& ucell_in,
+	Grid_Driver* gd)
+{
+	ModuleBase::TITLE("Gint","initialize_pvpR");
+
+	int npol = 1;
+	if(GlobalV::NSPIN!=4)
+	{
+		if(this->hRGint != nullptr) delete this->hRGint;
+		this->hRGint = new hamilt::HContainer<double>(ucell_in.nat);
+	}
+	else
+	{
+		npol = 2;
+		if(this->hRGintCd != nullptr) delete this->hRGintCd;
+		this->hRGintCd = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
+	}
+
+	// prepare the row_index and col_index for construct AtomPairs, they are same, name as orb_index
+	std::vector<int> orb_index(ucell_in.nat + 1);
+	orb_index[0] = 0;
+	for(int i=1;i<orb_index.size();i++)
+	{
+		int type = ucell_in.iat2it[i-1];
+		orb_index[i] = orb_index[i-1] + ucell_in.atoms[type].nw * npol;
+	}
+	if(GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4)
+	{
+		this->hRGint->fix_gamma();
+	}
+	for (int T1 = 0; T1 < ucell_in.ntype; ++T1)
+	{
+		const Atom* atom1 = &(ucell_in.atoms[T1]);
+		for (int I1 = 0; I1 < atom1->na; ++I1)
+		{
+			auto& tau1 = atom1->tau[I1];
+
+			gd->Find_atom(ucell_in, tau1, T1, I1);
+
+			const int iat1 = ucell_in.itia2iat(T1,I1);
+
+			// for grid integration (on FFT box),
+			// we only need to consider <phi_i | phi_j>,
+
+			// whether this atom is in this processor.
+			if(this->gridt->in_this_processor[iat1])
+			{
+				for (int ad = 0; ad < gd->getAdjacentNum()+1; ++ad)
+				{
+					const int T2 = gd->getType(ad);
+					const int I2 = gd->getNatom(ad);
+					const int iat2 = ucell_in.itia2iat(T2, I2);
+					const Atom* atom2 = &(ucell_in.atoms[T2]); 
+
+					// NOTE: hRGint wil save total number of atom pairs, 
+					// if only upper triangle is saved, the lower triangle will be lost in 2D-block parallelization.
+					// if the adjacent atom is in this processor.
+					if(this->gridt->in_this_processor[iat2])
+					{
+						ModuleBase::Vector3<double> dtau = gd->getAdjacentTau(ad) - tau1;
+						double distance = dtau.norm() * ucell_in.lat0;
+						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+
+						//if(distance < rcut)
+						// mohan reset this 2013-07-02 in Princeton
+						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// this should be consistant with LCAO_nnr::cal_nnrg function 
+						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
+						// distance = 7.0000000000000000
+						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						if(distance < rcut - 1.0e-15)
+						{
+							// calculate R index
+							auto& R_index = gd->getBox(ad);
+							// insert this atom-pair into this->hRGint
+							if(GlobalV::NSPIN != 4)
+							{
+								hamilt::AtomPair<double> tmp_atom_pair(iat1, iat2, R_index.x, R_index.y, R_index.z, orb_index.data(), orb_index.data(), ucell_in.nat);
+								this->hRGint->insert_pair(tmp_atom_pair);
+							}
+							else
+							{
+								hamilt::AtomPair<std::complex<double>> tmp_atom_pair(iat1, iat2, R_index.x, R_index.y, R_index.z, orb_index.data(), orb_index.data(), ucell_in.nat);
+								this->hRGintCd->insert_pair(tmp_atom_pair);
+							}
+						}
+					}// end iat2
+				}// end ad
+			}// end iat
+		}// end I1
+	}// end T1
+	if(GlobalV::NSPIN != 4)
+	{
+		this->hRGint->allocate(0);
+	}
+	else
+	{
+		this->hRGintCd->allocate(0);
+	}
 }

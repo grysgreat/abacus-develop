@@ -30,8 +30,9 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 			if(size==0) continue;
 
 			int * block_iw, * block_index, * block_size;
+			int * block_iat;
 			bool** cal_flag;
-			Gint_Tools::get_block_info(*this->gridt, this->bxyz, size, grid_index, block_iw, block_index, block_size, cal_flag);
+			Gint_Tools::get_block_info(*this->gridt, this->bxyz, size, grid_index, block_iw, block_index, block_size, block_iat, cal_flag);
 
 			//evaluate psi on grids
 			Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -74,6 +75,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 			delete[] block_iw;
 			delete[] block_index;
 			delete[] block_size;
+			delete[] block_iat;
 			for(int ib=0; ib<this->bxyz; ++ib)
 			{
 				delete[] cal_flag[ib];

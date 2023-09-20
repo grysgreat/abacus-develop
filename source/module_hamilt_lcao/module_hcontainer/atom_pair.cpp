@@ -135,6 +135,9 @@ AtomPair<T>::AtomPair(const int& atom_i_,
     this->col_size = col_atom_begin[atom_j + 1] - col_atom_begin[atom_j];
     this->R_index.resize(3, 0);
     this->current_R = 0;
+    this->R_index[0] = rx;
+    this->R_index[1] = ry;
+    this->R_index[2] = rz;
     if (existed_matrix != nullptr)
     {
         this->ldc = row_atom_begin[natom] - row_atom_begin[0];

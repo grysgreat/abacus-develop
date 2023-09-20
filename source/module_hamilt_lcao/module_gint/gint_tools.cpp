@@ -128,12 +128,14 @@ namespace Gint_Tools
 		int * &block_iw,
 		int * &block_index,
 		int * &block_size,
+		int * &block_iat,
 		bool** &cal_flag
 	)
 	{
 		block_iw = new int[na_grid];
 		block_index = new int[na_grid+1];
 		block_size = new int[na_grid];
+		block_iat = new int[na_grid];
 		cal_flag = new bool* [bxyz];
 		for(int ib=0; ib<bxyz; ib++)
 		{
@@ -145,6 +147,7 @@ namespace Gint_Tools
 		{
 			const int mcell_index=gt.bcell_start[grid_index] + id;
 			const int iat=gt.which_atom[mcell_index]; // index of atom
+			block_iat[id] = iat;
 			const int it=GlobalC::ucell.iat2it[ iat ]; // index of atom type
 			const int ia=GlobalC::ucell.iat2ia[ iat ]; // index of atoms within each type
 			const int start=GlobalC::ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)

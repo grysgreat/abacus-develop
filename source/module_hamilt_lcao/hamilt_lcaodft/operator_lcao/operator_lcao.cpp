@@ -139,18 +139,19 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
             //cal_type=lcao_gint refer to grid integral operators, which are relied on stucture and potential based on real space grids
             //and should be updated each SCF steps
 
-            OperatorLCAO<TK, TR>* last = this;
-            while(last != nullptr)
+            if(!this->hr_done)
             {
-                //update HR first
-                //in cal_type=lcao_gint, HR should be updated by every sub-node.
-                last->contributeHR();
+                OperatorLCAO<TK, TR>* last = this;
+                while(last != nullptr)
+                {
+                    //update HR first
+                    //in cal_type=lcao_gint, HR should be updated by every sub-node.
+                    last->contributeHR();
 
-                //update HK next
-                //in cal_type=lcao_gint, HK should be updated by every sub-node.
-                last->contributeHk(ik_in);
-
-                last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                    //update HK next
+                    //in cal_type=lcao_gint, HK will update in the last node with OperatorLCAO::contributeHk()
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
             }
 
             break;
