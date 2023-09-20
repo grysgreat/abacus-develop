@@ -280,7 +280,7 @@ namespace Gint_Tools
         double* DMR,
 		const int job);
 }
-
+/*
 // sum_nu rho_mu,nu psi_nu, for gamma point
     void mult_psi_DM_new(
         const Grid_Technique& gt, 
@@ -296,7 +296,7 @@ namespace Gint_Tools
 		double** psi_DM,
 		const double*const*const DM,
 		const int job);
-
+*/
 
 namespace Gint_Tools
 {

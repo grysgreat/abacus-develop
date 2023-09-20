@@ -10,6 +10,8 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -297,4 +299,20 @@ void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
 
 
     ModuleBase::timer::tick("Gint_Gamma","transfer_pvpR");
+}
+
+void Gint_Gamma::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
+{
+    ModuleBase::TITLE("Gint_Gamma","transfer_DMR");
+    ModuleBase::timer::tick("Gint_Gamma","transfer_DMR");
+
+    for (auto& tmp_DMR_grid: this->DMRGint)
+    {
+        if (tmp_DMR_grid == nullptr)
+        {
+            tmp_DMR_grid = new hamilt::HContainer<double>(*this->hRGint);
+        }
+        hamilt::transferParallels2Serials(DM2D, tmp_DMR_grid);
+    }
+    ModuleBase::timer::tick("Gint_Gamma","transfer_DMR");
 }
