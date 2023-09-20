@@ -523,7 +523,20 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
     // ===================================
     // transfer HR from Gint to Veff<OperatorLCAO<std::complex<double>, double>>
     // ===================================
-    hamilt::transferSerials2Parallels<double>(*this->hRGint, hR);
+#ifdef __MPI
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if(size == 1)
+    {
+        hR->add(*this->hRGint);
+    }
+    else
+    {
+        hamilt::transferSerials2Parallels(*this->hRGint, hR);
+    }
+#else
+    hR->add(*this->hRGint);
+#endif
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
     
     return;
@@ -669,7 +682,20 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
     // ===================================
     // transfer HR from Gint to Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>
     // ===================================
-    hamilt::transferSerials2Parallels<std::complex<double>>(*this->hRGintCd, hR);
+#ifdef __MPI
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if(size == 1)
+    {
+        hR->add(*this->hRGintCd);
+    }
+    else
+    {
+        hamilt::transferSerials2Parallels<std::complex<double>>(*this->hRGintCd, hR);
+    }
+#else
+    hR->add(*this->hRGintCd);
+#endif
     
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
     return;
