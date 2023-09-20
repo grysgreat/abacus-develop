@@ -36,6 +36,15 @@ class Gint
         const int& ny_in,
         const int& nplane_in,
         const int& startz_current_in);
+    
+    /**
+     * @brief calculate the neighbor atoms of each atom in this processor
+     * size of BaseMatrix with be the non-parallel version
+    */
+    void initialize_pvpR(
+        const UnitCell& unitcell,
+        Grid_Driver* gd
+    );
 
     const Grid_Technique* gridt = nullptr;
     protected:
@@ -61,7 +70,8 @@ class Gint
         const double delta_r,
         double* vldr3,
         const int LD_pool,
-        double* pvpR_reduced);
+        double* pvpR_reduced,
+        hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
     void gint_kernel_dvlocal(
@@ -81,7 +91,8 @@ class Gint
         double* vldr3,
         double* vkdr3,
         const int LD_pool,
-        double* pvpR_reduced);
+        double* pvpR_reduced,
+        hamilt::HContainer<double>* hR = nullptr);
 
 	void cal_meshball_vlocal_gamma(
 		const int na_grid,  						// how many atoms on this (i,j,k) grid
@@ -198,15 +209,6 @@ class Gint
         double** dpsiy_dm,
         double** dpsiz_dm,
         double* rho);
-    
-    /**
-     * @brief calculate the neighbor atoms of each atom in this processor
-     * size of BaseMatrix with be the non-parallel version
-    */
-    void initialize_pvpR(
-        const UnitCell& unitcell,
-        Grid_Driver* gd
-    );
 
     // dimension: [GlobalC::LNNR.nnrg] 
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.

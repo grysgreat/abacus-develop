@@ -484,19 +484,32 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
                             
                             hamilt::BaseMatrix<double>* tmp_matrix = this->hRGint->find_matrix(iat, iat2, dR.x, dR.y, dR.z);
-                            if(tmp_matrix == nullptr)
-                            {
-                                ModuleBase::WARNING_QUIT("Gint_k::transfer_pvpR","tmp_matrix == nullptr");
-                            }
+#ifdef __DEBUG
+                            assert(tmp_matrix != nullptr);
+#endif
                             double* tmp_pointer = tmp_matrix->get_pointer();
                             const double *vijR = &pvpR_reduced[0][ixxx];
                             for(int iw=0; iw<atom1->nw; iw++)
                             {
                                 for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                 {
-                                    *tmp_pointer++ = *vijR++; 
-                                    //if(((start1+iw == 238 ) && ( start2+iw2 == 1089 )))
-                                    //    GlobalV::ofs_running<<__FILE__<<__LINE__<<" "<<iat<<" "<<iat2<<" "<<ixxx<<" "<<start1+iw<<" "<<start2+iw2<<" "<<vijR[iw2]<<" "<<iw2_lo[iw2]<<" "<<vij[iw2_lo[iw2]]<<std::endl;
+                                    *tmp_pointer++ = *vijR++;
+                                }
+                            }
+                            // save the lower triangle.
+                            if(iat < iat2)//skip iat == iat2
+                            {
+                                hamilt::BaseMatrix<double>* conj_matrix = this->hRGint->find_matrix(iat2, iat, -dR.x, -dR.y, -dR.z);
+#ifdef __DEBUG
+                                assert(conj_matrix != nullptr);
+#endif
+                                tmp_pointer = tmp_matrix->get_pointer();
+                                for(int iw=0; iw<atom1->nw; iw++)
+                                {
+                                    for(int iw2 = 0; iw2<atom2->nw; ++iw2)
+                                    {
+                                        conj_matrix->get_value(iw2, iw) = *tmp_pointer++; 
+                                    }
                                 }
                             }
                             ++nad;
@@ -511,6 +524,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
     // transfer HR from Gint to Veff<OperatorLCAO<std::complex<double>, double>>
     // ===================================
     hamilt::transferSerials2Parallels<double>(*this->hRGint, hR);
+    ModuleBase::timer::tick("Gint_k","transfer_pvpR");
     
     return;
 }
@@ -582,10 +596,9 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
                             
                             hamilt::BaseMatrix<std::complex<double>>* tmp_matrix = this->hRGintCd->find_matrix(iat, iat2, dR.x, dR.y, dR.z);
-                            if(tmp_matrix == nullptr)
-                            {
-                                ModuleBase::WARNING_QUIT("Gint_k::transfer_pvpR","tmp_matrix == nullptr");
-                            }
+#ifdef __DEBUG
+                            assert(tmp_matrix != nullptr);
+#endif
                             std::complex<double>* tmp_pointer = tmp_matrix->get_pointer();
                             std::vector<int> step_trace(4, 0);
                             for (int is = 0; is < 2; is++)
@@ -595,10 +608,10 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
                                     step_trace[is * 2 + is2] = atom2->nw * 2 * is + is2;
                                 }
                             }
-                            std::complex<double>* vijR[4];
+                            const double* vijR[4];
                             for(int spin = 0; spin < 4; spin++) 
                             {
-                                auto vijR = &pvpR_reduced[spin][ixxx];
+                                vijR[spin] = &pvpR_reduced[spin][ixxx];
                             }
                             for(int iw=0; iw<atom1->nw; iw++)
                             {
@@ -628,6 +641,23 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
                                     tmp_pointer += 2 * atom2->nw;
                                 }
                             }
+                            // save the lower triangle.
+                            if(iat < iat2)
+                            {
+                                hamilt::BaseMatrix<std::complex<double>>* conj_matrix = this->hRGintCd->find_matrix(iat2, iat, -dR.x, -dR.y, -dR.z);
+#ifdef __DEBUG
+                                assert(conj_matrix != nullptr);
+#endif
+                                tmp_pointer = tmp_matrix->get_pointer();
+                                for(int iw1=0; iw1<atom1->nw * 2; ++iw1)
+                                {
+                                    for(int iw2 = 0; iw2<atom2->nw * 2; ++iw2)
+                                    {
+                                        conj_matrix->get_value(iw2, iw1) = conj(*tmp_pointer);
+                                        tmp_pointer++;
+                                    }
+                                }
+                            }
                             ++nad;
                         }// end distane<rcut
                     }
@@ -641,5 +671,6 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
     // ===================================
     hamilt::transferSerials2Parallels<std::complex<double>>(*this->hRGintCd, hR);
     
+    ModuleBase::timer::tick("Gint_k","transfer_pvpR");
     return;
 }

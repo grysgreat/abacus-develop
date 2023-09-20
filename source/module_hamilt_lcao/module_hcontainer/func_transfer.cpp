@@ -239,7 +239,7 @@ void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s, hamilt::HCont
     std::vector<int> sendbuf, receivebuf;
     std::vector<int> sendcounts(size), recvcounts(size), sdispls(size), rdispls(size);
     // -----------------------------------
-    
+    // prepare sendbuf and sendcounts and sdispls and size of receivebuf   
     for (int i = 0; i < size; ++i)
     { // transfer in same process
         std::vector<int> tmp_indexes;
@@ -356,7 +356,10 @@ void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s, hamilt::HCont
     // send data
     for (int i = 0; i < size; ++i)
     {
-        trans_s.pack_data(i, (sendbuf.data() + sdispls[i]));
+        if(sendcounts[i] > 0)
+        {
+            trans_s.pack_data(i, (sendbuf.data() + sdispls[i]));
+        }
     }
 
     /*end_time = std::chrono::high_resolution_clock::now();
@@ -383,7 +386,10 @@ void transferSerials2Parallels(const hamilt::HContainer<TR>& hR_s, hamilt::HCont
     // receive data
     for (int i = 0; i < size; ++i)
     {
-        trans_p.receive_data(i, (receivebuf.data() + rdispls[i]));
+        if(recvcounts[i] > 0)
+        {
+            trans_p.receive_data(i, (receivebuf.data() + rdispls[i]));
+        }
     }
     } // end of data_transfer
 
@@ -534,7 +540,10 @@ void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p, hamilt::HCont
     // send data
     for (int i = 0; i < size; ++i)
     {
-        trans_p.pack_data(i, (sendbuf.data() + sdispls[i]));
+        if(sendcounts[i] > 0)
+        {
+            trans_p.pack_data(i, (sendbuf.data() + sdispls[i]));
+        }
     }
 
     /*end_time = std::chrono::high_resolution_clock::now();
@@ -561,7 +570,10 @@ void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p, hamilt::HCont
     // receive data
     for (int i = 0; i < size; ++i)
     {
-        trans_s.receive_data(i, (receivebuf.data() + rdispls[i]));
+        if(recvcounts[i] > 0)
+        {
+            trans_s.receive_data(i, (receivebuf.data() + rdispls[i]));
+        }
     }
     } // end of data_transfer
 

@@ -286,8 +286,6 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
         this->calculate_HContainer_sparse_cd(current_spin, sparse_threshold, *(p_ham_lcao->getSR()), this->LM->SR_soc_sparse);
     }
 
-    GK.cal_vlocal_R_sparseMatrix(current_spin, sparse_threshold, this->LM);
-
     if (GlobalV::dft_plus_u)
     {
         if (GlobalV::NSPIN != 4)

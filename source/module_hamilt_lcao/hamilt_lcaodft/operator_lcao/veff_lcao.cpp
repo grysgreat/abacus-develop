@@ -162,10 +162,6 @@ template<typename TK, typename TR>
 void Veff<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("Veff", "contributeHk");
-    ModuleBase::timer::tick("Veff", "contributeHk");
-    
-
-    ModuleBase::timer::tick("Veff", "contributeHk");
 }
 
 }

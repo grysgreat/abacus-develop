@@ -23,7 +23,8 @@ void Gint::gint_kernel_vlocal(
 	const double delta_r,
 	double* vldr3,
 	const int LD_pool,
-	double* pvpR_in)
+	double* pvpR_in,
+	hamilt::HContainer<double>* hR)
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
@@ -47,9 +48,10 @@ void Gint::gint_kernel_vlocal(
 	//and accumulates to the corresponding element in Hamiltonian
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
+		if(hR == nullptr) hR = this->hRGint;
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
-			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, this->hRGint);
+			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
     }
     else
     {
@@ -134,7 +136,8 @@ void Gint::gint_kernel_vlocal_meta(
 	double* vldr3,
 	double* vkdr3,
 	const int LD_pool,
-	double* pvpR_in)
+	double* pvpR_in,
+	hamilt::HContainer<double>* hR)
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
@@ -172,22 +175,23 @@ void Gint::gint_kernel_vlocal_meta(
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {
+		if(hR == nullptr) hR = this->hRGint;
 		//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
-			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, this->hRGint);
+			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
 		//integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
-			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, this->hRGint);
+			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, hR);
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
-			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, this->hRGint);
+			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, hR);
 		this->cal_meshball_vlocal_gamma(
 			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
-			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, this->hRGint);
+			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, hR);
     }
     else
     {
@@ -268,9 +272,9 @@ void Gint::cal_meshball_vlocal_gamma(
                 if(ib_length<=0) continue;
 
 				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
-				hamilt::BaseMatrix<double>* tmp_matrix = hR->find_matrix(iat1, iat2, 0,0,0);
+				hamilt::AtomPair<double>* tmp_ap = hR->find_pair(iat1, iat2);
 #ifdef __DEBUG
-				assert(tmp_matrix!=nullptr);
+				assert(tmp_ap!=nullptr);
 #endif
                 int cal_pair_num=0;
                 for(int ib=first_ib; ib<last_ib; ++ib)
@@ -279,12 +283,13 @@ void Gint::cal_meshball_vlocal_gamma(
                 }
 
                 const int n=block_size[ia2];
+				//std::cout<<__FILE__<<__LINE__<<" "<<n<<" "<<m<<" "<<tmp_ap->get_row_size()<<" "<<tmp_ap->get_col_size()<<std::endl;
                 if(cal_pair_num>ib_length/4)
                 {
                     dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
                         &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
                         &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
-                        &beta, tmp_matrix->get_pointer(), &n);
+                        &beta, tmp_ap->get_pointer(0), &n);
 						//&GridVlocal[iw1_lo*lgd_now+iw2_lo], &lgd_now);   
                 }
                 else
@@ -297,10 +302,11 @@ void Gint::cal_meshball_vlocal_gamma(
                             dgemm_(&transa, &transb, &n, &m, &k, &alpha,
                                 &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
                                 &psir_ylm[ib][block_index[ia1]], &LD_pool,
-                                &beta, tmp_matrix->get_pointer(), &n);                          
+                                &beta, tmp_ap->get_pointer(0), &n);                          
                         }
                     }
                 }
+				//std::cout<<__FILE__<<__LINE__<<" "<<tmp_ap->get_pointer(0)[2]<<std::endl;
 			}
 		}
 	}

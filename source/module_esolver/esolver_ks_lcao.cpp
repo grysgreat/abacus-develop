@@ -584,9 +584,15 @@ void ESolver_KS_LCAO::eachiterinit(const int istep, const int iter)
     }
 #endif
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    if(GlobalV::VL_IN_H)
     {
-        this->UHM.GK.renew();
+        // update Gint_K
+        if (!GlobalV::GAMMA_ONLY_LOCAL)
+        {
+            this->UHM.GK.renew();
+        }
+        // update real space Hamiltonian
+        this->p_hamilt->refresh();
     }
 }
 void ESolver_KS_LCAO::hamilt2density(int istep, int iter, double ethr)

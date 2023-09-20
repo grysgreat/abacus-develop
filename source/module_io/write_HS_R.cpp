@@ -27,40 +27,30 @@ void ModuleIO::output_HS_R(const int& istep,
     }
     else if(GlobalV::NSPIN==2)
     {
-        // jingan add 2021-6-4
-        for (int ik = 0; ik < kv.nks; ik++)
+        // save HR of current_spin first
+        UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
+        // calculate HR of the other spin
+        if(GlobalV::VL_IN_H)
         {
-            if (ik == 0 || ik == kv.nks / 2)
+            int ik = 0;
+            if(GlobalV::CURRENT_SPIN == 1)
             {
-                if(GlobalV::NSPIN == 2)
-                {
-                    GlobalV::CURRENT_SPIN = kv.isk[ik];
-                }
-
-                //note: some MPI process will not have grids when MPI cores is too many, v_eff in these processes are empty
-                const double* vr_eff1 = v_eff.nc * v_eff.nr > 0? &(v_eff(GlobalV::CURRENT_SPIN, 0)):nullptr;
-                    
-                if(!GlobalV::GAMMA_ONLY_LOCAL)
-                {
-                    if(GlobalV::VL_IN_H)
-                    {
-                        Gint_inout inout(vr_eff1, GlobalV::CURRENT_SPIN, Gint_Tools::job_type::vlocal);
-                        UHM.GK.cal_gint(&inout);
-                    }
-                }
-
-                UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
+                ik = 0;
+                GlobalV::CURRENT_SPIN = 0;
+            } 
+            else
+            {
+                ik = kv.nks / 2;
+                GlobalV::CURRENT_SPIN = 1;
             }
+            p_ham->refresh();
+            p_ham->updateHk(ik);
         }
+        UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
     }
 
     ModuleIO::save_HSR_sparse(istep, *UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
     UHM.destroy_all_HSR_sparse();
-
-    if(!GlobalV::GAMMA_ONLY_LOCAL) //LiuXh 20181011
-    {
-        UHM.GK.destroy_pvpR();
-    } //LiuXh 20181011
 
     ModuleBase::timer::tick("ModuleIO","output_HS_R"); 
     return;

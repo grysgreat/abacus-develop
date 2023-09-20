@@ -491,21 +491,18 @@ void HTransSerial<T>::pack_data(int irank, T* values)
     assert(values != nullptr);
     assert(this->size_values[irank] != 0);
 #endif
-    const int number_atom = this->orb_indexes[irank][0];
     auto& sparse_ap = this->hr->get_sparse_ap();
     auto& sparse_ap_index = this->hr->get_sparse_ap_index();
-#ifdef __DEBUG
-    assert(sparse_ap.size() == number_atom);
-#endif
 
 #ifdef _OPENMP
     // calculate the index of each atom
-    std::vector<T*> value_atoms(number_atom, values);
+    std::vector<T*> value_atoms(sparse_ap.size(), values);
     long size_begin = 0;
     for (int i = 0; i < sparse_ap.size(); ++i)
     {
         value_atoms[i] += size_begin;
         const int atom_i = i;
+        if(sparse_ap[i].size() == 0) continue;
         const int size_row = this->orb_indexes[irank][this->orb_row_indexes[irank][atom_i]];
         for (int j = 0; j < sparse_ap[i].size(); ++j)
         {
@@ -575,21 +572,18 @@ void HTransSerial<T>::unpack_data(int irank, const T* values)
     assert(values != nullptr);
     assert(this->size_values[irank] != 0);
 #endif
-    const int number_atom = this->orb_indexes[irank][0];
     auto& sparse_ap = this->hr->get_sparse_ap();
     auto& sparse_ap_index = this->hr->get_sparse_ap_index();
-#ifdef __DEBUG
-    assert(sparse_ap.size() == number_atom);
-#endif
 
 #ifdef _OPENMP
     // calculate the index of each atom
-    std::vector<const T*> value_atoms(number_atom, values);
+    std::vector<const T*> value_atoms(sparse_ap.size(), values);
     long size_begin = 0;
     for (int i = 0; i < sparse_ap.size(); ++i)
     {
         value_atoms[i] += size_begin;
         const int atom_i = i;
+        if(sparse_ap[i].size() == 0) continue;
         const int size_row = this->orb_indexes[irank][this->orb_row_indexes[irank][atom_i]];
         for (int j = 0; j < sparse_ap[i].size(); ++j)
         {

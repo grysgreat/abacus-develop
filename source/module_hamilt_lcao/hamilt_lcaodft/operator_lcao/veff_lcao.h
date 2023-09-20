@@ -44,6 +44,7 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         this->cal_type = lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in, paraV);
+        GK_in->initialize_pvpR(*ucell_in, GridD_in);
     }
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
                           Local_Orbital_Charge* loc_in,
@@ -62,6 +63,8 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         this->cal_type = lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in, paraV);
+
+        GG_in->initialize_pvpR(*ucell_in, GridD_in);
     }
 
     ~Veff<OperatorLCAO<TK, TR>>(){};
