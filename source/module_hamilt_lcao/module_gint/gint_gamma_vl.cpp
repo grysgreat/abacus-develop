@@ -320,13 +320,24 @@ void Gint_Gamma::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM
     ModuleBase::TITLE("Gint_Gamma","transfer_DMR");
     ModuleBase::timer::tick("Gint_Gamma","transfer_DMR");
 
-    for (auto& tmp_DMR_grid: this->DMRGint)
+#ifdef __MPI
+    for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        if (tmp_DMR_grid == nullptr)
+        if (this->DMRGint[is] == nullptr)
         {
-            tmp_DMR_grid = new hamilt::HContainer<double>(*this->hRGint);
+            this->DMRGint[is] = new hamilt::HContainer<double>(*this->hRGint);
         }
-        hamilt::transferParallels2Serials(DM2D, tmp_DMR_grid);
+        hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
     }
+#else
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        if (this->DMRGint[is] == nullptr)
+        {
+            this->DMRGint[is]->set_zero();
+            this->DMRGint[is]->add(*DM2D[is]);
+        }
+    }
+#endif
     ModuleBase::timer::tick("Gint_Gamma","transfer_DMR");
 }
