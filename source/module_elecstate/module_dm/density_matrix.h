@@ -51,6 +51,11 @@ class DensityMatrix
      * @param _DMR_in pointer of another HContainer object
      */
     void init_DMR(const hamilt::HContainer<TR>& _DMR_in);
+    /// @brief initialize density matrix DMR from another HContainer
+    /// this is a temprory function for NSPIN=4 case 
+    /// would be refactor in the future
+    /// @param _DMR_in 
+    void init_DMR(const hamilt::HContainer<std::complex<double>>& _DMR_in);
 
     /**
      * @brief set _DMK element directly

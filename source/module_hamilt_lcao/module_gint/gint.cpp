@@ -448,9 +448,11 @@ void Gint::initialize_pvpR(
 	if(GlobalV::NSPIN != 4)
 	{
 		this->hRGint->allocate(0);
+		ModuleBase::Memory::record("Gint::hRGint",this->hRGint->get_memory_size());
 	}
 	else
 	{
 		this->hRGintCd->allocate(0);
+		ModuleBase::Memory::record("Gint::hRGintCd",this->hRGintCd->get_memory_size());
 	}
 }
