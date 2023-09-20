@@ -100,7 +100,7 @@ class Gint
 		const int*const block_iw,					// block_iw[na_grid],	index of wave functions for each block
 		const int*const block_size, 				// block_size[na_grid],	number of columns of a band
 		const int*const block_index,				// block_index[na_grid+1], count total number of atomis orbitals
-		const int*const block_iat,                  // block_iat[na_grid], trach global atom index
+		const int grid_index,                       // index of grid group, for tracing iat
         const bool*const*const cal_flag,			// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 		const double*const*const psir_ylm,			// psir_ylm[bxyz][LD_pool]
 		const double*const*const psir_vlbr3,		// psir_vlbr3[bxyz][LD_pool]

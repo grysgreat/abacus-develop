@@ -259,6 +259,8 @@ OBJS_HCONTAINER=base_matrix.o\
     hcontainer.o\
     output_hcontainer.o\
     func_folding.o\
+    func_transfer.o\
+    transfer.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\

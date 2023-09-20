@@ -19,9 +19,8 @@ void Gint::gint_kernel_tau(
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
-	int * block_iat;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, block_iat, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -113,7 +112,6 @@ void Gint::gint_kernel_tau(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	delete[] block_iat;
 	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];

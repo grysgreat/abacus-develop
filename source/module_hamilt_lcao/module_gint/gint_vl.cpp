@@ -28,9 +28,8 @@ void Gint::gint_kernel_vlocal(
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
-	int* block_iat;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, block_iat, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -50,7 +49,7 @@ void Gint::gint_kernel_vlocal(
     {
 		if(hR == nullptr) hR = this->hRGint;
 		this->cal_meshball_vlocal_gamma(
-			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
+			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
     }
     else
@@ -64,7 +63,6 @@ void Gint::gint_kernel_vlocal(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	delete[] block_iat;
 	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
@@ -86,9 +84,8 @@ void Gint::gint_kernel_dvlocal(
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
-	int * block_iat;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, block_iat, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -119,7 +116,6 @@ void Gint::gint_kernel_dvlocal(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	delete[] block_iat;
 	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
@@ -141,9 +137,8 @@ void Gint::gint_kernel_vlocal_meta(
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
-	int * block_iat;
 	bool** cal_flag;
-	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, block_iat, cal_flag);
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     //evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -179,18 +174,18 @@ void Gint::gint_kernel_vlocal_meta(
 		//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
-			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
+			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			psir_ylm.ptr_2D, psir_vlbr3.ptr_2D, hR);
 		//integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
 		//and accumulates to the corresponding element in Hamiltonian
 		this->cal_meshball_vlocal_gamma(
-			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
+			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			dpsir_ylm_x.ptr_2D, dpsix_vlbr3.ptr_2D, hR);
 		this->cal_meshball_vlocal_gamma(
-			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
+			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			dpsir_ylm_y.ptr_2D, dpsiy_vlbr3.ptr_2D, hR);
 		this->cal_meshball_vlocal_gamma(
-			na_grid, LD_pool, block_iw, block_size, block_index, block_iat, cal_flag,
+			na_grid, LD_pool, block_iw, block_size, block_index, grid_index, cal_flag,
 			dpsir_ylm_z.ptr_2D, dpsiz_vlbr3.ptr_2D, hR);
     }
     else
@@ -213,7 +208,6 @@ void Gint::gint_kernel_vlocal_meta(
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;
-	delete[] block_iat;
 	for(int ib=0; ib<this->bxyz; ++ib)
 	{
 		delete[] cal_flag[ib];
@@ -229,7 +223,7 @@ void Gint::cal_meshball_vlocal_gamma(
 	const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
 	const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
 	const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
-	const int*const block_iat,                  // block_iat[na_grid], trach global atom index
+	const int grid_index,                       // index of grid group, for tracing global atom index
 	const bool*const*const cal_flag,	    	// cal_flag[this->bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
 	const double*const*const psir_ylm,		    // psir_ylm[this->bxyz][LD_pool]
 	const double*const*const psir_vlbr3,	    // psir_vlbr3[this->bxyz][LD_pool]
@@ -239,14 +233,15 @@ void Gint::cal_meshball_vlocal_gamma(
 	const double alpha=1, beta=1;
     const int lgd_now = this->gridt->lgd;
 
+	const int mcell_index = this->gridt->bcell_start[grid_index];
 	for(int ia1=0; ia1<na_grid; ++ia1)
 	{
-		const int iat1 = block_iat[ia1];
+		const int iat1= this->gridt->which_atom[mcell_index + ia1];
 		const int iw1_lo=block_iw[ia1];
 		const int m=block_size[ia1];
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
-			const int iat2 = block_iat[ia2];
+			const int iat2= this->gridt->which_atom[mcell_index + ia2];
 			const int iw2_lo=block_iw[ia2];
 			if(iw1_lo<=iw2_lo)
 			{

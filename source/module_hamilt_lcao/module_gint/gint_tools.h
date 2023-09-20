@@ -183,7 +183,7 @@ namespace Gint_Tools
 	// cal_flag : whether the atom-grid distance is larger than cutoff
 	//------------------------------------------------------
 	void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid, const int grid_index,
-		int * &block_iw, int * &block_index, int * &block_size, int * &block_iat, bool** &cal_flag);		
+		int * &block_iw, int * &block_index, int * &block_size, bool** &cal_flag);		
 
 	// psir_ylm[pw.bxyz][LD_pool]
     void cal_psir_ylm(
