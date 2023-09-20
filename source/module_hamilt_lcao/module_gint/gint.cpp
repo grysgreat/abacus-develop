@@ -13,6 +13,13 @@
 #include <mkl_service.h>
 #endif
 
+Gint::~Gint()
+{
+	delete this->hRGint;
+	delete this->hRGintCd;
+	
+}
+
 void Gint::cal_gint(Gint_inout *inout)
 {
 
