@@ -281,6 +281,22 @@ namespace Gint_Tools
 		const int job);
 }
 
+// sum_nu rho_mu,nu psi_nu, for gamma point
+    void mult_psi_DM_new(
+        const Grid_Technique& gt, 
+        const int bxyz,
+        const int& grid_index,
+        const int na_grid,  					    // how many atoms on this (i,j,k) grid
+		const int LD_pool,
+		const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
+		const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
+		const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
+		const bool*const*const cal_flag,	    	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		const double*const*const psi,	    // psir_vlbr3[bxyz][LD_pool]
+		double** psi_DM,
+		const double*const*const DM,
+		const int job);
+
 
 namespace Gint_Tools
 {
