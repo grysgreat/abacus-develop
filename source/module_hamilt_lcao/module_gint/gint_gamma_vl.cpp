@@ -319,7 +319,10 @@ void Gint_Gamma::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM
 {
     ModuleBase::TITLE("Gint_Gamma","transfer_DMR");
     ModuleBase::timer::tick("Gint_Gamma","transfer_DMR");
-
+    if (this->DMRGint.size() == 0)
+    {
+        this->DMRGint.resize(GlobalV::NSPIN);
+    }
 #ifdef __MPI
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {

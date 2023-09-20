@@ -99,6 +99,7 @@ class DensityMatrix
      * @return HContainer<TR>* pointer of DMR
      */
     hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
+    std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const;
 
     /**
      * @brief get pointer of DMK

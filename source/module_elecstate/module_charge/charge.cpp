@@ -220,6 +220,7 @@ double Charge::sum_rho(void) const
 
     // mohan fixed bug 2010-01-18,
     // sum_rho may be smaller than 1, like Na bcc.
+    std::cout << __FILE__<<__LINE__<< " sum_rho: " << sum_rho << std::endl;
     if (sum_rho <= 0.1)
     {
         GlobalV::ofs_warning << " sum_rho=" << sum_rho << std::endl;
