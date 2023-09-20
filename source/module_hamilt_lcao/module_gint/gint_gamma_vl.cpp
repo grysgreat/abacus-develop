@@ -263,7 +263,9 @@ void Gint_Gamma::vl_grid_to_2D(const double* vl_grid, const Parallel_2D& p2d, co
     ModuleBase::timer::tick("Gint_Gamma","distri_vl");
 }
 
+#ifdef __MPI
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#endif
 void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
 {
     ModuleBase::TITLE("Gint_Gamma","transfer_pvpR");
@@ -293,8 +295,20 @@ void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
             }
         }
     }
-    hamilt::transferSerials2Parallels(*this->hRGint, hR);
-
+#ifdef __MPI
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if(size == 1)
+    {
+        hR->add(*this->hRGint);
+    }
+    else
+    {
+        hamilt::transferSerials2Parallels(*this->hRGint, hR);
+    }
+#else
+    hR->add(*this->hRGint);
+#endif
 
     ModuleBase::timer::tick("Gint_Gamma","transfer_pvpR");
 }
