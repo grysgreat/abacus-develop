@@ -174,16 +174,11 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
         // psi::Psi<double> dm_gamma_2d;
         //  caution:wfc and dm
-        //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         //
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
-        cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
-        double* tmp = this->DM->get_DMK_pointer(0);
-        for (int i = 0; i < 169; i++)
-        {
-                std::cout << i << " " << tmp[i] << " " << this->loc->dm_gamma[0].c[i] << std::endl;
-        }
-        this->DM->cal_DMR_wo_transpose();
+        //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
+        //double* tmp = this->DM->get_DMK_pointer(0);
+        this->DM->cal_DMR();
         // get loc.dm_gamma from DM temporarily, and will delete this after Gint Refactor
         this->loc->dm_gamma.resize(GlobalV::NSPIN);
         for (int is = 0; is < GlobalV::NSPIN; ++is)

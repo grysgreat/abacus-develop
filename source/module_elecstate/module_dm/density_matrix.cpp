@@ -607,7 +607,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_wo_transpose()
                                             2,
                                             tmp_DMR_pointer,
                                             1);
-                        tmp_DMK_pointer += this->_paraV->get_col_size(iat2);
+                        tmp_DMK_pointer += this->_paraV->ncol;
                         tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
                     }
                 }
@@ -672,7 +672,7 @@ void DensityMatrix<double, double>::cal_DMR_wo_transpose()
             for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
             {
                 BlasConnector::axpy(this->_paraV->get_col_size(iat2), kphase, tmp_DMK_pointer, 1, tmp_DMR_pointer, 1);
-                tmp_DMK_pointer += this->_paraV->get_col_size(iat2);
+                tmp_DMK_pointer += this->_paraV->ncol;
                 tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
             }
         }

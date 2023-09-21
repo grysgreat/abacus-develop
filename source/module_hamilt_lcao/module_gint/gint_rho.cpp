@@ -52,7 +52,8 @@ void Gint::gint_kernel_rho(
 				block_index, cal_flag,
 				psir_ylm.ptr_2D,
 				psir_DM.ptr_2D,
-				this->DMRGint[is], 1);			
+				this->DMRGint[is], 1);		
+			
 		}
 		else
 		{
