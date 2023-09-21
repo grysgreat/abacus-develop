@@ -2,6 +2,7 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef __DEEPKS
@@ -328,6 +329,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             this->getOperator()->add(dftu);
         }
     }
+
+    ModuleBase::Memory::record("HamiltLCAO::hR", this->hR->get_memory_size());
+    ModuleBase::Memory::record("HamiltLCAO::sR", this->sR->get_memory_size());
     
     return;
 }

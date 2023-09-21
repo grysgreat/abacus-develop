@@ -13,6 +13,13 @@
 #include <mkl_service.h>
 #endif
 
+Gint::~Gint()
+{
+	delete this->hRGint;
+	delete this->hRGintCd;
+	
+}
+
 void Gint::cal_gint(Gint_inout *inout)
 {
 
@@ -448,9 +455,11 @@ void Gint::initialize_pvpR(
 	if(GlobalV::NSPIN != 4)
 	{
 		this->hRGint->allocate(0);
+		ModuleBase::Memory::record("Gint::hRGint",this->hRGint->get_memory_size());
 	}
 	else
 	{
 		this->hRGintCd->allocate(0);
+		ModuleBase::Memory::record("Gint::hRGintCd",this->hRGintCd->get_memory_size());
 	}
 }

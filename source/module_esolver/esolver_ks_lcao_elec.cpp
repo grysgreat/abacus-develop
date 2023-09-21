@@ -319,13 +319,21 @@ namespace ModuleESolver
         this->beforesolver(istep);
         this->pelec->init_scf(istep, sf.strucFac);
         // initalize DMR
+        // DMR should be same size with Hamiltonian(R)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
-            dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->init_DMR(this->RA,&GlobalC::ucell);
+            dynamic_cast<elecstate::ElecStateLCAO<double>*>(this->pelec)->get_DM()->init_DMR(
+                *(dynamic_cast<hamilt::HamiltLCAO<double, double>*>(this->p_hamilt)->getHR()));
         }
-        else if (!GlobalV::GAMMA_ONLY_LOCAL)
+        else if (GlobalV::NSPIN != 4)
         {
-            dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->init_DMR(this->RA,&GlobalC::ucell);
+            dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->init_DMR(
+                *(dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->getHR()));
+        }
+        else 
+        {
+            dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->init_DMR(
+                *(dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)->getHR()));
         }
         
         // the electron charge density should be symmetrized,
