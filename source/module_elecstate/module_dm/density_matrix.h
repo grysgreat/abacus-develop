@@ -126,7 +126,6 @@ class DensityMatrix
      */
     void cal_DMR();
     void cal_DMR_test(); // for reference during development
-    void cal_DMR_wo_transpose(); // calculate DMR from DMK without transpose
 
     /**
      * @brief merge density matrix DMR with different spin

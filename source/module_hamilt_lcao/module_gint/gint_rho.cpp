@@ -64,7 +64,9 @@ void Gint::gint_kernel_rho(
 				cal_flag, 
 				psir_ylm.ptr_2D,
 				psir_DM.ptr_2D,
-				inout->DM_R[is], 1);
+				inout->DM_R[is],
+				this->DMRGint[is],
+				1);
 		}
 
 		//do sum_mu g_mu(r)psi_mu(r) to get electron density on grid

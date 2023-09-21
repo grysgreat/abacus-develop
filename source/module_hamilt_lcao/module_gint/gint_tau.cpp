@@ -103,21 +103,27 @@ void Gint::gint_kernel_tau(
 				cal_flag, 
 				dpsir_ylm_x.ptr_2D,
 				dpsix_DM.ptr_2D,
-				inout->DM_R[is], 1);
+				inout->DM_R[is],
+				this->DMRGint[is],
+				1);
 			Gint_Tools::mult_psi_DMR(
 				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag,
 				dpsir_ylm_y.ptr_2D,
 				dpsiy_DM.ptr_2D,
-				inout->DM_R[is], 1);
+				inout->DM_R[is], 
+				this->DMRGint[is],
+				1);
 			Gint_Tools::mult_psi_DMR(
 				*this->gridt, this->bxyz, grid_index, na_grid,
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_z.ptr_2D,
 				dpsiz_DM.ptr_2D,
-				inout->DM_R[is], 1);
+				inout->DM_R[is], 
+				this->DMRGint[is],
+				1);
 		}
 
 		//do sum_i,mu g_i,mu(r) * d/dx_i psi_mu(r) to get kinetic energy density on grid

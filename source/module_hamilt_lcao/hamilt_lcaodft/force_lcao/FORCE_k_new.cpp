@@ -1248,6 +1248,7 @@ void Force_LCAO_k_new::cal_fvl_dphi_k_new(const bool isforce,
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 Gint_inout inout(DM_R,
+                                 is,
                                  vr_eff1,
                                  vofk_eff1,
                                  isforce,
@@ -1259,7 +1260,7 @@ void Force_LCAO_k_new::cal_fvl_dphi_k_new(const bool isforce,
             }
             else
             {
-                Gint_inout inout(DM_R, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
+                Gint_inout inout(DM_R, is, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
                 this->UHM->GK.cal_gint(&inout);
             }
         }

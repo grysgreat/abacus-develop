@@ -47,6 +47,11 @@ class Gint
         const UnitCell& unitcell,
         Grid_Driver* gd
     );
+    
+    /**
+     * @brief transfer DMR (2D para) to DMR (Grid para) in elecstate_lcao.cpp
+    */
+    void transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D);
 
     const Grid_Technique* gridt = nullptr;
     protected:
