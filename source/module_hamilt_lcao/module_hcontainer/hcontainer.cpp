@@ -296,7 +296,7 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
     // find (rx, ry, rz) in this->atom_pairs[i].R_values
     for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
-        if (it->find_R(rx_in, ry_in, rz_in))
+        if (it->find_R(rx_in, ry_in, rz_in) != -1)
         {
             // push bach the pointer of AtomPair to this->tmp_atom_pairs
             const AtomPair<T>* tmp_pointer = &(*it);
@@ -594,7 +594,7 @@ void HContainer<T>::shape_synchron( const HContainer<T>& other)
             for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
             {
                 int* R_pointer = other.atom_pairs[i].get_R_index(ir);
-                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]))
+                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]) != -1)
                 {
                     // do nothing
                 }
