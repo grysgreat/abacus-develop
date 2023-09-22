@@ -480,16 +480,21 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
         {
             this->DMRGint[is] = new hamilt::HContainer<double>(*this->hRGint);
         }
+		else
+		{
+			delete this->DMRGint[is];
+			this->DMRGint[is] = new hamilt::HContainer<double>(*this->hRGint);
+		}
         hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
     }
 #else
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        if (this->DMRGint[is] == nullptr)
+        if (this->DMRGint[is] != nullptr)
         {
             this->DMRGint[is]->set_zero();
-            this->DMRGint[is]->add(*DM2D[is]);
         }
+		this->DMRGint[is]->add(*DM2D[is]);
     }
 #endif
     ModuleBase::timer::tick("Gint","transfer_DMR");

@@ -1264,7 +1264,7 @@ namespace Gint_Tools
 						if(cal_flag[ib][ia1])
 						{
 							dgemv_(&trans, &block_size[ia1], &block_size[ia1], &alpha,
-									&DMR[DM_start], &block_size[ia1],
+									tmp_matrix, &block_size[ia1],
 									&psi[ib][idx1], &inc,
 									&beta, &psi_DMR[ib][idx1], &inc);
 						}
@@ -1394,7 +1394,7 @@ namespace Gint_Tools
         				if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
         				{
             				dgemv_(&trans, &block_size[ia2], &block_size[ia1], &alpha1,
-            					&DMR[DM_start], &block_size[ia2],
+            					tmp_matrix, &block_size[ia2],
             					&psi[ib][idx1], &inc,
             					&beta, &psi_DMR[ib][idx2], &inc);
         				}

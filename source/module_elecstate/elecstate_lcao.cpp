@@ -131,7 +131,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         }
     }
 
-    this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
+    //this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10
@@ -181,12 +181,12 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //double* tmp = this->DM->get_DMK_pointer(0);
         this->DM->cal_DMR();
         // get loc.dm_gamma from DM temporarily, and will delete this after Gint Refactor
-        this->loc->dm_gamma.resize(GlobalV::NSPIN);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            this->loc->set_dm_gamma(is,this->DM->get_DMK_pointer(is));
-        }
-        //
+        //this->loc->dm_gamma.resize(GlobalV::NSPIN);
+        //for (int is = 0; is < GlobalV::NSPIN; ++is)
+        //{
+        //    this->loc->set_dm_gamma(is,this->DM->get_DMK_pointer(is));
+        //}
+        
 /* once the above is deleted, this part is opened
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
@@ -209,7 +209,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
                 psi.fix_k(ik);
                 this->print_psi(psi);
             }
-            this->loc->cal_dk_gamma_from_2D_pub();
+            //this->loc->cal_dk_gamma_from_2D_pub();
         }
     }
 
