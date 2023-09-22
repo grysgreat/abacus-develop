@@ -344,6 +344,16 @@ void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, 
     this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->nrow + j] = value;
 }
 
+// set _DMK element
+template <typename TK, typename TR>
+void DensityMatrix<TK, TR>::set_DMK_zero()
+{
+    for (int ik = 0; ik < _nspin * _nks; ik++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(this->_DMK[ik].data(), this->_paraV->get_row_size() * this->_paraV->get_col_size());
+    }
+}
+
 // get a matrix element of density matrix dm(k)
 template <typename TK, typename TR>
 TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const

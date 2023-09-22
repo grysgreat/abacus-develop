@@ -187,7 +187,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //    this->loc->set_dm_gamma(is,this->DM->get_DMK_pointer(is));
         //}
         
-/* once the above is deleted, this part is opened
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx)
         {
@@ -198,7 +197,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
             }
         }
 #endif
-*/
+
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
         for (int ik = 0; ik < psi.get_nk(); ++ik)

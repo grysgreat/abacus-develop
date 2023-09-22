@@ -72,7 +72,8 @@ class DensityMatrix
      * @param value value to be set
      */
     void set_DMK(const int ispin, const int ik, const int i, const int j, const TK value);
-
+    void set_DMK_zero();
+    
     /**
      * @brief get a matrix element of density matrix dm(k)
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
