@@ -368,6 +368,11 @@ void Gint::initialize_pvpR(
 	ModuleBase::TITLE("Gint","initialize_pvpR");
 
 	int npol = 1;
+	// there is the only resize code of DMRGint
+	if(this->DMRGint.size() == 0)
+	{
+		this->DMRGint.resize(GlobalV::NSPIN);
+	}
 	if(GlobalV::NSPIN!=4)
 	{
 		if(this->hRGint != nullptr) delete this->hRGint;
@@ -405,7 +410,7 @@ void Gint::initialize_pvpR(
 	{
 		orb_index_npol.resize(ucell_in.nat + 1);
 		orb_index_npol[0] = 0;
-		for(int i=1;i<orb_index.size();i++)
+		for(int i=1;i<orb_index_npol.size();i++)
 		{
 			int type = ucell_in.iat2it[i-1];
 			orb_index_npol[i] = orb_index_npol[i-1] + ucell_in.atoms[type].nw * npol;
@@ -513,8 +518,9 @@ void Gint::initialize_pvpR(
 			this->DMRGint[is]->allocate(0);
 		}
 		ModuleBase::Memory::record("Gint::DMRGint",this->DMRGint[0]->get_memory_size() * this->DMRGint.size());
-#ifdef __MPI					
+#ifdef __MPI	
 		this->DMRGint_full->allocate(0);
+		ModuleBase::Memory::record("Gint::DMRGint_full",this->DMRGint_full->get_memory_size());
 #endif
 	}
 
@@ -524,10 +530,6 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 {
     ModuleBase::TITLE("Gint","transfer_DMR");
     ModuleBase::timer::tick("Gint","transfer_DMR");
-    if (this->DMRGint.size() == 0)
-    {
-        this->DMRGint.resize(GlobalV::NSPIN);
-    }
 	if(GlobalV::NSPIN != 4)
 	{
 		for (int is = 0; is < this->DMRGint.size(); is++)

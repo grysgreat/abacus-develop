@@ -497,6 +497,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                 }
 #endif
                 // loop over k-points
+                if(GlobalV::NSPIN !=4 )
                 for (int ik = 0; ik < this->_nks; ++ik)
                 {
                     // cal k_phase
@@ -533,6 +534,73 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                                             1);
                         tmp_DMK_pointer += 1;
                         tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                    }
+                }
+                // treat DMR as pauli matrix when NSPIN=4
+                if(GlobalV::NSPIN==4)
+                {
+                    std::vector<std::complex<double>> tmp_DMR(this->_paraV->get_col_size() * this->_paraV->get_row_size(), std::complex<double>(0.0, 0.0));
+                    for (int ik = 0; ik < this->_nks; ++ik)
+                    {
+                        // cal k_phase
+                        // if TK==std::complex<double>, kphase is e^{ikR}
+                        const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+                        const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                        double sinp, cosp;
+                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                        std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                        // set DMR element
+                        std::complex<double>* tmp_DMR_pointer = tmp_DMR.data();
+                        std::complex<double>* tmp_DMK_pointer = this->_DMK[ik + ik_begin].data();
+                        double* DMK_real_pointer = nullptr;
+                        double* DMK_imag_pointer = nullptr;
+                        // jump DMK to fill DMR
+                        // DMR is row-major, DMK is column-major
+                        tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+                        for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+                        {
+                            BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+                                                kphase,
+                                                tmp_DMK_pointer,
+                                                ld_hk,
+                                                tmp_DMR_pointer,
+                                                1);
+                            tmp_DMK_pointer += 1;
+                            tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+                        }
+                    }
+                    int npol = 2;
+                    // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
+                    std::vector<int> step_trace(npol * npol, 0);
+                    for (int is = 0; is < npol; is++)
+                    {
+                        for (int is2 = 0; is2 < npol; is2++)
+                        {
+                            step_trace[is * npol + is2] = this->_paraV->get_col_size(iat2) * is + is2;
+                            //step_trace[is + is2 * npol] = this->_paraV->get_col_size(iat2) * is + is2;
+                        }
+                    }
+                    std::complex<double> tmp[4];
+                    double* target_DMR = tmp_matrix->get_pointer();
+                    std::complex<double>* tmp_DMR_pointer = tmp_DMR.data();
+                    for(int irow=0;irow<this->_paraV->get_row_size(iat1);irow += 2)
+                    {
+                        for(int icol=0;icol<this->_paraV->get_col_size(iat2);icol += 2)
+                        {
+                            // catch the 4 spin component value of one orbital pair
+                            tmp[0] = tmp_DMR_pointer[icol + step_trace[0]];
+                            tmp[1] = tmp_DMR_pointer[icol + step_trace[1]];
+                            tmp[2] = tmp_DMR_pointer[icol + step_trace[2]];
+                            tmp[3] = tmp_DMR_pointer[icol + step_trace[3]];
+                            // transfer to Pauli matrix and save the real part
+                            // save them back to the tmp_matrix
+                            target_DMR[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();
+                            target_DMR[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();
+                            target_DMR[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag();
+                            target_DMR[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();
+                        }
+                        tmp_DMR_pointer += this->_paraV->get_col_size(iat2) * 2;
+                        target_DMR += this->_paraV->get_col_size(iat2) * 2;
                     }
                 }
             }
