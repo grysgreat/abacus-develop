@@ -36,7 +36,6 @@ LCAO_Deepks::LCAO_Deepks()
     inl_l = nullptr;
     H_V_deltaR = nullptr;
     gedm = nullptr;
-    H_V_delta_k = nullptr;
 }
 
 //Desctructor of the class
@@ -45,7 +44,6 @@ LCAO_Deepks::~LCAO_Deepks()
     delete[] alpha_index;
     delete[] inl_index;
     delete[] inl_l;
-    delete[] H_V_delta;
     delete[] H_V_deltaR;
 
     //=======1. to use deepks, pdm is required==========
@@ -67,14 +65,6 @@ LCAO_Deepks::~LCAO_Deepks()
         delete[] gedm;
     }
 
-    if (H_V_delta_k)
-    {
-        for (int ik = 0; ik < this->nks_V_delta; ++ik)
-        {
-            delete[] H_V_delta_k[ik];
-        }
-        delete[] H_V_delta_k;
-    }
     del_gdmx();
 }
 
