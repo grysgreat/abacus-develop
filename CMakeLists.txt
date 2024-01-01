@@ -38,6 +38,13 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 
 
 
+# enable json support
+if(ENABLE_RAPIDJSON)
+  find_package(RapidJSON REQUIRED)
+  add_compile_definitions(__RAPIDJSON)
+  include_directories(${RapidJSON_INCLUDE_PATH})
+endif()
+
 
 if (USE_CUDA)
   set(USE_CUSOLVER_LCAO ON)
