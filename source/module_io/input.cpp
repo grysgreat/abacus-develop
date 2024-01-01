@@ -827,7 +827,9 @@ bool Input::Read(const std::string &fn)
         {
             read_kspacing(ifs);
             for(int i=0;i<3;i++){
+#ifdef __RAPIDJSON 
                 Para_Json::kspacing.PushBack(kspacing[i],Para_Json::doc.GetAllocator());
+#endif
             }
         }
         else if (strcmp("min_dist_coef", word) == 0)
@@ -2677,10 +2679,11 @@ bool Input::Read(const std::string &fn)
         {
             ifs >> vdw_cutoff_period.x >> vdw_cutoff_period.y;
             read_value(ifs, vdw_cutoff_period.z);
-
+#ifdef __RAPIDJSON 
             Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.x,Para_Json::doc.GetAllocator());
             Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.y,Para_Json::doc.GetAllocator());
             Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.z,Para_Json::doc.GetAllocator());
+#endif
         }
         //--------------------------------------------------------
         // restart           Peize Lin 2020-04-04
@@ -3348,7 +3351,9 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> hubbard_u[i];
+#ifdef __RAPIDJSON 
                     Para_Json::hubbard_u.PushBack(hubbard_u[i],Para_Json::doc.GetAllocator());
+#endif
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
@@ -3357,7 +3362,9 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> orbital_corr[i];
+#ifdef __RAPIDJSON 
                     Para_Json::orbital_corr.PushBack(orbital_corr[i],Para_Json::doc.GetAllocator());
+#endif
                 }
             }
             else if (strcmp("omc", word) == 0)
@@ -3432,7 +3439,9 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> hubbard_u[i];
+#ifdef __RAPIDJSON 
                     Para_Json::hubbard_u.PushBack(hubbard_u[i],Para_Json::doc.GetAllocator());
+#endif
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
@@ -3441,7 +3450,9 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> orbital_corr[i];
+#ifdef __RAPIDJSON 
                     Para_Json::orbital_corr.PushBack(orbital_corr[i],Para_Json::doc.GetAllocator());
+#endif
                 }
             }
             else
