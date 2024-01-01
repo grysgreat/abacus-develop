@@ -84,9 +84,9 @@ int main(int argc, char **argv)
 	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
 	MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
 
-
+	int result;
 #ifdef __RAPIDJSON
-	int result = RUN_ALL_TESTS();
+	result = RUN_ALL_TESTS();
 #endif
 	MPI_Finalize();
 	return result;
