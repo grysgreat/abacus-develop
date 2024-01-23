@@ -26,7 +26,8 @@ MPI_Comm STO_WORLD;
 MPI_Comm PARAPW_WORLD; // qianrui add it for sto-dft 2021-4-14
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13z
 MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
-
+int mpi_number=0;
+int omp_number=0;
 void Parallel_Global::myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr)
 {
 	for(int i=0;i<*len;i++)
