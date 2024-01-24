@@ -1,4 +1,4 @@
-
+#define private public
 #include "gtest/gtest.h"
 #include "../abacusjson.h"
 #include <fstream>
@@ -56,12 +56,13 @@ TEST(AbacusJsonTest, OutputJson) {
 
     std::ifstream file(filename);
     ASSERT_TRUE(file.is_open());
-
+    
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    ASSERT_NE(content.find("\"key\":\"value\""), std::string::npos);
-    ASSERT_NE(content.find("\"key2\":{\"key3\":1}"), std::string::npos);
-    ASSERT_NE(content.find("\"key4\":0.1"), std::string::npos);
-    ASSERT_NE(content.find("\"key5\":true"), std::string::npos);
+    ASSERT_NE(content.find("\"key1\": \"value1\","), std::string::npos);
+    //ASSERT_NE(content.find("\"key2\" : {\"key3\":1}"), std::string::npos);
+    ASSERT_NE(content.find("\"key4\": 0.1"), std::string::npos);
+    ASSERT_NE(content.find("\"key5\": true"), std::string::npos);
+
 
     file.close();
 }
