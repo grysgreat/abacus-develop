@@ -185,6 +185,8 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     MPI_Comm_size(shmcomm, &process_num);
     MPI_Comm_rank(shmcomm, &local_rank);
     MPI_Comm_free(&shmcomm);
+    mpi_number = process_num;
+    omp_number = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank==0)
     {
         std::stringstream mess;
