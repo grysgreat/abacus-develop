@@ -8,6 +8,8 @@
 
 #ifdef __RAPIDJSON
 #include "json_output/abacusjson.h"
+#include "json_output/general_info.h"
+#include "module_io/input.h"
 #endif // __RAPIDJSON
 
 namespace Json
@@ -15,7 +17,7 @@ namespace Json
 void json_output()
 {
 #ifdef __RAPIDJSON
-    gen_general_info();
+    gen_general_info(INPUT);
     AbacusJson::write_to_json("abacus.json");
 #endif // __RAPIDJSON
 }

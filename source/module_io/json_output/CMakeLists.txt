@@ -1,6 +1,6 @@
 list(APPEND objects_json
     abacusjson.cpp
-    json_general_info.cpp
+    general_info.cpp
 
 )
 

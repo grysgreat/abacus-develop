@@ -4,10 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/stringbuffer.h"
-
 #include "abacusjson.h"
 
 namespace Json
@@ -74,7 +70,15 @@ void AbacusJson::write_to_json(std::string filename)
     ofs << buffer.GetString();
     ofs.close();
 };
-
-
+  template <>
+  void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value)
+  {
+      if (!doc.IsObject())
+      {
+          doc.SetObject();
+      }
+      rapidjson::Value val(value.c_str(), doc.GetAllocator());
+      add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
+  }
 } // namespace Json
 
