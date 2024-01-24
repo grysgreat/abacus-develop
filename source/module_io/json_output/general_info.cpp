@@ -3,7 +3,7 @@
 #include "abacusjson.h"
 #include "module_base/parallel_global.h"
 #include "module_io/input.h"
-
+#include "version.h"
 namespace Json
 {
 void gen_general_info(Input& input)
