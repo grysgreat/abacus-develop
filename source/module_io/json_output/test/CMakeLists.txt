@@ -6,5 +6,5 @@ remove_definitions(-DUSE_PAW)
 
 AddTest(
   TARGET io_json_output_json
-  SOURCES ../json.cpp
+  SOURCES ../abacusjson.cpp
 )
