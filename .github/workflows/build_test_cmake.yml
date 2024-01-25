@@ -35,6 +35,10 @@ jobs:
           - tag: gnu
             build_args: "-DENABLE_MPI=0"
             name: "Build without LCAO and MPI"
+          - tag: gnu
+            build_args: "-DENABLE_RAPIDJSON=ON"
+            name: "Build with Rapidjson"
+
 
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
