@@ -60,6 +60,7 @@ VPATH=./src_global:\
 ./module_relax/relax_new:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
+./module_io/json_output:\
 ./src_ri:\
 ./module_ri:\
 ./\
