@@ -73,13 +73,23 @@ TEST(AbacusJsonTest, OutputJson)
 TEST(AbacusJsonTest, GeneralInfo)
 {
 
-    INPUT.Default();
-    std::string input_file = "../../test/support/INPUT";
-    INPUT.Read(input_file);
+    INPUT.device = "cpu";
+    INPUT.pseudo_dir = "./abacus/test/pseudo_dir";
+    INPUT.orbital_dir = "./abacus/test/orbital_dir";
+    INPUT.stru_file = "./abacus/test/stru_file";
+    INPUT.kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
+    Json::AbacusJson::doc.Parse("{}");
     Json::json_output();
 
-    std::string filename = "test.json";
+    std::string filename = "abacus.json";
     std::ifstream file(filename);
     ASSERT_TRUE(file.is_open());
+
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+    ASSERT_NE(content.find("\"version\": \"v3.5.1\","), std::string::npos);
+    ASSERT_NE(content.find("\"device\": \"cpu\","), std::string::npos);
+    ASSERT_NE(content.find("\"omp_num\": 0,"), std::string::npos);
+    ASSERT_NE(content.find("\"orbital_dir\": \"./abacus/test/orbital_dir\","), std::string::npos);
 }
