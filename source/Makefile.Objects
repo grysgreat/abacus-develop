@@ -210,7 +210,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_fp.o\
     esolver_ks_pw.o\
     esolver_ks_pw_tool.o\
-    esolver_sdft_pw.o\
+    esolver_sdft_pw.omodule_io\
     esolver_sdft_pw_tool.o\
     esolver_lj.o\
     esolver_dp.o\
@@ -446,6 +446,10 @@ OBJS_IO=input.o\
     output_potential.o\
     output_mat_sparse.o\
     output_radial.o\
+    para_json.o\
+    abacusjson.o\
+    general_info.o\
+
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
