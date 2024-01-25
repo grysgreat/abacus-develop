@@ -3,7 +3,7 @@
 #include "abacusjson.h"
 #include "module_base/parallel_global.h"
 #include "module_io/input.h"
-
+#include "version.h"
 namespace Json
 {
 void gen_general_info(Input& input)
@@ -30,8 +30,8 @@ void gen_general_info(Input& input)
     std::string end_time_str;
     convert_time(time_now, end_time_str);
 
-    int mpi_num = Parallel_Global::mpi_number;
-    int omp_num = Parallel_Global::omp_number;
+    const int mpi_num = Parallel_Global::mpi_number;
+    const int omp_num = Parallel_Global::omp_number;
 
     AbacusJson::add_json({"general_info", "version"}, version);
     AbacusJson::add_json({"general_info", "commit"}, commit);

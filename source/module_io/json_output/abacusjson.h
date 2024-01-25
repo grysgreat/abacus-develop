@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -10,14 +9,21 @@
 namespace Json
 {
 
-
 // This class is used to construct a json value, and output some key values to a json file.
 class AbacusJson
 {
   public:
     // Add a key value pair to the json
     template <typename T>
-    static void add_json(std::vector<std::string> keys, const T& value);
+    static void add_json(std::vector<std::string> keys, const T& value)
+    {
+        if (!doc.IsObject())
+        {
+            doc.SetObject();
+        }
+        rapidjson::Value val(value);
+        add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
+    }
 
     // Output the json to a file
     static void write_to_json(std::string filename);
@@ -31,28 +37,8 @@ class AbacusJson
                                   rapidjson::Value& parent,
                                   rapidjson::Document::AllocatorType& allocator);
 };
-
-template <typename T>
-void AbacusJson::add_json(std::vector<std::string> keys, const T& value)
-{
-    if (!doc.IsObject())
-    {
-        doc.SetObject();
-    }
-    rapidjson::Value val(value);
-    add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
-}
-
 template <>
-void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value)
-{
-    if (!doc.IsObject())
-    {
-        doc.SetObject();
-    }
-    rapidjson::Value val(value.c_str(), doc.GetAllocator());
-    add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
-}
+void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value);
 
 
 } // namespace Json
