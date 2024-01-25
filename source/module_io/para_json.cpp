@@ -17,7 +17,7 @@ namespace Json
 void json_output()
 {
 #ifdef __RAPIDJSON
-    gen_general_info(INPUT);
+    gen_general_info();
     AbacusJson::write_to_json("abacus.json");
 #endif // __RAPIDJSON
 }

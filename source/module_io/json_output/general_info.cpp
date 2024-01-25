@@ -6,7 +6,7 @@
 #include "version.h"
 namespace Json
 {
-void gen_general_info(Input& input)
+void gen_general_info()
 {
 
 #ifdef VERSION
@@ -21,7 +21,7 @@ void gen_general_info(Input& input)
 #endif
 
     // start_time
-    std::time_t start_time = input.get_start_time();
+    std::time_t start_time = INPUT.get_start_time();
     std::string start_time_str;
     convert_time(start_time, start_time_str);
 
@@ -30,18 +30,18 @@ void gen_general_info(Input& input)
     std::string end_time_str;
     convert_time(time_now, end_time_str);
 
-    const int mpi_num = Parallel_Global::mpi_number;
-    const int omp_num = Parallel_Global::omp_number;
+    int mpi_num = Parallel_Global::mpi_number;
+    int omp_num = Parallel_Global::omp_number;
 
     AbacusJson::add_json({"general_info", "version"}, version);
     AbacusJson::add_json({"general_info", "commit"}, commit);
-    AbacusJson::add_json({"general_info", "device"}, input.device);
+    AbacusJson::add_json({"general_info", "device"}, INPUT.device);
     AbacusJson::add_json({"general_info", "mpi_num"}, mpi_num);
     AbacusJson::add_json({"general_info", "omp_num"}, omp_num);
-    AbacusJson::add_json({"general_info", "pseudo_dir"}, input.pseudo_dir);
-    AbacusJson::add_json({"general_info", "orbital_dir"}, input.orbital_dir);
-    AbacusJson::add_json({"general_info", "stru_file"}, input.stru_file);
-    AbacusJson::add_json({"general_info", "kpt_file"}, input.kpoint_file);
+    AbacusJson::add_json({"general_info", "pseudo_dir"}, INPUT.pseudo_dir);
+    AbacusJson::add_json({"general_info", "orbital_dir"}, INPUT.orbital_dir);
+    AbacusJson::add_json({"general_info", "stru_file"}, INPUT.stru_file);
+    AbacusJson::add_json({"general_info", "kpt_file"}, INPUT.kpoint_file);
     AbacusJson::add_json({"general_info", "start_time"}, start_time_str);
     AbacusJson::add_json({"general_info", "end_time"}, end_time_str);
 }

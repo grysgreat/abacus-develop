@@ -2,5 +2,5 @@
 
 namespace Json
 {
-    void gen_general_info(Input& input);
+void gen_general_info();
 }
