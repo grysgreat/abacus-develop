@@ -1,9 +1,11 @@
 #define private public
-#include "gtest/gtest.h"
-#include "../abacusjson.h"
 #include <fstream>
 
-TEST(AbacusJsonTest, AddJson) {
+#include "../abacusjson.h"
+#include "gtest/gtest.h"
+
+TEST(AbacusJsonTest, AddJson)
+{
     Json::AbacusJson::doc.SetObject();
 
     // add a string
@@ -43,11 +45,12 @@ TEST(AbacusJsonTest, AddJson) {
     ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 4.56);
 }
 
-TEST(AbacusJsonTest, OutputJson) {
+TEST(AbacusJsonTest, OutputJson)
+{
     Json::AbacusJson::doc.SetObject();
 
     Json::AbacusJson::add_json({"key1"}, "value1");
-    Json::AbacusJson::add_json({"key2","key3"}, 1);
+    Json::AbacusJson::add_json({"key2", "key3"}, 1);
     Json::AbacusJson::add_json({"key4"}, 0.1);
     Json::AbacusJson::add_json({"key5"}, true);
 
@@ -56,7 +59,7 @@ TEST(AbacusJsonTest, OutputJson) {
 
     std::ifstream file(filename);
     ASSERT_TRUE(file.is_open());
-    
+
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     ASSERT_NE(content.find("\"key1\": \"value1\","), std::string::npos);
     ASSERT_NE(content.find("\"key2\": {"), std::string::npos);
@@ -64,6 +67,19 @@ TEST(AbacusJsonTest, OutputJson) {
     ASSERT_NE(content.find("\"key4\": 0.1"), std::string::npos);
     ASSERT_NE(content.find("\"key5\": true"), std::string::npos);
 
-
     file.close();
+}
+
+TEST(AbacusJsonTest, GeneralInfo)
+{
+
+    INPUT.Default();
+    std::string input_file = "../../test/support/INPUT";
+    INPUT.Read(input_file);
+    // output the json file
+    Json::json_output();
+
+    std::string filename = "test.json";
+    std::ifstream file(filename);
+    ASSERT_TRUE(file.is_open());
 }
