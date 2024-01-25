@@ -30,8 +30,16 @@ void gen_general_info()
     std::string end_time_str;
     convert_time(time_now, end_time_str);
 
+
+#ifdef __MPI
     int mpi_num = Parallel_Global::mpi_number;
     int omp_num = Parallel_Global::omp_number;
+#elif
+    int mpi_num = 1;
+    int omp_num = 1;
+#endif
+
+
 
     AbacusJson::add_json({"general_info", "version"}, version);
     AbacusJson::add_json({"general_info", "commit"}, commit);
