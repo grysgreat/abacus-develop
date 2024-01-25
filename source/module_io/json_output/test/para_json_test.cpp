@@ -1,8 +1,9 @@
-#define private public
-#include <fstream>
-
-#include "../abacusjson.h"
 #include "gtest/gtest.h"
+#define private public
+#define __RAPIDJSON 1
+#include "../abacusjson.h"
+#include "module_io/input.h"
+#include "module_io/para_json.h"
 
 TEST(AbacusJsonTest, AddJson)
 {
