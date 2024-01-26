@@ -4,7 +4,7 @@
 #include "../abacusjson.h"
 #include "module_io/input.h"
 #include "module_io/para_json.h"
-
+#include "version.h"
 TEST(AbacusJsonTest, AddJson)
 {
     Json::AbacusJson::doc.SetObject();
@@ -90,7 +90,7 @@ TEST(AbacusJsonTest, GeneralInfo)
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     ASSERT_NE(content.find("\"version\": \"v3.5.1\","), std::string::npos);
-    ASSERT_NE(content.find("\"commit\": \"b0fa3d92e (Thu Jan 25 15:17:24 2024 +0800)\","), std::string::npos);
+    ASSERT_NE(content.find(VERSION), std::string::npos);
     ASSERT_NE(content.find("\"device\": \"cpu\","), std::string::npos);
     ASSERT_NE(content.find("\"omp_num\": 0,"), std::string::npos);
     ASSERT_NE(content.find("\"mpi_num\": 0,"), std::string::npos);
