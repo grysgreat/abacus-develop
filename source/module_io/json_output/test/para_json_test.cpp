@@ -90,7 +90,13 @@ TEST(AbacusJsonTest, GeneralInfo)
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
     ASSERT_NE(content.find("\"version\": \"v3.5.1\","), std::string::npos);
+    ASSERT_NE(content.find("\"commit\": \"b0fa3d92e (Thu Jan 25 15:17:24 2024 +0800)\","), std::string::npos);
     ASSERT_NE(content.find("\"device\": \"cpu\","), std::string::npos);
     ASSERT_NE(content.find("\"omp_num\": 0,"), std::string::npos);
+    ASSERT_NE(content.find("\"mpi_num\": 0,"), std::string::npos);
     ASSERT_NE(content.find("\"orbital_dir\": \"./abacus/test/orbital_dir\","), std::string::npos);
+    ASSERT_NE(content.find("\"pseudo_dir\": \"./abacus/test/pseudo_dir\","), std::string::npos);
+    ASSERT_NE(content.find("\"stru_file\": \"./abacus/test/stru_file\","), std::string::npos);
+    ASSERT_NE(content.find("\"kpt_file\": \"./abacus/test/kpoint_file\","), std::string::npos);
+    ASSERT_NE(content.find("\"start_time\": \"1970-01-01 08:00:00\","), std::string::npos);
 }
