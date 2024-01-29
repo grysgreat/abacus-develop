@@ -1,4 +1,5 @@
 #include "general_info.h"
+
 #include "../para_json.h"
 #include "abacusjson.h"
 #include "module_base/parallel_global.h"
@@ -6,6 +7,8 @@
 #include "version.h"
 namespace Json
 {
+
+#ifdef __RAPIDJSON
 void gen_general_info()
 {
 
@@ -30,7 +33,6 @@ void gen_general_info()
     std::string end_time_str;
     convert_time(time_now, end_time_str);
 
-
 #ifdef __MPI
     int mpi_num = Parallel_Global::mpi_number;
     int omp_num = Parallel_Global::omp_number;
@@ -38,8 +40,6 @@ void gen_general_info()
     int mpi_num = 1;
     int omp_num = 1;
 #endif
-
-
 
     AbacusJson::add_json({"general_info", "version"}, version);
     AbacusJson::add_json({"general_info", "commit"}, commit);
@@ -53,4 +53,5 @@ void gen_general_info()
     AbacusJson::add_json({"general_info", "start_time"}, start_time_str);
     AbacusJson::add_json({"general_info", "end_time"}, end_time_str);
 }
+#endif
 } // namespace Json

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 
+#include "module_base/global_variable.h"
 #ifdef __RAPIDJSON
 #include "json_output/abacusjson.h"
 #include "json_output/general_info.h"
@@ -18,7 +19,13 @@ void json_output()
 {
 #ifdef __RAPIDJSON
     gen_general_info();
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+        AbacusJson::write_to_json("abacus.json");
+#elif
     AbacusJson::write_to_json("abacus.json");
+#endif
+
 #endif // __RAPIDJSON
 }
 

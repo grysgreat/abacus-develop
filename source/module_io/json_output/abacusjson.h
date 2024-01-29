@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
+#ifdef __RAPIDJSON
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
@@ -40,5 +42,5 @@ class AbacusJson
 template <>
 void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value);
 
-
 } // namespace Json
+#endif

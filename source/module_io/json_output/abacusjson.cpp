@@ -1,16 +1,16 @@
+#include "abacusjson.h"
 
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include "abacusjson.h"
-
 namespace Json
 {
 
-
+#ifdef __RAPIDJSON
 rapidjson::Document AbacusJson::doc;
+
 void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
                                    std::vector<std::string>::iterator end,
                                    rapidjson::Value& val,
@@ -70,15 +70,15 @@ void AbacusJson::write_to_json(std::string filename)
     ofs << buffer.GetString();
     ofs.close();
 };
-  template <>
-  void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value)
-  {
-      if (!doc.IsObject())
-      {
-          doc.SetObject();
-      }
-      rapidjson::Value val(value.c_str(), doc.GetAllocator());
-      add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
-  }
+template <>
+void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value)
+{
+    if (!doc.IsObject())
+    {
+        doc.SetObject();
+    }
+    rapidjson::Value val(value.c_str(), doc.GetAllocator());
+    add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
+}
+#endif
 } // namespace Json
-
