@@ -75,6 +75,30 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_EQ(Json::AbacusJson::doc["array"][2]["int"].GetInt(), 2);
     ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["string"].GetString(), "200");
     ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
+
+    // add array in array
+    Json::jsonValue object0(rapidjson::kArrayType);
+
+    object0.PushBack(1, Json::AbacusJson::doc.GetAllocator());
+    object0.PushBack(2, Json::AbacusJson::doc.GetAllocator());
+    object0.PushBack(3, Json::AbacusJson::doc.GetAllocator());
+    
+    Json::jsonValue object1(rapidjson::kArrayType);
+
+    object1.PushBack(2, Json::AbacusJson::doc.GetAllocator());
+    object1.PushBack(3, Json::AbacusJson::doc.GetAllocator());
+    object1.PushBack(4, Json::AbacusJson::doc.GetAllocator());
+
+    Json::AbacusJson::add_json({"Darray"}, object0,true);
+    Json::AbacusJson::add_json({"Darray"}, object1,true);
+
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][0].GetInt(), 1);
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][1].GetInt(), 2);
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][2].GetInt(), 3);
+
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][0].GetInt(), 2);
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][1].GetInt(), 3);
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][2].GetInt(), 4);
 }
 
 TEST(AbacusJsonTest, OutputJson)
