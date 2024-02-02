@@ -53,16 +53,15 @@ TEST(AbacusJsonTest, AddJson)
     Json::AbacusJson::add_json({"key6","key7"}, true,true);
     Json::AbacusJson::add_json({"key6","key7"}, false,true);
 
-    rapidjson::Document::AllocatorType& rpjallocator = Json::AbacusJson::doc.GetAllocator();
+    
     // add key-val to a object array
     for(int i=0;i<3;i++){
-        Json::jsonValue object(rapidjson::kObjectType);
-        object.AddMember("int", i, rpjallocator);
+        Json::jsonValue object(JobjectType);
+        object.JaddNormal("int",i);
         std::string str = std::to_string(i*100);   
-        object.AddMember("string", Json::jsonValue().SetString(str.c_str(),str.length(),rpjallocator), rpjallocator);
-        object.AddMember("double", 0.01*i, rpjallocator);    
+        object.JaddString("string", str);
+        object.JaddNormal("double", 0.01*i);    
         Json::AbacusJson::add_json({"array"}, object,true);
-
     }
     ASSERT_EQ(Json::AbacusJson::doc["array"][0]["int"].GetInt(), 0);
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["string"].GetString(), "0");
@@ -77,17 +76,17 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
 
     // add array in array
-    Json::jsonValue object0(rapidjson::kArrayType);
+    Json::jsonValue object0(JarrayType);
 
-    object0.PushBack(1, Json::AbacusJson::doc.GetAllocator());
-    object0.PushBack(2, Json::AbacusJson::doc.GetAllocator());
-    object0.PushBack(3, Json::AbacusJson::doc.GetAllocator());
+    object0.JPushBack(1);
+    object0.JPushBack(2);
+    object0.JPushBack(3);
     
-    Json::jsonValue object1(rapidjson::kArrayType);
+    Json::jsonValue object1(JarrayType);
 
-    object1.PushBack(2, Json::AbacusJson::doc.GetAllocator());
-    object1.PushBack(3, Json::AbacusJson::doc.GetAllocator());
-    object1.PushBack(4, Json::AbacusJson::doc.GetAllocator());
+    object1.JPushBack(2);
+    object1.JPushBack(3);
+    object1.JPushBack(4);
 
     Json::AbacusJson::add_json({"Darray"}, object0,true);
     Json::AbacusJson::add_json({"Darray"}, object1,true);
@@ -115,7 +114,6 @@ TEST(AbacusJsonTest, OutputJson)
     Json::AbacusJson::add_json({"key6","key7"}, true,true);
     Json::AbacusJson::add_json({"key6","key7"}, false,true);
 
-    rapidjson::Document::AllocatorType& rpjallocator = Json::AbacusJson::doc.GetAllocator();
 
  
     std::string filename = "test.json";

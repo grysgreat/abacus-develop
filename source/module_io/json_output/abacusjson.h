@@ -8,6 +8,16 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 
+//define of AbacusJson
+#define JobjectType rapidjson::kObjectType
+#define JarrayType rapidjson::kArrayType
+#define Get_Jallocator Json::AbacusJson::allocator()
+#define Set_JString(str) Json::jsonValue().SetString(str.c_str(),str.length(),Get_Jallocator)
+#define JaddString(str,val) AddMember(str, Set_JString(val), Get_Jallocator)
+#define JaddNormal(str,val) AddMember(str, val, Get_Jallocator)
+#define JPushBack(val) PushBack(val, Get_Jallocator)
+
+
 namespace Json
 {
 
@@ -31,14 +41,8 @@ class AbacusJson
     // Output the json to a file
     static void write_to_json(std::string filename);
 
-    /**
-    *   Recursive solution, using template derivation mechanism, 
-    *   take out the first one at a time, shorten the size of the parameter package.
-    */
-    
-    jsonValue create_jsonObj(){
-      jsonValue object(rapidjson::kObjectType);
-      return object;
+    static rapidjson::Document::AllocatorType& allocator(){
+      return doc.GetAllocator();
     }
 
 
