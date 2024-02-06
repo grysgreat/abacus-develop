@@ -42,6 +42,10 @@ void Driver::init()
     INPUT.close_log();
 
     // (5) output the json file
+    //Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
+    Json::create_Json(&GlobalC::ucell,&INPUT);
+
+
     Json::json_output();
     return;
 }

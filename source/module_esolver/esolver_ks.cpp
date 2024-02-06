@@ -12,6 +12,8 @@
 #include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
+#include "module_io/json_output/init_info.h"
+
 
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
@@ -570,6 +572,12 @@ namespace ModuleESolver
     {
         int precision = 3;
         std::string tag = "POT";
+// add nkstot£¬nkstot_ibz to output json
+#ifdef __RAPIDJSON
+        int Jnkstot = this->pelec->klist->nkstot;
+        int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+        Json::add_nkstot(Jnkstot,Jnkstot_ibz);
+#endif //__RAPIDJSON 
         return ModuleIO::Output_Potential(this->pw_big,
                                           this->pw_rhod,
                                           GlobalV::NSPIN,
