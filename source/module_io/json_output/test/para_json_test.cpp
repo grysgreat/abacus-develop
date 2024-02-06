@@ -77,6 +77,7 @@ TEST(AbacusJsonTest, AddJson)
     for(int i=0;i<3;i++){
         Json::jsonValue object(JobjectType);
         object.JaddNormal("int",i);
+
         std::string str = std::to_string(i*100);  
         std::string str2 = "Kstring";
 
@@ -92,19 +93,24 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["string"].GetString(), "0");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["0"].GetString(), "string");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["Kstring"].GetString(), "0");
+
     ASSERT_EQ(Json::AbacusJson::doc["array"][0]["double"].GetDouble(), 0.0);
 
     ASSERT_EQ(Json::AbacusJson::doc["array"][1]["int"].GetInt(), 1);
     ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["string"].GetString(), "100");
+
     ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["100"].GetString(), "string");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["Kstring"].GetString(), "100");
+
     ASSERT_EQ(Json::AbacusJson::doc["array"][1]["double"].GetDouble(), 0.01);
 
     ASSERT_EQ(Json::AbacusJson::doc["array"][2]["int"].GetInt(), 2);
     ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["string"].GetString(), "200");
+
     ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["200"].GetString(), "string");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["Kstring"].GetString(), "200");
     ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
+
 
 
 
@@ -118,6 +124,7 @@ TEST(AbacusJsonTest, AddJson)
     object0.JPushBack(3);
     
     Json::jsonValue object1(JarrayType);
+
 
     object1.JPushBack(2.1);
     object1.JPushBack(3.1);
@@ -133,10 +140,11 @@ TEST(AbacusJsonTest, AddJson)
     Json::AbacusJson::add_json({"Darray"}, object1,true);
     Json::AbacusJson::add_json({"Darray"}, object2,true);
 
-    // Validate json parameters in doc objects
+
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][0].GetInt(), 1);
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][1].GetInt(), 2);
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][2].GetInt(), 3);
+
 
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][0].GetDouble(), 2.1);
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][1].GetDouble(), 3.1);
@@ -145,6 +153,7 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][0].GetString(), "str1");
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][1].GetString(), "str2");
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][2].GetString(), "str3");
+
 
 }
 

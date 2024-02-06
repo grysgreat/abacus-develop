@@ -27,10 +27,12 @@
 *
 *         2 - array. just using: array.JPushBack(val)
 */
+
 #define JobjectType rapidjson::kObjectType
 #define JarrayType rapidjson::kArrayType
 #define Get_Jallocator Json::AbacusJson::allocator()
 #define Set_JString(str) Json::jsonValue().SetString(str.c_str(),str.length(),Get_Jallocator)
+
 
 #define JaddStringV(str,val) AddMember(str, Set_JString(val), Get_Jallocator)
 #define JaddStringK(str,val) AddMember(Set_JString(str), val, Get_Jallocator)
@@ -42,6 +44,7 @@
 * @brief The json processing module in abacus contains basic meta-operations such as 
 *         adding, modifying, and checking json.
 */
+
 namespace Json
 {
 
@@ -88,7 +91,6 @@ void AbacusJson::add_json(std::vector<std::string> keys, const std::string& valu
 
 template <>
 void AbacusJson::add_json(std::vector<std::string> keys, const rapidjson::Value& value,bool IsArray);
-
 
 
 } // namespace Json
