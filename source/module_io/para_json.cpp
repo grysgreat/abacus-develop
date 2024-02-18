@@ -24,15 +24,6 @@ namespace Json
 // #endif
 // }
 
-void create_Json(UnitCell *ucell,Input *input){
-#ifdef __RAPIDJSON
-    gen_general_info(input);
-    gen_init(ucell);
-#endif
-}
-
-
-
 void json_output()
 {
 #ifdef __RAPIDJSON
@@ -43,6 +34,14 @@ void json_output()
     AbacusJson::write_to_json("abacus.json");
 #endif
 #endif // __RAPIDJSON
+}
+
+void create_Json(UnitCell *ucell,Input *input){
+#ifdef __RAPIDJSON
+    gen_general_info(input);
+    gen_init(ucell);
+#endif
+    json_output();
 }
 
 void convert_time(std::time_t time_now, std::string& time_str)

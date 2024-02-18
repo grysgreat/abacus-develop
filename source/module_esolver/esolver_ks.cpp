@@ -562,7 +562,7 @@ namespace ModuleESolver
     {
         int precision = 3;
         std::string tag = "POT";
-// add nkstot£¬nkstot_ibz to output json
+// add nkstot,nkstot_ibz to output json
 #ifdef __RAPIDJSON
         int Jnkstot = this->pelec->klist->nkstot;
         int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
