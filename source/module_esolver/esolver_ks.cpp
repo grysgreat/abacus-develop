@@ -477,7 +477,12 @@ namespace ModuleESolver
 
             ModuleBase::timer::tick(this->classname, "Run");
         }       
-
+        // add nkstot,nkstot_ibz to output json
+        #ifdef __RAPIDJSON
+                int Jnkstot = this->pelec->klist->nkstot;
+                int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+                Json::add_nkstot(Jnkstot,Jnkstot_ibz);
+        #endif //__RAPIDJSON 
         return;
     };
 
@@ -562,12 +567,6 @@ namespace ModuleESolver
     {
         int precision = 3;
         std::string tag = "POT";
-// add nkstot,nkstot_ibz to output json
-#ifdef __RAPIDJSON
-        int Jnkstot = this->pelec->klist->nkstot;
-        int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
-        Json::add_nkstot(Jnkstot,Jnkstot_ibz);
-#endif //__RAPIDJSON 
         return ModuleIO::Output_Potential(this->pw_big,
                                           this->pw_rhod,
                                           GlobalV::NSPIN,
