@@ -136,10 +136,20 @@ TEST(AbacusJsonTest, AddJson)
     object2.JPushBack("str2");
     object2.JPushBack("str3");
 
+    Json::jsonValue object3(JarrayType);
+
+    std::string astr1 = "string1";
+    std::string astr2 = "string2";
+    std::string astr3 = "string3";
+    object3.JPushBackString(astr1);
+    object3.JPushBackString(astr2);
+    object3.JPushBackString(astr3);
+
+
     Json::AbacusJson::add_json({"Darray"}, object0,true);
     Json::AbacusJson::add_json({"Darray"}, object1,true);
     Json::AbacusJson::add_json({"Darray"}, object2,true);
-
+    Json::AbacusJson::add_json({"Darray"}, object3,true);
 
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][0].GetInt(), 1);
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][1].GetInt(), 2);
@@ -154,6 +164,10 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][1].GetString(), "str2");
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][2].GetString(), "str3");
 
+
+    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][0].GetString(), "string1");
+    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][1].GetString(), "string2");
+    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][2].GetString(), "string3");
 
 }
 

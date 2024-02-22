@@ -25,7 +25,8 @@
 *                 eg. both key,val is std::string, using: object.JaddStringKV(str,val)
 *                 eg. none of key,val is std::string, using: object.JaddNormal(str,val)
 *
-*         2 - array. just using: array.JPushBack(val)
+*         2 - array.  using: array.JPushBack(val)
+*                     or : JPushBackString(val)
 */
 
 #define JobjectType rapidjson::kObjectType
@@ -39,7 +40,7 @@
 #define JaddStringKV(str,val) AddMember(Set_JString(str), Set_JString(val), Get_Jallocator)
 #define JaddNormal(str,val) AddMember(str, val, Get_Jallocator)
 #define JPushBack(val) PushBack(val, Get_Jallocator)
-
+#define JPushBackString(val) PushBack(Set_JString(val), Get_Jallocator)
 /**
 * @brief The json processing module in abacus contains basic meta-operations such as 
 *         adding, modifying, and checking json.
