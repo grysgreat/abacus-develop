@@ -11,6 +11,7 @@
 #include "json_output/abacusjson.h"
 #include "json_output/general_info.h"
 #include "json_output/init_info.h"
+#include "json_output/readin_info.h"
 
 #endif // __RAPIDJSON
 
@@ -40,6 +41,7 @@ void create_Json(UnitCell *ucell,Input *input){
 #ifdef __RAPIDJSON
     gen_general_info(input);
     gen_init(ucell);
+    gen_stru(ucell);
 #endif
     json_output();
 }
