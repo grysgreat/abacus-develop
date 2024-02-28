@@ -49,9 +49,9 @@ void Driver::driver_run()
     p_esolver->Init(INPUT, GlobalC::ucell);
 
 
-// #ifdef __RAPIDJSON
-//     Json::gen_stru_wrapper(&GlobalC::ucell);
-// #endif
+#ifdef __RAPIDJSON
+    Json::gen_stru_wrapper(&GlobalC::ucell);
+#endif
 
     //------------------------------------------------------------
     // This part onward needs to be refactored.
