@@ -47,9 +47,9 @@ void Driver::driver_run()
 
     // 4. Initialize Esolver,and fill json-structure 
     p_esolver->Init(INPUT, GlobalC::ucell);
-
+#ifdef __RAPIDJSON
     Json::gen_stru_wrapper(&GlobalC::ucell);
-
+#endif
 
     //------------------------------------------------------------
     // This part onward needs to be refactored.
