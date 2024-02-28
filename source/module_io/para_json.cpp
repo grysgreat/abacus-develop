@@ -41,9 +41,15 @@ void create_Json(UnitCell *ucell,Input *input){
 #ifdef __RAPIDJSON
     gen_general_info(input);
     gen_init(ucell);
-    gen_stru(ucell);
+    // gen_stru(ucell);
 #endif
     json_output();
+}
+
+void gen_stru_wrapper(UnitCell *ucell){
+#ifdef __RAPIDJSON
+    gen_stru(ucell);
+#endif
 }
 
 void convert_time(std::time_t time_now, std::string& time_str)
