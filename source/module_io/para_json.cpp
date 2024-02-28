@@ -48,7 +48,12 @@ void create_Json(UnitCell *ucell,Input *input){
 
 void gen_stru_wrapper(UnitCell *ucell){
 #ifdef __RAPIDJSON
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+        gen_stru(ucell);
+#elif
     gen_stru(ucell);
+#endif
 #endif
 }
 
