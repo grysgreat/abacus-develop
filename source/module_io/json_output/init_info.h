@@ -21,6 +21,9 @@ void gen_init(UnitCell *ucell);
 */
 void add_nkstot(int nkstot,int nkstot_ibz);
 
-
+/**
+* @param ucell: ucell for reading structure init in abacus.
+*/
+void gen_stru(UnitCell *ucell);
 #endif
 }

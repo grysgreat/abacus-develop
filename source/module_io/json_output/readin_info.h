@@ -12,7 +12,7 @@ namespace Json
 {
 #ifdef __RAPIDJSON
 
-void gen_stru(UnitCell *ucell);
+
 
 #endif
 }
