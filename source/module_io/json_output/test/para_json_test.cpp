@@ -339,7 +339,8 @@ TEST(AbacusJsonTest, InitInfo)
     GlobalV::NBANDS = 10;
 
     for(int i=0;i<3;i++){
-        ucell.atoms[i].label = std::to_string(i);
+        std::string str = "label";
+        ucell.atoms[i].label = str+std::to_string(i);
         ucell.atoms[i].ncpp.zv = i*3;
     }
 
@@ -363,9 +364,9 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group"].GetString(), "T_d");
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group_in_space"].GetString(), "O_h");
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["0"].GetInt(), 0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["1"].GetInt(), 3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["2"].GetInt(), 6);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["label0"].GetInt(), 0);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["label1"].GetInt(), 3);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["label2"].GetInt(), 6);
 
 }
 
