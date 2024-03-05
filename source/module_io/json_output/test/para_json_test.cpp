@@ -6,6 +6,7 @@
 #include "module_io/para_json.h"
 #include "../init_info.h"
 #include "../general_info.h"
+#include "../readin_info.h"
 #include "version.h"
 
 /************************************************
@@ -87,12 +88,18 @@ TEST(AbacusJsonTest, AddJson)
         object.JaddNormal("double", 0.01*i);    
         Json::AbacusJson::add_json({"array"}, object,true);
     }
+    Json::AbacusJson::add_json({"array","1","new_add_notLast"}, "correct1",false);
+    Json::AbacusJson::add_json({"array","0","new_add_Last"}, "correct2",false);
 
     // Validate json parameters in doc objects
+
     ASSERT_EQ(Json::AbacusJson::doc["array"][0]["int"].GetInt(), 0);
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["string"].GetString(), "0");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["0"].GetString(), "string");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["Kstring"].GetString(), "0");
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["new_add_notLast"].GetString(), "correct1");
+
+
 
     ASSERT_EQ(Json::AbacusJson::doc["array"][0]["double"].GetDouble(), 0.0);
 
@@ -110,9 +117,9 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["200"].GetString(), "string");
     ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["Kstring"].GetString(), "200");
     ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
-
-
-
+    
+    
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["new_add_Last"].GetString(), "correct2");
 
 
 
@@ -151,7 +158,10 @@ TEST(AbacusJsonTest, AddJson)
     Json::AbacusJson::add_json({"Darray"}, object2,true);
     Json::AbacusJson::add_json({"Darray"}, object3,true);
 
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][0].GetInt(), 1);
+    Json::AbacusJson::add_json({"Darray","1","1"}, "new_add_method",false);
+
+    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][0].GetString(), "new_add_method");
+
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][1].GetInt(), 2);
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][2].GetInt(), 3);
 
@@ -183,10 +193,68 @@ TEST(AbacusJsonTest, OutputJson)
 
     //array test
     Json::AbacusJson::add_json({"key6","key7"}, true,true);
-    Json::AbacusJson::add_json({"key6","key7"}, false,true);
+
+/**
+//new method print test
+    for(int i=0;i<3;i++){
+        Json::jsonValue object(JobjectType);
+        object.JaddNormal("int",i);
+
+        std::string str = std::to_string(i*100);  
+        std::string str2 = "Kstring";
+
+        object.JaddStringV("string", str);
+        object.JaddStringK(str, "string");
+        object.JaddStringKV(str2, str);
+        object.JaddNormal("double", 0.01*i);    
+        Json::AbacusJson::add_json({"Oarray"}, object,true);
+    }
+    Json::AbacusJson::add_json({"Oarray","1","acc"}, "acc",false);
+    Json::AbacusJson::add_json({"Oarray","0","ac1c"}, "ac1c",false);
+
+    Json::AbacusJson::add_json({"key8","array"}, "1",true);
+    Json::AbacusJson::add_json({"key8","array"}, "2",true);
+    Json::AbacusJson::add_json({"key8","array"}, "3",true);
+    Json::AbacusJson::add_json({"key8","array"}, "4",true);
+    Json::AbacusJson::add_json({"key8","array","1"}, "13",true);
+
+     // add array in array
+    Json::jsonValue object0(JarrayType);
+
+    object0.JPushBack(1);
+    object0.JPushBack(2);
+    object0.JPushBack(3);
+    
+    Json::jsonValue object1(JarrayType);
 
 
- 
+    object1.JPushBack(2.1);
+    object1.JPushBack(3.1);
+    object1.JPushBack(4.1);
+
+    Json::jsonValue object2(JarrayType);
+
+    object2.JPushBack("str1");
+    object2.JPushBack("str2");
+    object2.JPushBack("str3");
+
+    Json::jsonValue object3(JarrayType);
+
+    std::string astr1 = "string1";
+    std::string astr2 = "string2";
+    std::string astr3 = "string3";
+    object3.JPushBackString(astr1);
+    object3.JPushBackString(astr2);
+    object3.JPushBackString(astr3);
+    Json::AbacusJson::add_json({"Darray"}, object0,true);
+    Json::AbacusJson::add_json({"Darray"}, object1,true);
+    Json::AbacusJson::add_json({"Darray"}, object2,true);
+    Json::AbacusJson::add_json({"Darray"}, object3,true);
+    Json::AbacusJson::add_json({"Darray","1","1"}, "addnew",false);
+
+
+ */
+
     std::string filename = "test.json";
     Json::AbacusJson::write_to_json(filename);
 
@@ -299,5 +367,6 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["0"].GetInt(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["1"].GetInt(), 3);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["2"].GetInt(), 6);
-    
+
 }
+

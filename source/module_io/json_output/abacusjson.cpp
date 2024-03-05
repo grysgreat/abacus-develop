@@ -4,12 +4,27 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <sstream>
 namespace Json
 {
 
 #ifdef __RAPIDJSON
 rapidjson::Document AbacusJson::doc;
+
+bool isNum(std::string str)  
+{  
+	std::stringstream sin;  
+    sin<<str;
+	double d;  
+	char c;  
+	if(!(sin >> d))  
+		return false;
+	
+	if (sin >> c) 
+		return false;
+	return true;  
+}
+
 
 void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
                                    std::vector<std::string>::iterator end,
@@ -22,10 +37,27 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
     if (begin != end)
     {
         rapidjson::Value key((*begin).c_str(), allocator);
+        std::string key_str = *begin;
+
+
+
         if (begin + 1 == end)
         {
+
+            if(isNum(key_str)){
+                std::string::size_type sz;
+                int index = std::stoi(key_str,&sz);
+                
+                if(index!=0){
+                    parent[index-1] = val;
+                }
+                else {
+                    int arr_size = parent.Size();
+                    parent[arr_size-1] = val;
+                }
+            }
             // if key exists, then overwrite it
-            if (parent.HasMember(key))
+            else if (parent.HasMember(key))
             {
                 if(parent[key].IsArray()){
                     parent[key].PushBack(val, allocator);
@@ -52,8 +84,20 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
         }
         else
         {
+            if(isNum(key_str)){
+                std::string::size_type sz;
+                int index = std::stoi(key_str,&sz);
+                
+                if(index!=0){
+                    add_nested_member(begin + 1, end, val, parent[index-1], allocator,IsArray);
+                }
+                else {
+                    int arr_size = parent.Size();
+                    add_nested_member(begin + 1, end, val, parent[arr_size-1], allocator,IsArray);
+                }
+            }
             // need to check if the key exists
-            if (parent.HasMember(key))
+            else if (parent.HasMember(key))
             {
                 // this key should be an object
                 if (!parent[key].IsObject())
