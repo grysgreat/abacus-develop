@@ -6,7 +6,6 @@
 #include "module_io/para_json.h"
 #include "../init_info.h"
 #include "../general_info.h"
-#include "../readin_info.h"
 #include "version.h"
 
 /************************************************

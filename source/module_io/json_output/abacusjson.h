@@ -54,7 +54,33 @@ using jsonValue = rapidjson::Value;
 class AbacusJson
 {
   public:
-    // The template specialization method adds a key-val object to the doc tree
+    /**
+     *  @brief: The template specialization method adds value to the doc tree
+
+     *  @param: 'keys' is a vector string, represents the path to be added to the json tree.
+     *
+     *          'value' is the value that needs to be added to the json tree, which type can be 
+     *          Json::jsonValue or other common value type(such as int, double ,bool ,std::string).
+     *
+     *          'IsArray' is a bool value, means the whether the root node to which 'value' is added is an array.
+     *
+     *  @usage: 1. Add/Modify a double val to object json node (key2 is a object node): 
+     *                Json::AbacusJson::add_json({"key1","key2"}, 3.1415,false);
+     *
+     *          2. Pushback a double val to array json node (key2 is a array node):
+     *                Json::AbacusJson::add_json({"key1","key2"}, 3.1415,true);
+     *
+     *          3. Modify a doble val to array json node (key2 is a array node), when use this method, 
+     *            The index number of the array starts at 1, and if the index is 0, it means that the last element 
+     *            of the array is modified:
+     *            If we have a json array: {"key":[1,2,3]}
+     *                i). Json::AbacusJson::add_json({"key","1"}, 4,true);  => {"key":[4,2,3]}
+     *                ii). Json::AbacusJson::add_json({"key","0"}, 4,true);  => {"key":[1,2,4]}
+     *                iii). Json::AbacusJson::add_json({"key","2"}, 4,true);  => {"key":[1,4,3]}
+     *                iv). Json::AbacusJson::add_json({"key","3"}, 4,true);  => {"key":[1,2,4]}
+     *                iv). Json::AbacusJson::add_json({"key","4"}, 4,true);  => error!, The array element corresponding
+     *                     to the index has no value.
+    */
     template <typename T>
     static void add_json(std::vector<std::string> keys, const T& value,bool IsArray)
     {
