@@ -99,10 +99,11 @@ void gen_stru(UnitCell *ucell){
             Json::AbacusJson::add_json({"init","coordinate"}, coordinateArray,true);
         
             Json::AbacusJson::add_json({"init","mag"}, ucell->atoms[i].mag[j],true);
-        
+
+    std::string str = label[i];
+    Json::AbacusJson::add_json({"init","label"}, str,true);        
         }
-        std::string str = label[i];
-        Json::AbacusJson::add_json({"init","label"}, str,true);
+
     }
 
 
