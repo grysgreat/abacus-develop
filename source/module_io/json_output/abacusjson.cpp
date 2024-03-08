@@ -44,16 +44,16 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
         if (begin + 1 == end)
         {
 
-            if(isNum(key_str)){
+            if(isNum(key_str)&&parent.IsArray()){
                 std::string::size_type sz;
                 int index = std::stoi(key_str,&sz);
                 
-                if(index!=0){
-                    parent[index-1] = val;
+                if(index>=0){
+                    parent[index] = val;
                 }
                 else {
                     int arr_size = parent.Size();
-                    parent[arr_size-1] = val;
+                    parent[arr_size+index] = val;
                 }
             }
             // if key exists, then overwrite it
@@ -84,16 +84,16 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
         }
         else
         {
-            if(isNum(key_str)){
+            if(isNum(key_str)&&parent.IsArray()){
                 std::string::size_type sz;
                 int index = std::stoi(key_str,&sz);
                 
-                if(index!=0){
-                    add_nested_member(begin + 1, end, val, parent[index-1], allocator,IsArray);
+                if(index>=0){
+                    add_nested_member(begin + 1, end, val, parent[index], allocator,IsArray);
                 }
                 else {
                     int arr_size = parent.Size();
-                    add_nested_member(begin + 1, end, val, parent[arr_size-1], allocator,IsArray);
+                    add_nested_member(begin + 1, end, val, parent[arr_size+index], allocator,IsArray);
                 }
             }
             // need to check if the key exists
