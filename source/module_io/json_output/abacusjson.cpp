@@ -100,10 +100,10 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
             else if (parent.HasMember(key))
             {
                 // this key should be an object
-                if (!parent[key].IsObject())
+                if (!parent[key].IsObject()&&!parent[key].IsArray())
                 {
                     std::cout << "Warning: write to json, key " << *begin
-                              << " exist and is not an object, and abacus will add it as a middle node." << std::endl;
+                              << " exist and is not an object or array, and abacus will add it as a middle node." << std::endl;
                 }
                 add_nested_member(begin + 1, end, val, parent[key], allocator,IsArray);
             }
