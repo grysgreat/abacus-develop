@@ -190,9 +190,6 @@ TEST(AbacusJsonTest, AddJson)
     Json::AbacusJson::add_json({"0","11","-1"}, 1,true);
 
 
-    std::string filename = "test2.json";
-    Json::AbacusJson::write_to_json(filename);
-
 }
 
 TEST(AbacusJsonTest, OutputJson)
