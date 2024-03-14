@@ -43,8 +43,9 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
             Print_Info::print_screen(stress_step, force_step, istep);
         }
 
-
+#ifdef __RAPIDJSON
         Json::init_output_array_obj();
+#endif //__RAPIDJSON 
 
         // mohan added eiter to count for the electron iteration number, 2021-01-28
         p_esolver->Run(istep - 1, GlobalC::ucell);
@@ -122,7 +123,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                     GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                 }
             }
-
+#ifdef __RAPIDJSON
             //add Json of cell coo stress force
             double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
             double fac = ModuleBase::Ry_to_eV / 0.529177;
@@ -130,6 +131,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                 &GlobalC::ucell,
                 force,fac,
                 stress,unit_transform);
+#endif //__RAPIDJSON 
         }
         time_t fend = time(NULL);
 
