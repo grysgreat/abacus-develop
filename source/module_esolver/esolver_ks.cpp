@@ -25,6 +25,8 @@
 #include "module_base/parallel_common.h"
 #endif
 
+#include "module_io/json_output/output_info.h"
+
 namespace ModuleESolver
 {
 
@@ -462,6 +464,14 @@ namespace ModuleESolver
                 }
             }
             afterscf(istep);
+
+
+            //add Json of efermi energy converge
+            Json::add_output_efermi_energy_converge(
+                this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
+                this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+                this->conv_elec
+            );
 
             ModuleBase::timer::tick(this->classname, "Run");
         }       

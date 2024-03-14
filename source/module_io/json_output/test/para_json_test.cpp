@@ -64,10 +64,7 @@ TEST(AbacusJsonTest, AddJson)
     // modify a value
     Json::AbacusJson::add_json({"key4"}, 4.56,false);
     ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 4.56);
-
-    // modify a value
-    Json::AbacusJson::add_json({"key4"}, 4.56,false);    
-
+    
 
     //array test
     Json::AbacusJson::add_json({"key6","key7"}, true,true);
@@ -474,6 +471,107 @@ TEST(AbacusJsonTest, Init_stru_test){
     ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][0].GetDouble(), 0.3);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][1].GetDouble(), 0.3);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][2].GetDouble(), 0.3);
+
+
+}
+
+
+TEST(AbacusJsonTest, new_addJson_test ){
+    Json::AbacusJson::doc.Parse("{}");
+
+    // add a string
+    Json::AbacusJson::add_Json("value1",false,"key1");
+    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key1"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key1"].IsString());
+    ASSERT_STREQ(Json::AbacusJson::doc["key1"].GetString(), "value1");
+
+    // add a string to a nested object
+    Json::AbacusJson::add_Json("value2",false,"key2", "key3");
+    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsObject());
+    ASSERT_TRUE(Json::AbacusJson::doc["key2"].HasMember("key3"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key2"]["key3"].IsString());
+    ASSERT_STREQ(Json::AbacusJson::doc["key2"]["key3"].GetString(), "value2");
+
+    Json::AbacusJson::add_Json(123,false,"key2");
+    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsInt());
+    ASSERT_EQ(Json::AbacusJson::doc["key2"].GetInt(), 123);
+
+
+    // add an int
+    Json::AbacusJson::add_Json(123,false,"key2");
+    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsInt());
+    ASSERT_EQ(Json::AbacusJson::doc["key2"].GetInt(), 123);
+
+    // add a bool
+    Json::AbacusJson::add_Json(true,false,"key3");
+    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key3"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key3"].IsBool());
+    ASSERT_EQ(Json::AbacusJson::doc["key3"].GetBool(), true);
+
+    // add a double
+    Json::AbacusJson::add_Json(1.23,false,"key4");
+    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key4"));
+    ASSERT_TRUE(Json::AbacusJson::doc["key4"].IsDouble());
+    ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 1.23);
+
+    // modify a value
+    Json::AbacusJson::add_Json(4.56,false,"key4");
+    ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 4.56);
+
+
+
+
+    // add key-val to a object array
+    for(int i=0;i<3;i++){
+        Json::jsonValue object(JobjectType);
+        object.JaddNormal("int",i);
+
+        std::string str = std::to_string(i*100);  
+        std::string str2 = "Kstring";
+
+        object.JaddStringV("string", str);
+        object.JaddStringK(str, "string");
+        object.JaddStringKV(str2, str);
+        object.JaddNormal("double", 0.01*i);    
+        Json::AbacusJson::add_Json(object,true,"array");
+    }
+    Json::AbacusJson::add_Json("correct1",false,"array",1,"new_add_notLast");
+    Json::AbacusJson::add_Json("correct2",false,"array",-1,"new_add_Last");
+
+    ASSERT_EQ(Json::AbacusJson::doc["array"][0]["int"].GetInt(), 0);
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["string"].GetString(), "0");
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["0"].GetString(), "string");
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["Kstring"].GetString(), "0");
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["new_add_notLast"].GetString(), "correct1");
+
+
+
+    ASSERT_EQ(Json::AbacusJson::doc["array"][0]["double"].GetDouble(), 0.0);
+
+    ASSERT_EQ(Json::AbacusJson::doc["array"][1]["int"].GetInt(), 1);
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["string"].GetString(), "100");
+
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["100"].GetString(), "string");
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["Kstring"].GetString(), "100");
+
+    ASSERT_EQ(Json::AbacusJson::doc["array"][1]["double"].GetDouble(), 0.01);
+
+    ASSERT_EQ(Json::AbacusJson::doc["array"][2]["int"].GetInt(), 2);
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["string"].GetString(), "200");
+
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["200"].GetString(), "string");
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["Kstring"].GetString(), "200");
+    ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
+    
+    
+    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["new_add_Last"].GetString(), "correct2");
+
+
+    std::string filename = "newjson.json";
+    Json::AbacusJson::write_to_json(filename);
 
 
 }
