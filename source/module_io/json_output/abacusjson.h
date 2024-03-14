@@ -83,14 +83,14 @@ class AbacusJson
      *                Json::AbacusJson::add_json(3.1415,true, "key1","key2");
      *
      *          3. Modify a doble val to array json node (key2 is a array node), when use this method, 
-     *            The index number of the array starts at 1, and if the index is 0, it means that the last element 
-     *            of the array is modified:
+     *            The index number of the array starts at 0, if it's negative, it's going from back to front. 
+     *            eg. If the index is -1, it means that the last element of the array is modified:
      *            If we have a json array: {"key":[1,2,3]}
-     *                i). Json::AbacusJson::add_json(4,true,"key",1);  => {"key":[4,2,3]}
-     *                ii). Json::AbacusJson::add_json(4,true,"key",0);  => {"key":[1,2,4]}
-     *                iii). Json::AbacusJson::add_json(4,true,"key",2);  => {"key":[1,4,3]}
-     *                iv). Json::AbacusJson::add_json(4,true,"key",3);  => {"key":[1,2,4]}
-     *                iv). Json::AbacusJson::add_json({4,true,"key",4);  => error!, The array element corresponding
+     *                i). Json::AbacusJson::add_json(4,true,"key",0);  => {"key":[4,2,3]}
+     *                ii). Json::AbacusJson::add_json(4,true,"key",-1);  => {"key":[1,2,4]}
+     *                iii). Json::AbacusJson::add_json(4,true,"key",1);  => {"key":[1,4,3]}
+     *                iv). Json::AbacusJson::add_json(4,true,"key",2);  => {"key":[1,2,4]}
+     *                iv). Json::AbacusJson::add_json({4,true,"key",3);  => error!, The array element corresponding
      *                     to the index has no value.
     */
     template <typename T, typename ...Ts>
@@ -128,14 +128,14 @@ class AbacusJson
      *                Json::AbacusJson::add_json({"key1","key2"}, 3.1415,true);
      *
      *          3. Modify a doble val to array json node (key2 is a array node), when use this method, 
-     *            The index number of the array starts at 1, and if the index is 0, it means that the last element 
-     *            of the array is modified:
+     *            The index number of the array starts at 0, if it's negative, it's going from back to front. 
+     *            eg. If the index is -1, it means that the last element of the array is modified:
      *            If we have a json array: {"key":[1,2,3]}
-     *                i). Json::AbacusJson::add_json({"key","1"}, 4,true);  => {"key":[4,2,3]}
-     *                ii). Json::AbacusJson::add_json({"key","0"}, 4,true);  => {"key":[1,2,4]}
-     *                iii). Json::AbacusJson::add_json({"key","2"}, 4,true);  => {"key":[1,4,3]}
-     *                iv). Json::AbacusJson::add_json({"key","3"}, 4,true);  => {"key":[1,2,4]}
-     *                iv). Json::AbacusJson::add_json({"key","4"}, 4,true);  => error!, The array element corresponding
+     *                i). Json::AbacusJson::add_json({"key","0"}, 4,true);  => {"key":[4,2,3]}
+     *                ii). Json::AbacusJson::add_json({"key","-1"}, 4,true);  => {"key":[1,2,4]}
+     *                iii). Json::AbacusJson::add_json({"key","1"}, 4,true);  => {"key":[1,4,3]}
+     *                iv). Json::AbacusJson::add_json({"key","2"}, 4,true);  => {"key":[1,2,4]}
+     *                iv). Json::AbacusJson::add_json({"key","3"}, 4,true);  => error!, The array element corresponding
      *                     to the index has no value.
     */
     template <typename T>
