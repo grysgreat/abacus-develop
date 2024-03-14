@@ -24,45 +24,48 @@ namespace Json
         int iat = 0;
         const double output_acc = 1.0e-8;
 
-        //add force
-        Json::jsonValue force_array(JarrayType);
-        for (int it = 0; it < ucell->ntype; it++)
-        {
-            for (int ia = 0; ia < ucell->atoms[it].na; ia++)
+        if (GlobalV::CAL_FORCE){
+            //add force
+            Json::jsonValue force_array(JarrayType);
+            for (int it = 0; it < ucell->ntype; it++)
             {
-                Json::jsonValue force_subarray(JarrayType);
-                double fx = std::abs(force(iat, 0)) > output_acc ? force(iat, 0) * fac : 0.0;
-                double fy = std::abs(force(iat, 1)) > output_acc ? force(iat, 1) * fac : 0.0;
-                double fz = std::abs(force(iat, 2)) > output_acc ? force(iat, 2) * fac : 0.0;
+                for (int ia = 0; ia < ucell->atoms[it].na; ia++)
+                {
+                    Json::jsonValue force_subarray(JarrayType);
+                    double fx = std::abs(force(iat, 0)) > output_acc ? force(iat, 0) * fac : 0.0;
+                    double fy = std::abs(force(iat, 1)) > output_acc ? force(iat, 1) * fac : 0.0;
+                    double fz = std::abs(force(iat, 2)) > output_acc ? force(iat, 2) * fac : 0.0;
 
-                force_subarray.JPushBack(fx);
-                force_subarray.JPushBack(fy);
-                force_subarray.JPushBack(fz);
-                force_array.JPushBack(force_subarray);
-                iat++;
+                    force_subarray.JPushBack(fx);
+                    force_subarray.JPushBack(fy);
+                    force_subarray.JPushBack(fz);
+                    force_array.JPushBack(force_subarray);
+                    iat++;
+                }
             }
+            // Json::AbacusJson::add_json({"output","-1","force"}, force_array,false);
+
+            AbacusJson::add_Json(force_array,false,"output",-1,"force");
         }
-        // Json::AbacusJson::add_json({"output","-1","force"}, force_array,false);
 
-        AbacusJson::add_Json(force_array,false,"output",-1,"force");
-
+        if (GlobalV::CAL_STRESS){
         //add stress
-        Json::jsonValue stress_array(JarrayType);
-        for (int i = 0; i < 3; i++)
-        {
-            Json::jsonValue stress_subarray(JarrayType);
-            double sx = stress(i, 0) * unit_transform;
-            double sy = stress(i, 1) * unit_transform;
-            double sz = stress(i, 2) * unit_transform;
-            stress_subarray.JPushBack(sx);
-            stress_subarray.JPushBack(sy);
-            stress_subarray.JPushBack(sz);
-            stress_array.JPushBack(stress_subarray);
-        }            
-        // Json::AbacusJson::add_json({"output","-1","stress"}, stress_array,false);
+            Json::jsonValue stress_array(JarrayType);
+            for (int i = 0; i < 3; i++)
+            {
+                Json::jsonValue stress_subarray(JarrayType);
+                double sx = stress(i, 0) * unit_transform;
+                double sy = stress(i, 1) * unit_transform;
+                double sz = stress(i, 2) * unit_transform;
+                stress_subarray.JPushBack(sx);
+                stress_subarray.JPushBack(sy);
+                stress_subarray.JPushBack(sz);
+                stress_array.JPushBack(stress_subarray);
+            }            
+            // Json::AbacusJson::add_json({"output","-1","stress"}, stress_array,false);
 
-        AbacusJson::add_Json(stress_array,false,"output",-1,"stress");
-
+            AbacusJson::add_Json(stress_array,false,"output",-1,"stress");
+        }
         //add coordinate
         int ntype = ucell->ntype;
         double lat0 = ucell->lat0;
