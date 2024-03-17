@@ -85,8 +85,8 @@ TEST(AbacusJsonTest, AddJson)
         object.JaddNormal("double", 0.01*i);    
         Json::AbacusJson::add_json({"array"}, object,true);
     }
-    Json::AbacusJson::add_json({"array","1","new_add_notLast"}, "correct1",false);
-    Json::AbacusJson::add_json({"array","-1","new_add_Last"}, "correct2",false);
+    Json::AbacusJson::add_json({"array",1,"new_add_notLast"}, "correct1",false);
+    Json::AbacusJson::add_json({"array",-1,"new_add_Last"}, "correct2",false);
 
 
 
@@ -157,8 +157,8 @@ TEST(AbacusJsonTest, AddJson)
     Json::AbacusJson::add_json({"Darray"}, object2,true);
     Json::AbacusJson::add_json({"Darray"}, object3,true);
 
-    Json::AbacusJson::add_json({"Darray","1","0"}, "new_add_method",false);
-    Json::AbacusJson::add_json({"Darray","1","-2"}, 40,false);
+    Json::AbacusJson::add_json({"Darray",1,0}, "new_add_method",false);
+    Json::AbacusJson::add_json({"Darray",1,-2}, 40,false);
 
     ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][0].GetString(), "new_add_method");
 
@@ -180,12 +180,6 @@ TEST(AbacusJsonTest, AddJson)
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][1].GetString(), "string2");
     ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][2].GetString(), "string3");
 
-    //array test
-    Json::AbacusJson::add_json({"key9","11"}, true,true);
-    Json::AbacusJson::add_json({"key9","11"}, false,true);
-    Json::AbacusJson::add_json({"0","11"}, true,true);
-    Json::AbacusJson::add_json({"0","11"}, false,true);
-    Json::AbacusJson::add_json({"0","11","-1"}, 1,true);
 
 
 }
@@ -211,69 +205,10 @@ TEST(AbacusJsonTest, OutputJson)
 
     //array test
     Json::AbacusJson::add_json({"key6","key7"}, object,true);
-    Json::AbacusJson::add_json({"key6","key7","0","arr"}, 13,true);
-    Json::AbacusJson::add_json({"key6","key7","0","arr"}, 14,true);
-    Json::AbacusJson::add_json({"key6","key7","0","arr","0"}, 1,true);
-/**
-//new method print test
-    for(int i=0;i<3;i++){
-        Json::jsonValue object(JobjectType);
-        object.JaddNormal("int",i);
+    Json::AbacusJson::add_json({"key6","key7",0,"arr"}, 13,true);
+    Json::AbacusJson::add_json({"key6","key7",0,"arr"}, 14,true);
+    Json::AbacusJson::add_json({"key6","key7",0,"arr",0}, 1,true);
 
-        std::string str = std::to_string(i*100);  
-        std::string str2 = "Kstring";
-
-        object.JaddStringV("string", str);
-        object.JaddStringK(str, "string");
-        object.JaddStringKV(str2, str);
-        object.JaddNormal("double", 0.01*i);    
-        Json::AbacusJson::add_json({"Oarray"}, object,true);
-    }
-    Json::AbacusJson::add_json({"Oarray","1","acc"}, "acc",false);
-    Json::AbacusJson::add_json({"Oarray","0","ac1c"}, "ac1c",false);
-
-    Json::AbacusJson::add_json({"key8","array"}, "1",true);
-    Json::AbacusJson::add_json({"key8","array"}, "2",true);
-    Json::AbacusJson::add_json({"key8","array"}, "3",true);
-    Json::AbacusJson::add_json({"key8","array"}, "4",true);
-    Json::AbacusJson::add_json({"key8","array","1"}, "13",true);
-
-     // add array in array
-    Json::jsonValue object0(JarrayType);
-
-    object0.JPushBack(1);
-    object0.JPushBack(2);
-    object0.JPushBack(3);
-    
-    Json::jsonValue object1(JarrayType);
-
-
-    object1.JPushBack(2.1);
-    object1.JPushBack(3.1);
-    object1.JPushBack(4.1);
-
-    Json::jsonValue object2(JarrayType);
-
-    object2.JPushBack("str1");
-    object2.JPushBack("str2");
-    object2.JPushBack("str3");
-
-    Json::jsonValue object3(JarrayType);
-
-    std::string astr1 = "string1";
-    std::string astr2 = "string2";
-    std::string astr3 = "string3";
-    object3.JPushBackString(astr1);
-    object3.JPushBackString(astr2);
-    object3.JPushBackString(astr3);
-    Json::AbacusJson::add_json({"Darray"}, object0,true);
-    Json::AbacusJson::add_json({"Darray"}, object1,true);
-    Json::AbacusJson::add_json({"Darray"}, object2,true);
-    Json::AbacusJson::add_json({"Darray"}, object3,true);
-    Json::AbacusJson::add_json({"Darray","1","1"}, "addnew",false);
-
-
- */
 
     std::string filename = "test.json";
     Json::AbacusJson::write_to_json(filename);
@@ -476,103 +411,5 @@ TEST(AbacusJsonTest, Init_stru_test){
 }
 
 
-TEST(AbacusJsonTest, new_addJson_test ){
-    Json::AbacusJson::doc.Parse("{}");
 
-    // add a string
-    Json::AbacusJson::add_Json("value1",false,"key1");
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key1"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key1"].IsString());
-    ASSERT_STREQ(Json::AbacusJson::doc["key1"].GetString(), "value1");
-
-    // add a string to a nested object
-    Json::AbacusJson::add_Json("value2",false,"key2", "key3");
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsObject());
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].HasMember("key3"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"]["key3"].IsString());
-    ASSERT_STREQ(Json::AbacusJson::doc["key2"]["key3"].GetString(), "value2");
-
-    Json::AbacusJson::add_Json(123,false,"key2");
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsInt());
-    ASSERT_EQ(Json::AbacusJson::doc["key2"].GetInt(), 123);
-
-
-    // add an int
-    Json::AbacusJson::add_Json(123,false,"key2");
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsInt());
-    ASSERT_EQ(Json::AbacusJson::doc["key2"].GetInt(), 123);
-
-    // add a bool
-    Json::AbacusJson::add_Json(true,false,"key3");
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key3"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key3"].IsBool());
-    ASSERT_EQ(Json::AbacusJson::doc["key3"].GetBool(), true);
-
-    // add a double
-    Json::AbacusJson::add_Json(1.23,false,"key4");
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key4"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key4"].IsDouble());
-    ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 1.23);
-
-    // modify a value
-    Json::AbacusJson::add_Json(4.56,false,"key4");
-    ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 4.56);
-
-
-
-
-    // add key-val to a object array
-    for(int i=0;i<3;i++){
-        Json::jsonValue object(JobjectType);
-        object.JaddNormal("int",i);
-
-        std::string str = std::to_string(i*100);  
-        std::string str2 = "Kstring";
-
-        object.JaddStringV("string", str);
-        object.JaddStringK(str, "string");
-        object.JaddStringKV(str2, str);
-        object.JaddNormal("double", 0.01*i);    
-        Json::AbacusJson::add_Json(object,true,"array");
-    }
-    Json::AbacusJson::add_Json("correct1",false,"array",1,"new_add_notLast");
-    Json::AbacusJson::add_Json("correct2",false,"array",-1,"new_add_Last");
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][0]["int"].GetInt(), 0);
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["string"].GetString(), "0");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["0"].GetString(), "string");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["Kstring"].GetString(), "0");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["new_add_notLast"].GetString(), "correct1");
-
-
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][0]["double"].GetDouble(), 0.0);
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][1]["int"].GetInt(), 1);
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["string"].GetString(), "100");
-
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["100"].GetString(), "string");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["Kstring"].GetString(), "100");
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][1]["double"].GetDouble(), 0.01);
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][2]["int"].GetInt(), 2);
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["string"].GetString(), "200");
-
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["200"].GetString(), "string");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["Kstring"].GetString(), "200");
-    ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
-    
-    
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["new_add_Last"].GetString(), "correct2");
-
-
-    std::string filename = "newjson.json";
-    Json::AbacusJson::write_to_json(filename);
-
-
-}
 

@@ -15,18 +15,18 @@ namespace Json
 void gen_init(UnitCell *ucell){
     std::string pgname = ucell->symm.pgname;
     std::string spgname = ucell->symm.spgname;
-    // AbacusJson::add_json({"init", "point_group"}, pgname,false);
-    // AbacusJson::add_json({"init", "point_group_in_space"}, spgname,false);
+    AbacusJson::add_json({"init", "point_group"}, pgname,false);
+    AbacusJson::add_json({"init", "point_group_in_space"}, spgname,false);
 
-    Json::AbacusJson::add_Json(pgname,false,"init", "point_group");
-    Json::AbacusJson::add_Json(spgname,false,"init","point_group_in_space");
+    // Json::AbacusJson::add_Json(pgname,false,"init", "point_group");
+    // Json::AbacusJson::add_Json(spgname,false,"init","point_group_in_space");
 
     int  numAtoms = ucell->atoms->na;
-    // AbacusJson::add_json({"init", "natom"}, numAtoms,false);
-    // AbacusJson::add_json({"init", "nband"}, GlobalV::NBANDS,false);
+    AbacusJson::add_json({"init", "natom"}, numAtoms,false);
+    AbacusJson::add_json({"init", "nband"}, GlobalV::NBANDS,false);
 
-    Json::AbacusJson::add_Json(numAtoms,false,"init", "natom");
-    Json::AbacusJson::add_Json(GlobalV::NBANDS,false,"init", "nband");
+    // Json::AbacusJson::add_Json(numAtoms,false,"init", "natom");
+    // Json::AbacusJson::add_Json(GlobalV::NBANDS,false,"init", "nband");
 
     int ntype = ucell->ntype,nelec_total=0;
     for (int it = 0; it < ntype; it++)
@@ -35,28 +35,28 @@ void gen_init(UnitCell *ucell){
         int number = ucell->atoms[it].ncpp.zv;
 
         nelec_total+=ucell->atoms[it].ncpp.zv * ucell->atoms[it].na;
-        // AbacusJson::add_json({"init", "nelectron_each_type",label}, number,false);
+        AbacusJson::add_json({"init", "nelectron_each_type",label}, number,false);
 
-        Json::AbacusJson::add_Json(number,false,"init", "nelectron_each_type",label);
+        //Json::AbacusJson::add_Json(number,false,"init", "nelectron_each_type",label);
     }    
     
-    // AbacusJson::add_json({"init", "nelectron"}, nelec_total,false);
+    AbacusJson::add_json({"init", "nelectron"}, nelec_total,false);
 
-    Json::AbacusJson::add_Json(nelec_total,false,"init", "nelectron");
+    // Json::AbacusJson::add_Json(nelec_total,false,"init", "nelectron");
 }
 
 
 void add_nkstot(int nkstot,int nkstot_ibz){
-    // Json::AbacusJson::add_json({"init", "nkstot"}, nkstot,false);
-    // Json::AbacusJson::add_json({"init", "nkstot_ibz"}, nkstot_ibz,false);
+    Json::AbacusJson::add_json({"init", "nkstot"}, nkstot,false);
+    Json::AbacusJson::add_json({"init", "nkstot_ibz"}, nkstot_ibz,false);
 
-    Json::AbacusJson::add_Json(nkstot,false,"init", "nkstot");
-    Json::AbacusJson::add_Json(nkstot_ibz,false,"init", "nkstot_ibz");
+    // Json::AbacusJson::add_Json(nkstot,false,"init", "nkstot");
+    // Json::AbacusJson::add_Json(nkstot_ibz,false,"init", "nkstot_ibz");
 }
 
 
 void gen_stru(UnitCell *ucell){
-    AbacusJson::add_Json("Unless otherwise specified, the unit of energy is Ry and the unit of length is Bohr",false,"comment");
+    AbacusJson::add_json({"comment"},"Unless otherwise specified, the unit of energy is Ry and the unit of length is Bohr",false);
 
     int ntype = ucell->ntype;
 
@@ -77,27 +77,27 @@ void gen_stru(UnitCell *ucell){
 
         Json::jsonValue element_obj(JobjectType);
         element_obj.JaddStringKV(atom_label,atom_element);
-        // Json::AbacusJson::add_json({"init","element"}, element_obj,false);
+        Json::AbacusJson::add_json({"init","element"}, element_obj,false);
     
-        Json::AbacusJson::add_Json(element_obj,false,"init","element");
+        // Json::AbacusJson::add_Json(element_obj,false,"init","element");
 
 
         std::string orbital_str = GlobalV::global_orbital_dir + orbital_fn[i];
         if(!orbital_str.compare("")){
             Json::jsonValue nullValue;
             nullValue.SetNull();
-            // Json::AbacusJson::add_json({"init","orb",atom_label}, nullValue,false);
+            Json::AbacusJson::add_json({"init","orb",atom_label}, nullValue,false);
         
-            Json::AbacusJson::add_Json(nullValue,false,"init","orb",atom_label);
+            // Json::AbacusJson::add_Json(nullValue,false,"init","orb",atom_label);
 
         }else {
-            // Json::AbacusJson::add_json({"init","orb",atom_label}, orbital_str,false);
-            Json::AbacusJson::add_Json(orbital_str,false,"init","orb",atom_label);
+            Json::AbacusJson::add_json({"init","orb",atom_label}, orbital_str,false);
+            // Json::AbacusJson::add_Json(orbital_str,false,"init","orb",atom_label);
         }    
         std::string pseudo_str = pseudo_fn[i];
-        // Json::AbacusJson::add_json({"init","pp",atom_label}, pseudo_str,false);
+        Json::AbacusJson::add_json({"init","pp",atom_label}, pseudo_str,false);
 
-        Json::AbacusJson::add_Json(pseudo_str,false,"init","pp",atom_label);
+        // Json::AbacusJson::add_Json(pseudo_str,false,"init","pp",atom_label);
  
     }
     
@@ -113,16 +113,16 @@ void gen_stru(UnitCell *ucell){
             coordinateArray.JPushBack(tau[j][0]*lat0);
             coordinateArray.JPushBack(tau[j][1]*lat0);
             coordinateArray.JPushBack(tau[j][2]*lat0);
-            //Json::AbacusJson::add_json({"init","coordinate"}, coordinateArray,true);
-            Json::AbacusJson::add_Json(coordinateArray,true,"init","coordinate");
+            Json::AbacusJson::add_json({"init","coordinate"}, coordinateArray,true);
+            // Json::AbacusJson::add_Json(coordinateArray,true,"init","coordinate");
  
-            // Json::AbacusJson::add_json({"init","mag"}, ucell->atoms[i].mag[j],true);
+            Json::AbacusJson::add_json({"init","mag"}, ucell->atoms[i].mag[j],true);
 
-            Json::AbacusJson::add_Json(ucell->atoms[i].mag[j],true,"init","mag");
+            // Json::AbacusJson::add_Json(ucell->atoms[i].mag[j],true,"init","mag");
  
             std::string str = label[i];
-            // Json::AbacusJson::add_json({"init","label"}, str,true);  
-            Json::AbacusJson::add_Json(str,true,"init","label");      
+            Json::AbacusJson::add_json({"init","label"}, str,true);  
+            // Json::AbacusJson::add_Json(str,true,"init","label");      
         }
 
     }
@@ -142,13 +142,13 @@ void gen_stru(UnitCell *ucell){
         cellArray3.JPushBack(ucell->latvec.e31);
         cellArray3.JPushBack(ucell->latvec.e32);
         cellArray3.JPushBack(ucell->latvec.e33);
-        // Json::AbacusJson::add_json({"init","cell"}, cellArray1,true);
-        // Json::AbacusJson::add_json({"init","cell"}, cellArray2,true);
-        // Json::AbacusJson::add_json({"init","cell"}, cellArray3,true);
+        Json::AbacusJson::add_json({"init","cell"}, cellArray1,true);
+        Json::AbacusJson::add_json({"init","cell"}, cellArray2,true);
+        Json::AbacusJson::add_json({"init","cell"}, cellArray3,true);
 
-        Json::AbacusJson::add_Json(cellArray1,true,"init","cell"); 
-        Json::AbacusJson::add_Json(cellArray2,true,"init","cell");  
-        Json::AbacusJson::add_Json(cellArray3,true,"init","cell");   
+        // Json::AbacusJson::add_Json(cellArray1,true,"init","cell"); 
+        // Json::AbacusJson::add_Json(cellArray2,true,"init","cell");  
+        // Json::AbacusJson::add_Json(cellArray3,true,"init","cell");   
     }
     return;
 }
