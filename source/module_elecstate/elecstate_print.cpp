@@ -9,7 +9,6 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_base/formatter.h"
 
-#include "module_io/json_output/output_info.h"
 
 
 namespace elecstate
