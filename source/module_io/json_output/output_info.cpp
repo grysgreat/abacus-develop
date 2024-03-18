@@ -13,6 +13,23 @@ namespace Json
     void init_output_array_obj(){
         jsonValue scf_obj(JobjectType);
         
+        scf_obj.JaddNormal("e_fermi",0);
+        scf_obj.JaddNormal("energy",0);
+        scf_obj.JaddNormal("scf_converge",0);
+
+        jsonValue force(JobjectType);
+        jsonValue stress(JobjectType);
+        jsonValue coordinate(JarrayType);
+        jsonValue mag(JarrayType);
+        jsonValue cell(JarrayType);
+
+        scf_obj.JaddNormal("force",force);
+        scf_obj.JaddNormal("stress",stress);
+        scf_obj.JaddNormal("coordinate",coordinate);
+        scf_obj.JaddNormal("mag",mag);
+        scf_obj.JaddNormal("cell",cell);
+
+
         AbacusJson::add_json({"output"},scf_obj,true);
     }
 

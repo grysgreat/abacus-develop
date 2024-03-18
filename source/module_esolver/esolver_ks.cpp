@@ -462,22 +462,26 @@ namespace ModuleESolver
                 {
                     std::cout<<"SCF restart after this step!"<<std::endl;
                 }
+
             }
+#ifdef __RAPIDJSON
+                //add Json of efermi energy converge
+                Json::add_output_efermi_energy_converge(
+                    this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
+                    this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+                    this->conv_elec
+                );
+#endif //__RAPIDJSON 
             afterscf(istep);
             ModuleBase::timer::tick(this->classname, "Run");
-        }          
+        } 
+
 #ifdef __RAPIDJSON
-        //add Json of efermi energy converge
-        Json::add_output_efermi_energy_converge(
-            this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
-            this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
-            this->conv_elec
-        );
-        // add nkstot,nkstot_ibz to output json
-        int Jnkstot = this->pelec->klist->nkstot;
-        int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
-        Json::add_nkstot(Jnkstot,Jnkstot_ibz);
-#endif //__RAPIDJSON 
+            // add nkstot,nkstot_ibz to output json
+            int Jnkstot = this->pelec->klist->nkstot;
+            int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+            Json::add_nkstot(Jnkstot,Jnkstot_ibz);
+#endif //__RAPIDJSON          
         return;
     };
 
