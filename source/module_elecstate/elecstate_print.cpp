@@ -8,9 +8,6 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_base/formatter.h"
-
-
-
 namespace elecstate
 {
 /// @brief print and check for band energy and occupations
@@ -375,7 +372,6 @@ void ElecState::print_etot(const bool converged,
                 std::cout << std::setw(10) << get_ucell_tot_magnetization();
                 std::cout << std::setw(10) << get_ucell_abs_magnetization();
             }
-
             std::cout << std::setprecision(6);
             std::cout << std::setw(15) << this->f_en.etot * ModuleBase::Ry_to_eV;
             std::cout << std::setw(15) << (this->f_en.etot - this->f_en.etot_old) * ModuleBase::Ry_to_eV;
