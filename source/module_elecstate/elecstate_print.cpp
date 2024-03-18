@@ -357,16 +357,6 @@ void ElecState::print_etot(const bool converged,
                     printf("\e[32m%-14e\e[0m", scf_thr);
                     // printf( "[32m%-14e[0m", scf_thr);
                 }
-#ifdef __RAPIDJSON
-                //add Json of scf mag
-                Json::add_output_scf_mag(
-                    get_ucell_tot_magnetization(), get_ucell_abs_magnetization(),
-                    this->f_en.etot * ModuleBase::Ry_to_eV,
-                    (this->f_en.etot - this->f_en.etot_old) * ModuleBase::Ry_to_eV,
-                    scf_thr,
-                    duration
-                );
-#endif //__RAPIDJSON 
                 // 34 is blue
                 printf("\e[36m%-15f\e[0m", this->f_en.etot * ModuleBase::Ry_to_eV);
                 std::cout << std::setprecision(3);
@@ -386,16 +376,6 @@ void ElecState::print_etot(const bool converged,
                 std::cout << std::setw(10) << get_ucell_abs_magnetization();
             }
 
-#ifdef __RAPIDJSON
-            //add Json of scf mag
-            Json::add_output_scf_mag(
-                get_ucell_tot_magnetization(), get_ucell_abs_magnetization(),
-                this->f_en.etot * ModuleBase::Ry_to_eV,
-                (this->f_en.etot - this->f_en.etot_old) * ModuleBase::Ry_to_eV,
-                scf_thr,
-                duration
-            );
-#endif //__RAPIDJSON 
             std::cout << std::setprecision(6);
             std::cout << std::setw(15) << this->f_en.etot * ModuleBase::Ry_to_eV;
             std::cout << std::setw(15) << (this->f_en.etot - this->f_en.etot_old) * ModuleBase::Ry_to_eV;

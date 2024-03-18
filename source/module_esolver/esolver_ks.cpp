@@ -451,6 +451,16 @@ namespace ModuleESolver
                     SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
                 */
                 printiter(iter, drho, duration, diag_ethr);
+#ifdef __RAPIDJSON
+                //add Json of scf mag
+                Json::add_output_scf_mag(
+                    GlobalC::ucell.magnet.tot_magnetization, GlobalC::ucell.magnet.abs_magnetization,
+                    this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+                    (this->pelec->f_en.etot - this->pelec->f_en.etot_old) * ModuleBase::Ry_to_eV,
+                    drho,
+                    duration
+                );
+#endif //__RAPIDJSON 
                 if (this->conv_elec)
                 {
                     this->niter = iter;
