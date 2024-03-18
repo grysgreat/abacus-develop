@@ -37,7 +37,7 @@ AddTest(
 AddTest(
   TARGET elecstate_print
   LIBS ${math_libs} base device
-  SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp ../../module_io/json_output/abacusjson.cpp  ../../module_io/json_output/output_info.cpp
+  SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp
 )
 
 AddTest(
