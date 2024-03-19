@@ -52,7 +52,8 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
 
         time_t eend = time(NULL);
         time_t fstart = time(NULL);
-
+        ModuleBase::matrix force;
+        ModuleBase::matrix stress;
         if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
         {
             // I'm considering putting force and stress
@@ -64,13 +65,11 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
             this->etot = p_esolver->cal_Energy();
 
             // calculate and gather all parts of total ionic forces
-            ModuleBase::matrix force;
             if (GlobalV::CAL_FORCE)
             {
                 p_esolver->cal_Force(force);
             }
             // calculate and gather all parts of stress
-            ModuleBase::matrix stress;
             if (GlobalV::CAL_STRESS)
             {
                 p_esolver->cal_Stress(stress);
@@ -123,16 +122,17 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                     GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                 }
             }
-#ifdef __RAPIDJSON
-            //add Json of cell coo stress force
-            double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-            double fac = ModuleBase::Ry_to_eV / 0.529177;
-            Json::add_output_cell_coo_stress_force(
-                &GlobalC::ucell,
-                force,fac,
-                stress,unit_transform);
-#endif //__RAPIDJSON 
         }
+#ifdef __RAPIDJSON
+        //add Json of cell coo stress force
+        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+        double fac = ModuleBase::Ry_to_eV / 0.529177;
+        Json::add_output_cell_coo_stress_force(
+            &GlobalC::ucell,
+            force,fac,
+            stress,unit_transform);
+#endif //__RAPIDJSON 
+    
         time_t fend = time(NULL);
 
         ++istep;

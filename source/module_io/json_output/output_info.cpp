@@ -10,12 +10,19 @@ namespace Json
 
 #ifdef __RAPIDJSON
 
+
+    // Adjust the position of the json object and set the initial value
     void init_output_array_obj(){
-        jsonValue scf_obj(JobjectType);
+
+
         
-        scf_obj.JaddNormal("e_fermi",0);
-        scf_obj.JaddNormal("energy",0);
-        scf_obj.JaddNormal("scf_converge",0);
+        jsonValue scf_obj(JobjectType);
+
+        Json::jsonValue nullValue;
+        nullValue.SetNull();
+        scf_obj.JaddNormal("e_fermi",nullValue);
+        scf_obj.JaddNormal("energy",nullValue);
+        scf_obj.JaddNormal("scf_converge",nullValue);
 
         jsonValue force(JobjectType);
         jsonValue stress(JobjectType);
@@ -23,8 +30,8 @@ namespace Json
         jsonValue mag(JarrayType);
         jsonValue cell(JarrayType);
 
-        scf_obj.JaddNormal("force",force);
-        scf_obj.JaddNormal("stress",stress);
+        scf_obj.JaddNormal("force",nullValue);
+        scf_obj.JaddNormal("stress",nullValue);
         scf_obj.JaddNormal("coordinate",coordinate);
         scf_obj.JaddNormal("mag",mag);
         scf_obj.JaddNormal("cell",cell);
