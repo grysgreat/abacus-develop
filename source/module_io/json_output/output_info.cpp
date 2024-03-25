@@ -152,6 +152,9 @@ namespace Json
         // Json::AbacusJson::add_Json(total_mag,false,"output",-1,"total_mag");
         // Json::AbacusJson::add_Json(absolute_mag,false,"output",-1,"absolute_mag");
 
+        if(ediff==energy) {
+            ediff=0;
+        }
         Json::jsonValue scf_obj(JobjectType);
         scf_obj.JaddNormal("energy",energy);
         scf_obj.JaddNormal("ediff",ediff);    

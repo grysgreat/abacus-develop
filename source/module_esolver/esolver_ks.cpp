@@ -456,8 +456,7 @@ namespace ModuleESolver
                 {
                     dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
                 }
-                printiter(iter, drho, dkin, duration, diag_ethr);
-              
+
 #ifdef __RAPIDJSON
                 //add Json of scf mag
                 Json::add_output_scf_mag(
@@ -468,7 +467,7 @@ namespace ModuleESolver
                     duration
                 );
 #endif //__RAPIDJSON 
-          
+                printiter(iter, drho, dkin, duration, diag_ethr);
               
                 if (this->conv_elec)
                 {
