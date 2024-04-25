@@ -80,6 +80,15 @@ If the program prompt something like "KILLED BY SIGNAL: 9 (Killed)", it may be c
 
 If the error message is "Segmentation fault", or there is no enough information on the error, please feel free to submit an issue.
 
+**4. Error "Read -1" when using mpirun in docker environment**
+This is because under docker, the process is executed with root permission, and it is necessary to set the root option for mpi and omp at the same time. MPI--`--allow-run-as-root`. OMP--`OMPI_ALLOW_RUN_AS_ROOT=1`,`OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1`,`OMPI_MCA_btl_vader_single_copy_mechanism=non`.
+
+A full running instruction is as follows:
+```
+OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=non
+e mpirun --allow-run-as-root -np 4 abacus
+```
+
 ## Miscellaneous
 
 **1. How to visualize charge density file?**
