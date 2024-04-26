@@ -82,13 +82,6 @@ If the error message is "Segmentation fault", or there is no enough information 
 
 **4. Error "Read -1" when using mpirun in docker environment**
 This is a [known issue](https://github.com/open-mpi/ompi/issues/4948) of OpenMPI running in a docker container. In this case, please set environment variable `OMPI_MCA_btl_vader_single_copy_mechanism=none`.
-
-A full running instruction is as follows:
-```
-OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=non
-e mpirun --allow-run-as-root -np 4 abacus
-```
-
 ## Miscellaneous
 
 **1. How to visualize charge density file?**
