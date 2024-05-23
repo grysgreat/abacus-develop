@@ -1,5 +1,6 @@
 #include "forces.h"
-
+#include "stress_func.h"
+#include "module_base/math_ylmreal.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 // new
@@ -15,12 +16,194 @@
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_psi/kernels/device.h"
+#include "module_base/memory.h"
+#include "module_base/math_polyint.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
+
+
+// cal_vq
+template <typename FPTYPE>
+std::vector<FPTYPE> cal_vq(int it, const FPTYPE* gk, int npw)
+{
+    // calculate beta in G-space using an interpolation table
+    const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
+
+    std::vector<FPTYPE> vq(nbeta * npw);
+    ModuleBase::Memory::record("stress_nl::vq", nbeta * npw * sizeof(FPTYPE));
+
+    for (int nb = 0; nb < nbeta; nb++)
+    {
+        FPTYPE* vq_ptr = &vq[nb * npw];
+        const FPTYPE* gnorm = &gk[3 * npw];
+        for (int ig = 0; ig < npw; ig++)
+        {
+            vq_ptr[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(GlobalC::ppcell.tab,
+                                                                    it,
+                                                                    nb,
+                                                                    GlobalV::NQX,
+                                                                    GlobalV::DQ,
+                                                                    gnorm[ig]);
+        }
+    }
+    return vq;
+}
+
+
+
+
+// cal_ylm
+template <typename FPTYPE>
+std::vector<FPTYPE> cal_ylm(int lmax, int npw, const FPTYPE* gk_in)
+{
+    int x1 = (lmax + 1) * (lmax + 1);
+    std::vector<FPTYPE> ylm(x1 * npw);
+    ModuleBase::Memory::record("stress_nl::ylm", x1 * npw * sizeof(FPTYPE));
+
+    ModuleBase::YlmReal::Ylm_Real(cpu_ctx, x1, npw, gk_in, ylm.data());
+    
+    return ylm;
+}
+
+// cal_pref
+template <typename FPTYPE>
+std::vector<std::complex<FPTYPE>> cal_pref(int it)
+{
+    const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
+    std::vector<std::complex<FPTYPE>> pref(nh);
+    for(int ih=0;ih<nh;ih++)
+    {
+        pref[ih] = std::pow(std::complex<FPTYPE>(0.0, -1.0), GlobalC::ppcell.nhtol(it, ih));
+    }
+    return pref;
+}
+// cal_vkb
+// cpu version first, gpu version later
+template <typename FPTYPE>
+void cal_vkb(
+    int it,
+    int ia,
+    int npw,
+    const FPTYPE* vq_in,
+    const FPTYPE* ylm_in,
+    const std::complex<FPTYPE>* sk_in,
+    const std::complex<FPTYPE>* pref_in,
+    std::complex<FPTYPE>* vkb_out)
+{
+    int ih=0;
+    // loop over all beta functions
+    for(int nb=0;nb<GlobalC::ucell.atoms[it].ncpp.nbeta;nb++)
+    {
+        int l = GlobalC::ppcell.nhtol(it, ih);
+        // loop over all m angular momentum
+        for(int m=0;m<2*l+1;m++)
+        {
+            int lm = l*l + m;
+            std::complex<FPTYPE>* vkb_ptr = &vkb_out[ih * npw];
+            const FPTYPE* ylm_ptr = &ylm_in[lm * npw];
+            const FPTYPE* vq_ptr = &vq_in[nb * npw];
+            // loop over all G-vectors
+            for(int ig=0;ig<npw;ig++)
+            {
+                vkb_ptr[ig] = ylm_ptr[ig] * vq_ptr[ig] * sk_in[ig] * pref_in[ih];
+            }
+            ih++;
+        }
+    }
+}
+
+// cal_vkb
+// cpu version first, gpu version later
+template <typename FPTYPE>
+void cal_vkb_deri(
+    int it,
+    int ia,
+    int npw,
+    int ipol,
+    int jpol,
+    const FPTYPE* vq_in, const FPTYPE* vq_deri_in,
+    const FPTYPE* ylm_in, const FPTYPE* ylm_deri_in,
+    const std::complex<FPTYPE>* sk_in,
+    const std::complex<FPTYPE>* pref_in,
+    const FPTYPE* gk_in,
+    std::complex<FPTYPE>* vkb_out)
+{
+    int x1 = (GlobalC::ppcell.lmaxkb + 1) * (GlobalC::ppcell.lmaxkb + 1);
+    int ih=0;
+    // loop over all beta functions
+    for(int nb=0;nb<GlobalC::ucell.atoms[it].ncpp.nbeta;nb++)
+    {
+        int l = GlobalC::ppcell.nhtol(it, ih);
+        // loop over all m angular momentum
+        for(int m=0;m<2*l+1;m++)
+        {
+            int lm = l*l + m;
+            std::complex<FPTYPE>* vkb_ptr = &vkb_out[ih * npw];
+            const FPTYPE* ylm_ptr = &ylm_in[lm * npw];
+            const FPTYPE* vq_ptr = &vq_in[nb * npw];
+            // set vkb to zero
+            for(int ig=0;ig<npw;ig++)
+            {
+                vkb_ptr[ig] = std::complex<FPTYPE>(0.0, 0.0);
+            }
+            // first term: ylm * vq * sk * pref
+            // loop over all G-vectors
+            if(ipol == jpol)
+            {
+                for(int ig=0;ig<npw;ig++)
+                {
+                    vkb_ptr[ig] -= ylm_ptr[ig] * vq_ptr[ig] * sk_in[ig] * pref_in[ih];
+                }
+            }
+            //second term: ylm_deri * vq_deri * sk * pref
+            // loop over all G-vectors
+            const FPTYPE* ylm_deri_ptr1 = &ylm_deri_in[(ipol * x1 + lm) * npw];
+            const FPTYPE* ylm_deri_ptr2 = &ylm_deri_in[(jpol * x1 + lm) * npw];
+            const FPTYPE* vq_deri_ptr = &vq_deri_in[nb * npw];
+            const FPTYPE* gkn = &gk_in[4 * npw];
+            for(int ig=0;ig<npw;ig++)
+            {
+                vkb_ptr[ig] -= (gk_in[ig*3+ipol] * ylm_deri_ptr2[ig] + gk_in[ig*3+jpol] * ylm_deri_ptr1[ig]) 
+                                * vq_ptr[ig] * sk_in[ig] * pref_in[ih];
+            }
+            //third term: ylm * vq_deri * sk * pref
+            // loop over all G-vectors
+            for(int ig=0;ig<npw;ig++)
+            {
+                vkb_ptr[ig] -= 2.0 * ylm_ptr[ig] * vq_deri_ptr[ig] * sk_in[ig] * pref_in[ih]
+                               * gk_in[ig*3+ipol] * gk_in[ig*3+jpol] * gkn[ig];
+            }
+            ih++;
+        }
+    }
+}
+
+
+// cal_gk
+template <typename FPTYPE>
+std::vector<FPTYPE> cal_gk(int ik, ModulePW::PW_Basis_K* wfc_basis)
+{
+    int npw = wfc_basis->npwk[ik];
+    std::vector<FPTYPE> gk(npw * 5);
+    ModuleBase::Memory::record("stress_nl::gk", 5 * npw * sizeof(FPTYPE));
+    ModuleBase::Vector3<FPTYPE> tmp;
+    for(int ig=0;ig<npw;++ig)
+    {
+        tmp = wfc_basis->getgpluskcar(ik, ig);
+        gk[ig*3] = tmp.x;
+        gk[ig*3+1] = tmp.y;
+        gk[ig*3+2] = tmp.z;
+        FPTYPE norm = sqrt(tmp.norm2());
+        gk[3 * npw + ig] = norm * GlobalC::ucell.tpiba;
+        gk[4 * npw + ig] = norm<1e-8?0.0:1.0/norm*GlobalC::ucell.tpiba;
+    }
+    return gk;
+}
+
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
@@ -958,46 +1141,45 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     ModuleBase::timer::tick("Forces", "cal_force_nl");
 
     const int nkb = GlobalC::ppcell.nkb;
+    int wg_nc = wg.nc;
     if (nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
     {
         return; // mohan add 2010-07-25
     }
-
     // There is a contribution for jh<>ih in US case or multi projectors case
     // Actually, the judge of nondiagonal should be done on every atom type
     const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
+    this->device = psi::device::get_device_type<Device>(this->ctx);
 
-    // dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
-    // ModuleBase::ComplexArray dbecp(3, GlobalV::NBANDS, nkb);
-    // ModuleBase::ComplexMatrix becp(GlobalV::NBANDS, nkb);
-    std::complex<FPTYPE>*dbecp = nullptr, *becp = nullptr, *vkb1 = nullptr, *vkb = nullptr;
-    resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb, "Force::becp");
-    resmem_complex_op()(this->ctx, dbecp, 3 * GlobalV::NBANDS * nkb, "Force::dbecp");
-    // vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
-    // ModuleBase::ComplexMatrix vkb1(nkb, this->npwx);
+    // prepare the memory of the becp and dbecp:
+    // becp: <Beta(nkb,npw)|psi(nbnd,npw)>
+    // dbecp: <dBeta(nkb,npw)/dG|psi(nbnd,npw)>
+    std::complex<FPTYPE> *dbecp = nullptr, *becp = nullptr,  *vkb1 = nullptr;
+    resmem_complex_op()(this->ctx, becp, wg_nc * nkb, "Force::becp");
+    resmem_complex_op()(this->ctx, dbecp, 6 * wg_nc * nkb, "Force::dbecp");
     resmem_complex_op()(this->ctx, vkb1, this->npwx * nkb, "Force::vkb1");
-    // init additional params
-    FPTYPE *force = nullptr;
-    FPTYPE *d_wg = nullptr;
-    FPTYPE* d_ekb = nullptr;
-    FPTYPE *gcar = nullptr;
-    auto *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>();
-    auto* qq_nt = GlobalC::ppcell.get_qq_nt_data<FPTYPE>();
-    int wg_nc = wg.nc;
-    int *atom_nh = nullptr, *atom_na = nullptr;
-    int* h_atom_nh = new int[GlobalC::ucell.ntype];
-    int* h_atom_na = new int[GlobalC::ucell.ntype];
+
+
+    // prepare the memory of stress and init some variables:
+    int *atom_nh = nullptr, *atom_na = nullptr, *h_atom_nh = new int[GlobalC::ucell.ntype],
+        *h_atom_na = new int[GlobalC::ucell.ntype];
     for (int ii = 0; ii < GlobalC::ucell.ntype; ii++)
     {
         h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
         h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
     }
+    FPTYPE *force = nullptr,  *d_wg = nullptr, *d_ekb = nullptr, *gcar = nullptr,
+           *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(), *kvec_c = wfc_basis->get_kvec_c_data<FPTYPE>(),
+           *qq_nt = GlobalC::ppcell.get_qq_nt_data<FPTYPE>();
+
+    
+
     if (this->device == psi::GpuDevice)
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
-        resmem_var_op()(this->ctx, force, forcenl.nr * forcenl.nc);
         resmem_var_op()(this->ctx, gcar, 3 * wfc_basis->nks * wfc_basis->npwk_max);
+        resmem_var_op()(this->ctx, force, forcenl.nr * forcenl.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, ekb.c, ekb.nr * ekb.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, force, forcenl.c, forcenl.nr * forcenl.nc);
@@ -1006,7 +1188,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                              gcar,
                              &wfc_basis->gcar[0][0],
                              3 * wfc_basis->nks * wfc_basis->npwk_max);
-
         resmem_int_op()(this->ctx, atom_nh, GlobalC::ucell.ntype);
         resmem_int_op()(this->ctx, atom_na, GlobalC::ucell.ntype);
         syncmem_int_h2d_op()(this->ctx, this->cpu_ctx, atom_nh, h_atom_nh, GlobalC::ucell.ntype);
@@ -1022,31 +1203,28 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         atom_na = h_atom_na;
     }
 
-    for (int ik = 0; ik < wfc_basis->nks; ik++)
+
+    int nks = wfc_basis->nks;
+
+    for(int ik=0;ik<nks;ik++)//loop k points
     {
+        // only for uspp: move the spin index in deeq
         if (GlobalV::NSPIN == 2)
             GlobalV::CURRENT_SPIN = p_kv->isk[ik];
         const int nbasis = wfc_basis->npwk[ik];
-        // generate vkb
-        if (GlobalC::ppcell.nkb > 0)
-        {
-            vkb = GlobalC::ppcell.get_vkb_data<FPTYPE>();
-            GlobalC::ppcell.getvnl(ctx, ik, vkb);
-        }
 
-        // get becp according to wave functions and vkb
-        // important here ! becp must set zero!!
-        // vkb: Beta(nkb,npw)
-        // becp(nkb,nbnd): <Beta(nkb,npw)|psi(nbnd,npw)>
-        // becp.zero_out();
+
+
         psi_in[0].fix_k(ik);
         char transa = 'C';
         char transb = 'N';
+
         ///
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        while (wg(ik, nbands_occ - 1) == 0.0)
+        const double threshold = ModuleBase::threshold_wg * wg(ik, 0);
+        while (std::fabs(wg(ik, nbands_occ - 1)) < threshold)
         {
             nbands_occ--;
             if (nbands_occ == 0)
@@ -1054,24 +1232,96 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                 break;
             }
         }
-        int npm = GlobalV::NPOL * nbands_occ;
-        gemm_op()(this->ctx,
-                  transa,
-                  transb,
-                  nkb,
-                  npm,
-                  nbasis,
-                  &ModuleBase::ONE,
-                  vkb,
-                  this->npwx,
-                  psi_in[0].get_pointer(),
-                  this->npwx,
-                  &ModuleBase::ZERO,
-                  becp,
-                  nkb);
+        const int npm = GlobalV::NPOL * nbands_occ;
+        const int npw = p_kv->ngk[ik];
+
+
+        std::vector<FPTYPE> g_plus_k = cal_gk<FPTYPE>(ik, wfc_basis);
+        std::complex<FPTYPE>* becp_ptr = becp;
+        std::complex<FPTYPE>* dbecp_ptr[6];
+        for(int i=0;i<6;i++)
+        {
+            dbecp_ptr[i] = &dbecp[i * wg_nc * nkb];
+        }
+        std::complex<FPTYPE>* ppcell_vkb = GlobalC::ppcell.vkb.c;
+        std::complex<FPTYPE>* ppcell_vkb_d= GlobalC::ppcell.get_vkb_data<FPTYPE>();
+
+        int lmax = GlobalC::ppcell.lmaxkb;
+        //prepare ylm，size: (lmax+1)^2 * npwx
+        std::vector<double> ylm =  cal_ylm(lmax, npw, g_plus_k.data());
+
+        for(int it=0;it<GlobalC::ucell.ntype;it++)//loop all elements 
+        {
+            // prepare inputs for calculating vkb，vkb1，vkb2 
+            // prepare vq and vq', size: nq * npwx 
+            std::vector<double> vq =  cal_vq(it, g_plus_k.data(), npw);
+            // prepare（-i）^l, size: nh
+            std::vector<complex<double>> pref =  cal_pref<double>(it);
+            int nh = pref.size();
+
+            double time=0,time2=0;
+            for(int ia=0;ia<h_atom_na[it];ia++)
+            {
+                // prepare SK
+
+                
+                std::complex<FPTYPE>* sk=GlobalC::ppcell.psf->get_sk( ik,it,ia, wfc_basis);;
+
+                
+                // 1. calculate becp
+                // 1.a calculate vkb
+                cal_vkb(it, ia, npw, 
+                    vq.data(), 
+                    ylm.data(), 
+                    sk,
+                    pref.data(), 
+                    ppcell_vkb);
+                // 2.b calculate becp = vkb * psi
+
+                if (this->device == psi::GpuDevice)
+                {
+                    syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, ppcell_vkb_d, ppcell_vkb, nh * npw);
+                    gemm_op()(this->ctx,
+                            transa,
+                            transb,
+                            nh,
+                            npm,
+                            npw,
+                            &ModuleBase::ONE,
+                            ppcell_vkb_d,
+                            npw,
+                            psi_in[0].get_pointer(),
+                            npwx,
+                            &ModuleBase::ZERO,
+                            becp_ptr,
+                            nkb);
+                    
+                }
+                else {
+                    gemm_op()(this->ctx,
+                        transa,
+                        transb,
+                        nh,
+                        npm,
+                        npw,
+                        &ModuleBase::ONE,
+                        ppcell_vkb,
+                        npw,
+                        psi_in[0].get_pointer(),
+                        npwx,
+                        &ModuleBase::ZERO,
+                        becp_ptr,
+                        nkb);
+                }
+
+                becp_ptr += nh;
+                delete [] sk;
+            }//end ia
+        }//end it
+        // becp calculate is over , now we should broadcast this data.
         if (this->device == psi::GpuDevice)
         {
-            std::complex<FPTYPE>* h_becp = nullptr;
+            std::complex<FPTYPE> *h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
             Parallel_Reduce::reduce_pool(h_becp, GlobalV::NBANDS * nkb);
@@ -1082,24 +1332,37 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         {
             Parallel_Reduce::reduce_pool(becp, GlobalV::NBANDS * nkb);
         }
-        // out.printcm_real("becp",becp,1.0e-4);
-        //  Calculate the derivative of beta,
-        //  |dbeta> =  -ig * |beta>
-        // dbecp.zero_out();
+        int index = 0;        
         for (int ipol = 0; ipol < 3; ipol++)
         {
-            cal_vkb1_nl_op()(this->ctx,
-                             nkb,
-                             this->npwx,
-                             wfc_basis->npwk_max,
-                             GlobalC::ppcell.vkb.nc,
-                             nbasis,
-                             ik,
-                             ipol,
-                             ModuleBase::NEG_IMAG_UNIT,
-                             vkb,
-                             gcar,
-                             vkb1);
+            if (this->device == psi::GpuDevice)
+            {
+                cal_vkb1_nl_op()(this->ctx,
+                                nkb,
+                                this->npwx,
+                                wfc_basis->npwk_max,
+                                GlobalC::ppcell.vkb.nc,
+                                nbasis,
+                                ik,
+                                ipol,
+                                ModuleBase::NEG_IMAG_UNIT,
+                                ppcell_vkb_d,
+                                gcar,
+                                vkb1);
+            }else {
+                cal_vkb1_nl_op()(this->ctx,
+                                nkb,
+                                this->npwx,
+                                wfc_basis->npwk_max,
+                                GlobalC::ppcell.vkb.nc,
+                                nbasis,
+                                ik,
+                                ipol,
+                                ModuleBase::NEG_IMAG_UNIT,
+                                ppcell_vkb,
+                                gcar,
+                                vkb1);
+            }
             std::complex<double>* pdbecp = dbecp + ipol * GlobalV::NBANDS * nkb;
             gemm_op()(this->ctx,
                       transa,
@@ -1116,7 +1379,6 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                       pdbecp,
                       nkb);
         } // end ipol
-
         //		don't need to reduce here, keep dbecp different in each processor,
         //		and at last sum up all the forces.
         //		Parallel_Reduce::reduce_pool( dbecp.ptr, dbecp.ndata);
@@ -1152,23 +1414,23 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     // sum up forcenl from all processors
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr* forcenl.nc);
 
-    delete[] h_atom_nh;
-    delete[] h_atom_na;
-    delmem_complex_op()(this->ctx, vkb1);
+
+    delete [] h_atom_nh;
+    delete [] h_atom_na;
     delmem_complex_op()(this->ctx, becp);
     delmem_complex_op()(this->ctx, dbecp);
-    if (this->device == psi::GpuDevice)
-    {
+    if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, d_ekb);
-        delmem_var_op()(this->ctx, gcar);
-        delmem_var_op()(this->ctx, force);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
     }
-    //  this->print(GlobalV::ofs_running, "nonlocal forces", forcenl);
-    ModuleBase::timer::tick("Forces", "cal_force_nl");
+
+
+	ModuleBase::timer::tick("Forces","cal_force_nl");
 }
+
+
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
