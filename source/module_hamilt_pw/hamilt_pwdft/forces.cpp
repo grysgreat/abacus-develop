@@ -1,3 +1,5 @@
+
+
 #include "forces.h"
 #include "stress_func.h"
 #include "module_base/math_ylmreal.h"
@@ -81,6 +83,29 @@ std::vector<std::complex<FPTYPE>> cal_pref(int it)
     }
     return pref;
 }
+
+// cal_pref
+// template <typename FPTYPE>
+// std::vector<std::complex<FPTYPE>> cal_vkb1_nl(
+//     const int &it,
+//     const int &ik,
+//     const int &nkb,
+//     const int &ipol,
+//     const std::complex<FPTYPE> *vkb,
+//     const FPTYPE *gcar,
+    
+//     )
+// {
+//     const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
+//     std::vector<std::complex<FPTYPE>> pref(nh);
+//     for(int ih=0;ih<nh;ih++)
+//     {
+//         pref[ih] = std::pow(std::complex<FPTYPE>(0.0, -1.0), GlobalC::ppcell.nhtol(it, ih));
+//     }
+//     return pref;
+// }
+
+
 // cal_vkb
 // cpu version first, gpu version later
 template <typename FPTYPE>
@@ -1238,10 +1263,12 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
 
         std::vector<FPTYPE> g_plus_k = cal_gk<FPTYPE>(ik, wfc_basis);
         std::complex<FPTYPE>* becp_ptr = becp;
+
+
         std::complex<FPTYPE>* dbecp_ptr[6];
-        for(int i=0;i<6;i++)
+        for(int i=0;i<3;i++)
         {
-            dbecp_ptr[i] = &dbecp[i * wg_nc * nkb];
+            dbecp_ptr[i] = &dbecp[i * GlobalV::NBANDS * nkb];
         }
         std::complex<FPTYPE>* ppcell_vkb = GlobalC::ppcell.vkb.c;
         std::complex<FPTYPE>* ppcell_vkb_d= GlobalC::ppcell.get_vkb_data<FPTYPE>();
@@ -1315,6 +1342,52 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                 }
 
                 becp_ptr += nh;
+                for (int ipol = 0; ipol < 3; ipol++)
+                {
+                    if (this->device == psi::GpuDevice)
+                    {
+                        cal_vkb1_nl_op()(this->ctx,
+                                        nh,
+                                        this->npwx,
+                                        wfc_basis->npwk_max,
+                                        GlobalC::ppcell.vkb.nc,
+                                        nbasis, 
+                                        ik,
+                                        ipol,
+                                        ModuleBase::NEG_IMAG_UNIT,
+                                        ppcell_vkb_d,
+                                        gcar,
+                                        vkb1);
+                    }else {
+                        cal_vkb1_nl_op()(this->ctx,
+                                        nh,
+                                        this->npwx,
+                                        wfc_basis->npwk_max,
+                                        GlobalC::ppcell.vkb.nc,
+                                        nbasis,
+                                        ik,
+                                        ipol,
+                                        ModuleBase::NEG_IMAG_UNIT,
+                                        ppcell_vkb,
+                                        gcar,
+                                        vkb1);
+                    }
+                    gemm_op()(this->ctx,
+                            transa,
+                            transb,
+                            nh,
+                            npm,
+                            nbasis,
+                            &ModuleBase::ONE,
+                            vkb1,
+                            this->npwx,
+                            psi_in[0].get_pointer(),
+                            this->npwx,
+                            &ModuleBase::ZERO,
+                            dbecp_ptr[ipol],
+                            nkb);
+                    dbecp_ptr[ipol] += nh;
+                } // end ipol
                 delete [] sk;
             }//end ia
         }//end it
@@ -1332,53 +1405,9 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         {
             Parallel_Reduce::reduce_pool(becp, GlobalV::NBANDS * nkb);
         }
+        
         int index = 0;        
-        for (int ipol = 0; ipol < 3; ipol++)
-        {
-            if (this->device == psi::GpuDevice)
-            {
-                cal_vkb1_nl_op()(this->ctx,
-                                nkb,
-                                this->npwx,
-                                wfc_basis->npwk_max,
-                                GlobalC::ppcell.vkb.nc,
-                                nbasis,
-                                ik,
-                                ipol,
-                                ModuleBase::NEG_IMAG_UNIT,
-                                ppcell_vkb_d,
-                                gcar,
-                                vkb1);
-            }else {
-                cal_vkb1_nl_op()(this->ctx,
-                                nkb,
-                                this->npwx,
-                                wfc_basis->npwk_max,
-                                GlobalC::ppcell.vkb.nc,
-                                nbasis,
-                                ik,
-                                ipol,
-                                ModuleBase::NEG_IMAG_UNIT,
-                                ppcell_vkb,
-                                gcar,
-                                vkb1);
-            }
-            std::complex<double>* pdbecp = dbecp + ipol * GlobalV::NBANDS * nkb;
-            gemm_op()(this->ctx,
-                      transa,
-                      transb,
-                      nkb,
-                      npm,
-                      nbasis,
-                      &ModuleBase::ONE,
-                      vkb1,
-                      this->npwx,
-                      psi_in[0].get_pointer(),
-                      this->npwx,
-                      &ModuleBase::ZERO,
-                      pdbecp,
-                      nkb);
-        } // end ipol
+
         //		don't need to reduce here, keep dbecp different in each processor,
         //		and at last sum up all the forces.
         //		Parallel_Reduce::reduce_pool( dbecp.ptr, dbecp.ndata);
@@ -1405,6 +1434,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                           becp,
                           dbecp,
                           force);
+
     } // end ik
 
     if (this->device == psi::GpuDevice)
@@ -1419,9 +1449,11 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     delete [] h_atom_na;
     delmem_complex_op()(this->ctx, becp);
     delmem_complex_op()(this->ctx, dbecp);
+    delmem_complex_op()(this->ctx, vkb1);
     if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, d_ekb);
+        delmem_var_op()(this->ctx, gcar);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
     }
