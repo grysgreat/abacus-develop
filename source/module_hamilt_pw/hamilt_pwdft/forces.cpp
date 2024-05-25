@@ -1176,13 +1176,20 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
     this->device = psi::device::get_device_type<Device>(this->ctx);
 
+    int max_nh=0;
+    for(int it=0;it<GlobalC::ucell.ntype;it++)//loop all elements 
+    {
+        max_nh = std::max(GlobalC::ucell.atoms[it].ncpp.nh,max_nh);
+    }
+
+
     // prepare the memory of the becp and dbecp:
     // becp: <Beta(nkb,npw)|psi(nbnd,npw)>
     // dbecp: <dBeta(nkb,npw)/dG|psi(nbnd,npw)>
     std::complex<FPTYPE> *dbecp = nullptr, *becp = nullptr,  *vkb1 = nullptr;
     resmem_complex_op()(this->ctx, becp, wg_nc * nkb, "Force::becp");
     resmem_complex_op()(this->ctx, dbecp, 6 * wg_nc * nkb, "Force::dbecp");
-    resmem_complex_op()(this->ctx, vkb1, this->npwx * nkb, "Force::vkb1");
+    resmem_complex_op()(this->ctx, vkb1, this->npwx * max_nh, "Force::vkb1");
 
 
     // prepare the memory of stress and init some variables:
