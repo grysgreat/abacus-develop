@@ -100,13 +100,15 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 		if(GlobalC::ucell.atoms[nt].ncpp.nlcc)
 		{
 			//drhoc();
-			chr->non_linear_core_correction(
+			this->deriv_drhoc(
 				GlobalC::ppcell.numeric,
 				GlobalC::ucell.atoms[nt].ncpp.msh,
 				GlobalC::ucell.atoms[nt].ncpp.r,
 				GlobalC::ucell.atoms[nt].ncpp.rab,
 				GlobalC::ucell.atoms[nt].ncpp.rho_atc,
-				rhocg);
+				rhocg,
+				rho_basis,
+				1);
 
 
 			//diagonal term 
@@ -129,7 +131,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 				GlobalC::ucell.atoms[nt].ncpp.rab,
 				GlobalC::ucell.atoms[nt].ncpp.rho_atc,
 				rhocg,
-				rho_basis);
+				rho_basis,
+				0);
 			// non diagonal term (g=0 contribution missing)
 #ifdef _OPENMP
 #pragma omp parallel
@@ -201,10 +204,19 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 	const FPTYPE *rab,
 	const FPTYPE *rhoc,
 	FPTYPE *drhocg,
-	ModulePW::PW_Basis* rho_basis
+	ModulePW::PW_Basis* rho_basis,
+	int type
 )
 {
 	int  igl0;
+	double gx = 0, rhocg1 = 0;
+	double *aux = new double[mesh];
+	this->device = base_device::get_device_type<Device>(this->ctx);
+	// the modulus of g for a given shell
+	// the fourier transform
+	// auxiliary memory for integration
+	double *gx_arr = new double[rho_basis->ngg];
+	double *gx_arr_d = nullptr;
 	// counter on radial mesh points
 	// counter on g shells
 	// lower limit for loop on ngl
@@ -212,46 +224,75 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 	//
 	// G=0 term
 	//
-	if (rho_basis->gg_uniq[0] < 1.0e-8)
-	{
-		drhocg [0] = 0.0;
-		igl0 = 1;
+	if(type == 0){
+		if (rho_basis->gg_uniq[0] < 1.0e-8)
+		{
+			drhocg [0] = 0.0;
+			igl0 = 1;
+		}
+		else
+		{
+			igl0 = 0;
+		}
+	} else {
+		if (rho_basis->gg_uniq[0] < 1.0e-8)
+		{
+			for (int ir = 0;ir < mesh; ir++)
+			{
+				aux [ir] = r [ir] * r [ir] * rhoc [ir];
+			}
+			ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+			drhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
+			igl0 = 1;
+		} 
+		else
+		{
+			igl0 = 0;
+		}		
 	}
-	else
-	{
-		igl0 = 0;
-	}
-#ifdef _OPENMP
-#pragma omp parallel
-{
-#endif
-	double gx = 0, rhocg1 = 0;
-	// the modulus of g for a given shell
-	// the fourier transform
-	double *aux = new double[ mesh];
-	// auxiliary memory for integration
+
 
 	//
 	// G <> 0 term
-	//
+	//]
+
 #ifdef _OPENMP
-#pragma omp for
+#pragma omp parallel for
 #endif
 	for(int igl = igl0;igl< rho_basis->ngg;igl++)
 	{
-		gx = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
-		for( int ir = 0;ir< mesh; ir++)
-		{
-			aux [ir] = r [ir] * rhoc [ir] * (r [ir] * cos (gx * r [ir] ) / gx - sin (gx * r [ir] ) / pow(gx,2));
-		}//ir
-		ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-		drhocg [igl] = ModuleBase::FOUR_PI / GlobalC::ucell.omega * rhocg1;
-	}//igl
-	
-	delete [] aux;
-#ifdef _OPENMP
-}
-#endif
+		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
+	}
+
+	double *r_d = nullptr, *rhoc_d = nullptr, *rab_d = nullptr,*aux_d = nullptr,*drhocg_d = nullptr;
+	if(this->device == base_device::GpuDevice ) {
+		resmem_var_op()(this->ctx, r_d, mesh);
+		resmem_var_op()(this->ctx, rhoc_d, mesh);
+		resmem_var_op()(this->ctx, rab_d, mesh);
+
+		resmem_var_op()(this->ctx, aux_d, mesh);
+		resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg);
+		resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
+
+		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gx_arr_d, gx_arr, rho_basis->ngg);
+		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, mesh);
+		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, mesh);
+		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, rhoc, mesh);
+	}
+
+	if(this->device == base_device::GpuDevice) {
+		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
+			r_d,rhoc_d,gx_arr_d,rab_d,drhocg_d,mesh,igl0,rho_basis->ngg,GlobalC::ucell.omega,type);
+		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg, drhocg_d, rho_basis->ngg);	
+
+	} else {
+		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
+			r,rhoc,gx_arr,rab,drhocg,mesh,igl0,rho_basis->ngg,GlobalC::ucell.omega,type);
+
+	}
+
+	delete [] gx_arr;
+
 	return;
 }
 

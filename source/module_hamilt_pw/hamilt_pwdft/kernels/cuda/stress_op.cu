@@ -353,6 +353,115 @@ __global__ void cal_vq_deri(
         tab, it, ib, tab_2, tab_3, table_interval, gnorm[idx]);
 }
 
+
+
+template <typename FPTYPE>
+__device__ void Simpson_Integral
+(
+    const int mesh,
+    FPTYPE * func,
+    const FPTYPE * rab,
+    FPTYPE &asum
+)
+{
+    asum = 0.00;
+	const size_t end = mesh-2;
+    for( size_t i=1; i!=end; i+=2 )
+    {
+		const double f1 = func[i]*rab[i];
+		asum += f1 + f1 + func[i+1]*rab[i+1];
+    }
+	const double f1 = func[mesh-2]*rab[mesh-2];
+	asum += f1+f1;
+	asum += asum;
+	asum += func[0]*rab[0] + func[mesh-1]*rab[mesh-1];
+	asum /= 3.0;
+    return;
+}// end subroutine simpson
+
+
+#define FOUR_PI 4.0 * 3.14159265358979323846
+template <typename FPTYPE>
+__global__ void cal_stress_drhoc_aux(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+){
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    FPTYPE aux_d[1300];
+    FPTYPE rhocg1=0;
+    if(idx<ngg) {
+        for( int ir = 0;ir< mesh; ir++)
+        {
+            if(type ==0 ){
+                aux_d [ir]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[idx] * r [ir] ) / gx_arr[idx] - sin (gx_arr[idx] * r [ir] ) / pow(gx_arr[idx],2));
+            }
+            else {
+                aux_d [ir] = ir!=0 ? sin(gx_arr[idx] * r[ir]) / (gx_arr[idx] * r[ir]) : 1.0;
+                aux_d [ir] = r[ir] * r[ir] * rhoc [ir] * aux_d [ir];
+            }
+            //drhocg [ir] = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[idx] * r [ir] ) / gx_arr[idx] - sin (gx_arr[idx] * r [ir] ) / pow(gx_arr[idx],2));
+        }//ir
+
+        Simpson_Integral<FPTYPE>(mesh, aux_d, rab, rhocg1);
+        if(type ==0 ) drhocg [idx] = FOUR_PI / omega * rhocg1;
+        else drhocg [idx] = FOUR_PI * rhocg1 / omega;
+
+    }
+
+}
+
+
+template <typename FPTYPE>
+__global__ void cal_stress_drhoc_aux2(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+){
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    FPTYPE aux_d[2];
+    FPTYPE rhocg1=0.0, f_0=0.0, f_2=0.0, f_1=0.0;
+
+    if(idx<ngg) {
+        for( int ir = 0;ir< mesh; ir++)
+        {
+            if(type ==0 ){
+                aux_d [ir%2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[idx] * r [ir] ) / gx_arr[idx] - sin (gx_arr[idx] * r [ir] ) / pow(gx_arr[idx],2));
+            }
+            else {
+                aux_d [ir%2] = ir!=0 ? sin(gx_arr[idx] * r[ir]) / (gx_arr[idx] * r[ir]) : 1.0;
+                aux_d [ir%2] = r[ir] * r[ir] * rhoc [ir] * aux_d [ir%2];
+            }
+            if(ir==0){
+                f_0 = aux_d[ir%2]*rab[ir];
+            } else if(ir==mesh-2){
+                f_2 = aux_d[ir%2]*rab[ir];
+            } else if(ir==mesh-1) {
+                f_1 = aux_d[ir%2]*rab[ir];
+            } else if(ir%2==0){
+                const double f1 = aux_d[1]*rab[ir-1];
+                rhocg1 += f1 + f1 + aux_d[0]*rab[ir];
+            }
+
+        }//ir
+        rhocg1 += f_2+f_2;
+        rhocg1 += rhocg1;
+        rhocg1 += f_0 + f_1;
+        rhocg1/=3.0;
+
+        if(type ==0 ) drhocg [idx] = FOUR_PI / omega * rhocg1;
+        else drhocg [idx] = FOUR_PI * rhocg1 / omega;
+
+    }
+
+}
+
+
+
 template <typename FPTYPE>
 void cal_vkb_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         const base_device::DEVICE_GPU* ctx,
@@ -448,6 +557,21 @@ void cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     return ;
 }
 
+template <typename FPTYPE>
+void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
+        const FPTYPE* r, const FPTYPE* rhoc,  
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+    )
+{
+    const int block = (ngg + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    cal_stress_drhoc_aux<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
+        r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega,type
+    );
+    return ;
+}
+
 // template <typename FPTYPE>
 // void prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
 //         const base_device::DEVICE_GPU* ctx,
@@ -519,6 +643,9 @@ template struct cal_vkb_op<float, base_device::DEVICE_GPU>;
 
 template struct cal_vkb_deri_op<double, base_device::DEVICE_GPU>;
 template struct cal_vkb_deri_op<float, base_device::DEVICE_GPU>;
+
+template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_GPU>;
+template struct cal_stress_drhoc_aux_op<float, base_device::DEVICE_GPU>;
 
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_GPU>;
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_GPU>;
