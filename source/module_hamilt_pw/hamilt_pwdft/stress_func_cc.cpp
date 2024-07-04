@@ -282,12 +282,12 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r_d,rhoc_d,gx_arr_d,rab_d,drhocg_d,mesh,igl0,rho_basis->ngg,GlobalC::ucell.omega,type);
-		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg, drhocg_d, rho_basis->ngg);	
+			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr,rab,drhocg,mesh,igl0,rho_basis->ngg,GlobalC::ucell.omega,type);
+			r,rhoc,gx_arr+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
 
 	}
 

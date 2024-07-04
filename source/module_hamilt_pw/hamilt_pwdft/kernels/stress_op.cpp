@@ -360,7 +360,7 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU>{
 #ifdef _OPENMP
 #pragma omp for
 #endif
-        for(int igl = igl0;igl< ngg;igl++)
+        for(int igl = 0;igl< ngg;igl++)
         {
             FPTYPE *aux = new FPTYPE[mesh];
             for( int ir = 0;ir< mesh; ir++)
