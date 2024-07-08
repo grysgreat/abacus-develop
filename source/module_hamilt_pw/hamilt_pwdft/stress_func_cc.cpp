@@ -269,7 +269,11 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc(const bool& numeric,
 			r,rhoc,gx_arr+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
 
 	}
-
+    delmem_var_op()(this->ctx, r_d);
+    delmem_var_op()(this->ctx, rhoc_d);
+    delmem_var_op()(this->ctx, rab_d);
+    delmem_var_op()(this->ctx, gx_arr_d);
+    delmem_var_op()(this->ctx, drhocg_d);
 	delete [] gx_arr;
 
     return;
