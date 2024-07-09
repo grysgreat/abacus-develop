@@ -275,6 +275,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc(const bool& numeric,
     delmem_var_op()(this->ctx, gx_arr_d);
     delmem_var_op()(this->ctx, drhocg_d);
 	delete [] gx_arr;
+    delete [] aux;
 
     return;
 }

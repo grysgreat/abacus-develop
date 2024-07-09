@@ -566,7 +566,7 @@ void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     )
 {
     const int block = (ngg + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    cal_stress_drhoc_aux<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
+    cal_stress_drhoc_aux2<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
         r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega,type
     );
     return ;
