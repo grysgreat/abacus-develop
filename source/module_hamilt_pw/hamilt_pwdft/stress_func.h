@@ -53,7 +53,8 @@
 //----------------------------------------------------------------
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-class Stress_Func {
+class Stress_Func
+{
   public:
     Stress_Func(){};
     ~Stress_Func(){};
@@ -65,15 +66,13 @@ class Stress_Func {
                     ModuleSymmetry::Symmetry* p_symm,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>>* psi_in
-                    = nullptr); // electron kinetic part in PW basis
+                    const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
-    void
-        stress_har(ModuleBase::matrix& sigma,
-                   ModulePW::PW_Basis* rho_basis,
-                   const bool is_pw,
-                   const Charge* const chr); // hartree part in PW or LCAO basis
+    void stress_har(ModuleBase::matrix& sigma,
+                    ModulePW::PW_Basis* rho_basis,
+                    const bool is_pw,
+                    const Charge* const chr); // hartree part in PW or LCAO basis
 
     // 3) the stress from the ewald term (ion-ion intraction under
     //		periodic boundary conditions).
@@ -82,39 +81,35 @@ class Stress_Func {
                     const bool is_pw); // ewald part in PW or LCAO basis
 
     // 4) the stress from the local pseudopotentials
-    void stress_loc(
-        ModuleBase::matrix& sigma,
-        ModulePW::PW_Basis* rho_basis,
-        const Structure_Factor* p_sf,
-        const bool is_pw,
-        const Charge* const chr); // local pseudopotential part in PW or LCAO
+    void stress_loc(ModuleBase::matrix& sigma,
+                    ModulePW::PW_Basis* rho_basis,
+                    const Structure_Factor* p_sf,
+                    const bool is_pw,
+                    const Charge* const chr); // local pseudopotential part in PW or LCAO
 
-    void dvloc_of_g(
-        const int& msh,
-        const FPTYPE* rab,
-        const FPTYPE* r,
-        const FPTYPE* vloc_at,
-        const FPTYPE& zp,
-        FPTYPE* dvloc,
-        ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
+    void dvloc_of_g(const int& msh,
+                    const FPTYPE* rab,
+                    const FPTYPE* r,
+                    const FPTYPE* vloc_at,
+                    const FPTYPE& zp,
+                    FPTYPE* dvloc,
+                    ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
 
     /**
-     * @brief compute the derivative of the coulomb potential in reciprocal
-     * space D V(g^2) / D g^2 = 4pi e^2/omegai /G^4
+     * @brief compute the derivative of the coulomb potential in reciprocal space
+     *        D V(g^2) / D g^2 = 4pi e^2/omegai /G^4
      *
      */
-    void dvloc_coulomb(
-        const FPTYPE& zp,
-        FPTYPE* dvloc,
-        ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
+    void dvloc_coulomb(const FPTYPE& zp,
+                       FPTYPE* dvloc,
+                       ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
 
     // 5) the stress from the non-linear core correction (if any)
     void stress_cc(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
                    const Structure_Factor* p_sf,
                    const bool is_pw,
-                   const Charge* const chr); // nonlinear core correction stress
-                                             // in PW or LCAO basis
+                   const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
                      const int mesh,
@@ -124,33 +119,28 @@ class Stress_Func {
                      FPTYPE* drhocg,
                      ModulePW::PW_Basis* rho_basis,
                      int type); // used in nonlinear core correction stress
-
+                     
     // 6) the stress from the exchange-correlation functional term
-    void stress_gga(
-        ModuleBase::matrix& sigma,
-        ModulePW::PW_Basis* rho_basis,
-        const Charge* const chr); // gga part in both PW and LCAO basis
+    void stress_gga(ModuleBase::matrix& sigma,
+                    ModulePW::PW_Basis* rho_basis,
+                    const Charge* const chr); // gga part in both PW and LCAO basis
     void stress_mgga(ModuleBase::matrix& sigma,
                      const ModuleBase::matrix& wg,
                      const ModuleBase::matrix& v_ofk,
                      const Charge* const chr,
                      K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
-                     const psi::Psi<complex<FPTYPE>, Device>*
-                         psi_in); // gga part in PW basis
+                     const psi::Psi<complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
 
     // 7) the stress from the non-local pseudopotentials
     /**
-     * @brief This routine computes the atomic force of non-local
-     * pseudopotential Stress^{NL}_{ij} = -1/\Omega \sum_{n,k}f_{nk}\sum_I
-     * \sum_{lm,l'm'}D_{l,l'}^{I} [ \sum_G \langle
-     * c_{nk}(\mathbf{G+K})|\beta_{lm}^I(\mathbf{G+K})\rangle * \sum_{G'}\langle
-     * \partial \beta_{lm}^I(\mathbf{G+K})/\partial \varepsilon_{ij}
-     * |c_{nk}(\mathbf{G+K})\rangle ] there would be three parts in the above
-     * equation: (1) sum over becp and dbecp with D_{l,l'}^{I} ----- first line
-     * in the above equation (2) calculate becp = <psi | beta> ----- second line
-     * in the above equation (3) calculate dbecp = <psi | dbeta> ----- third
-     * line in the above equation
+     * @brief This routine computes the atomic force of non-local pseudopotential
+     *    Stress^{NL}_{ij} = -1/\Omega \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} [
+     *               \sum_G \langle c_{nk}(\mathbf{G+K})|\beta_{lm}^I(\mathbf{G+K})\rangle *
+     *               \sum_{G'}\langle \partial \beta_{lm}^I(\mathbf{G+K})/\partial \varepsilon_{ij}
+     * |c_{nk}(\mathbf{G+K})\rangle ] there would be three parts in the above equation: (1) sum over becp and dbecp with
+     * D_{l,l'}^{I} ----- first line in the above equation (2) calculate becp = <psi | beta> ----- second line in the
+     * above equation (3) calculate dbecp = <psi | dbeta> ----- third line in the above equation
      */
     void stress_nl(ModuleBase::matrix& sigma,
                    const ModuleBase::matrix& wg,
@@ -163,17 +153,15 @@ class Stress_Func {
                    pseudopot_cell_vnl* nlpp_in,
                    const UnitCell& ucell_in); // nonlocal part in PW basis
 
-    void get_dvnl1(
-        ModuleBase::ComplexMatrix& vkb,
-        const int ik,
-        const int ipol,
-        Structure_Factor* p_sf,
-        ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
-    void get_dvnl2(
-        ModuleBase::ComplexMatrix& vkb,
-        const int ik,
-        Structure_Factor* p_sf,
-        ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
+    void get_dvnl1(ModuleBase::ComplexMatrix& vkb,
+                   const int ik,
+                   const int ipol,
+                   Structure_Factor* p_sf,
+                   ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
+    void get_dvnl2(ModuleBase::ComplexMatrix& vkb,
+                   const int ik,
+                   Structure_Factor* p_sf,
+                   ModulePW::PW_Basis_K* wfc_basis); // used in nonlocal part in PW basis
 
     FPTYPE Polynomial_Interpolation_nl(const ModuleBase::realArray& table,
                                        const int& dim1,
@@ -183,8 +171,7 @@ class Stress_Func {
                                        const FPTYPE& x);
 
     /**
-     * @brief Compute the derivatives of the radial Fourier transform of the Q
-     * functions
+     * @brief Compute the derivatives of the radial Fourier transform of the Q functions
      *
      * This routine computes the derivatives of the Fourier transform of
      * the Q function needed in stress assuming that the radial fourier
@@ -227,45 +214,27 @@ class Stress_Func {
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 
-    using resmem_complex_op
-        = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using resmem_complex_h_op
-        = base_device::memory::resize_memory_op<std::complex<FPTYPE>,
-                                                base_device::DEVICE_CPU>;
-    using setmem_complex_op
-        = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_op
-        = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_h_op
-        = base_device::memory::delete_memory_op<std::complex<FPTYPE>,
-                                                base_device::DEVICE_CPU>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
+    using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
     using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
-                                                     Device,
-                                                     base_device::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
     using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>,
-                                                     base_device::DEVICE_CPU,
-                                                     Device>;
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
-    using resmem_var_h_op
-        = base_device::memory::resize_memory_op<FPTYPE,
-                                                base_device::DEVICE_CPU>;
+    using resmem_var_h_op = base_device::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;
     using setmem_var_op = base_device::memory::set_memory_op<FPTYPE, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
-    using delmem_var_h_op
-        = base_device::memory::delete_memory_op<FPTYPE,
-                                                base_device::DEVICE_CPU>;
-    using syncmem_var_h2d_op = base_device::memory::
-        synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
-    using syncmem_var_d2h_op = base_device::memory::
-        synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
+    using delmem_var_h_op = base_device::memory::delete_memory_op<FPTYPE, base_device::DEVICE_CPU>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 
     using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
     using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
-    using syncmem_int_h2d_op = base_device::memory::
-        synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
+    using syncmem_int_h2d_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
 
     using cal_vq_op = hamilt::cal_vq_op<FPTYPE, Device>;
     using cal_vq_deri_op = hamilt::cal_vq_deri_op<FPTYPE, Device>;

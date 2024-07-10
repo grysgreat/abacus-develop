@@ -6,10 +6,12 @@
 #include <complex>
 #include <module_base/macros.h>
 
-namespace hamilt {
+namespace hamilt
+{
 
 template <typename FPTYPE, typename Device>
-struct cal_dbecp_noevc_nl_op {
+struct cal_dbecp_noevc_nl_op
+{
     /// @brief The prestep to calculate the final stresses
     ///
     /// Input Parameters
@@ -50,7 +52,8 @@ struct cal_dbecp_noevc_nl_op {
 };
 
 template <typename FPTYPE, typename Device>
-struct cal_stress_nl_op {
+struct cal_stress_nl_op
+{
     /// @brief Calculate the final stresses for multi-device
     ///
     /// Input Parameters
@@ -103,18 +106,16 @@ struct cal_stress_nl_op {
 };
 
 template <typename T, typename Device>
-struct cal_stress_mgga_op {
+struct cal_stress_mgga_op
+{
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const int& spin,
-                    const int& nrxx,
-                    const Real& w1,
-                    const T* gradwfc,
-                    Real* crosstaus);
+    void operator()(const int& spin, const int& nrxx, const Real& w1, const T* gradwfc, Real* crosstaus);
 };
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vkb_op {
+struct cal_vkb_op
+{
     void operator()(const Device* ctx,
                     const int nh,
                     const int npw,
@@ -128,7 +129,8 @@ struct cal_vkb_op {
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vkb_deri_op {
+struct cal_vkb_deri_op
+{
     void operator()(const Device* ctx,
                     const int nh,
                     const int npw,
@@ -147,7 +149,8 @@ struct cal_vkb_deri_op {
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vq_op {
+struct cal_vq_op
+{
     void operator()(const Device* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -162,7 +165,8 @@ struct cal_vq_op {
 
 // cpu version first, gpu version later
 template <typename FPTYPE, typename Device>
-struct cal_vq_deri_op {
+struct cal_vq_deri_op
+{
     void operator()(const Device* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -175,23 +179,21 @@ struct cal_vq_deri_op {
                     FPTYPE* vq);
 };
 
+
 template <typename FPTYPE, typename Device>
-struct cal_stress_drhoc_aux_op {
-    void operator()(const FPTYPE* r,
-                    const FPTYPE* rhoc,
-                    const FPTYPE* gx_arr,
-                    const FPTYPE* rab,
-                    FPTYPE* drhocg,
-                    const int mesh,
-                    const int igl0,
-                    const int ngg,
-                    const double omega,
-                    int type);
+struct cal_stress_drhoc_aux_op{
+    void operator()(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+    );
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU> {
+struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>
+{
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& ipol,
                     const int& jpol,
@@ -211,7 +213,8 @@ struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU> {
 };
 
 template <typename FPTYPE>
-struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU> {
+struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
+{
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const bool& nondiagonal,
                     const int& ipol,
@@ -238,7 +241,8 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU> {
 
 // cpu version first, gpu version later
 template <typename FPTYPE>
-struct cal_vkb_op<FPTYPE, base_device::DEVICE_GPU> {
+struct cal_vkb_op<FPTYPE, base_device::DEVICE_GPU>
+{
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int nh,
                     const int npw,
@@ -251,7 +255,8 @@ struct cal_vkb_op<FPTYPE, base_device::DEVICE_GPU> {
 };
 
 template <typename FPTYPE>
-struct cal_vkb_deri_op<FPTYPE, base_device::DEVICE_GPU> {
+struct cal_vkb_deri_op<FPTYPE, base_device::DEVICE_GPU>
+{
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int nh,
                     const int npw,
@@ -270,7 +275,8 @@ struct cal_vkb_deri_op<FPTYPE, base_device::DEVICE_GPU> {
 
 // cpu version first, gpu version later
 template <typename FPTYPE>
-struct cal_vq_op<FPTYPE, base_device::DEVICE_GPU> {
+struct cal_vq_op<FPTYPE, base_device::DEVICE_GPU>
+{
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -285,7 +291,8 @@ struct cal_vq_op<FPTYPE, base_device::DEVICE_GPU> {
 
 // cpu version first, gpu version later
 template <typename FPTYPE>
-struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU> {
+struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
+{
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const FPTYPE* tab,
                     int it,
@@ -298,29 +305,32 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU> {
                     FPTYPE* vq);
 };
 
+
+
 template <typename FPTYPE>
-struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU> {
-    void operator()(const FPTYPE* r,
-                    const FPTYPE* rhoc,
-                    const FPTYPE* gx_arr,
-                    const FPTYPE* rab,
-                    FPTYPE* drhocg,
-                    const int mesh,
-                    const int igl0,
-                    const int ngg,
-                    const double omega,
-                    int type);
+struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega,
+        int type
+    );
 };
+
+
+
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename Device>
-struct pointer_array_malloc {
+struct pointer_array_malloc
+{
     void operator()(void** ptr, const int n);
 };
 
 template <typename Device>
-struct synchronize_ptrs {
+struct synchronize_ptrs
+{
     void operator()(void** ptr_out, const void** ptr_in, const int size);
 };
 
