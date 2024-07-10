@@ -109,20 +109,20 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
         if (GlobalC::ucell.atoms[it].ncpp.nlcc)
         {
 
-            chr->non_linear_core_correction(GlobalC::ppcell.numeric,
-                                            GlobalC::ucell.atoms[it].ncpp.msh,
-                                            GlobalC::ucell.atoms[it].ncpp.r,
-                                            GlobalC::ucell.atoms[it].ncpp.rab,
-                                            GlobalC::ucell.atoms[it].ncpp.rho_atc,
-                                            rhocg);
-            // this->deriv_drhoc(GlobalC::ppcell.numeric,
-            //                   GlobalC::ucell.atoms[it].ncpp.msh,
-            //                   GlobalC::ucell.atoms[it].ncpp.r,
-            //                   GlobalC::ucell.atoms[it].ncpp.rab,
-            //                   GlobalC::ucell.atoms[it].ncpp.rho_atc,
-            //                   rhocg,
-            //                   rho_basis,
-            //                   1);
+            // chr->non_linear_core_correction(GlobalC::ppcell.numeric,
+            //                                 GlobalC::ucell.atoms[it].ncpp.msh,
+            //                                 GlobalC::ucell.atoms[it].ncpp.r,
+            //                                 GlobalC::ucell.atoms[it].ncpp.rab,
+            //                                 GlobalC::ucell.atoms[it].ncpp.rho_atc,
+            //                                 rhocg);
+            this->deriv_drhoc(GlobalC::ppcell.numeric,
+                              GlobalC::ucell.atoms[it].ncpp.msh,
+                              GlobalC::ucell.atoms[it].ncpp.r,
+                              GlobalC::ucell.atoms[it].ncpp.rab,
+                              GlobalC::ucell.atoms[it].ncpp.rho_atc,
+                              rhocg,
+                              rho_basis,
+                              1);
 #ifdef _OPENMP
 #pragma omp parallel
             {
