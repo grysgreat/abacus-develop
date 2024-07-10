@@ -57,7 +57,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	}
 	else
 	{
-		if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
+		if(GlobalV::NSPIN==4) { GlobalC::ucell.cal_ux();
+}
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
         // etxc = std::get<0>(etxc_vtxc_v); // may delete?
         // vtxc = std::get<1>(etxc_vtxc_v); // may delete?
@@ -118,10 +119,11 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 			for(int ig = 0;ig< rho_basis->npw;ig++)
 			{
                 std::complex<double> local_sigmadiag;
-                if (rho_basis->ig_gge0 == ig)
+                if (rho_basis->ig_gge0 == ig) {
                     local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]];
-                else
+                } else {
                     local_sigmadiag = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]] * fact;
+}
                 sigmadiag += local_sigmadiag.real();
             }
 			this->deriv_drhoc (
@@ -145,7 +147,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 			for(int ig = 0;ig< rho_basis->npw;ig++)
 			{
 				const FPTYPE norm_g = sqrt(rho_basis->gg[ig]);
-				if(norm_g < 1e-4) 	continue;
+				if(norm_g < 1e-4) { 	continue;
+}
 				for (int l = 0; l < 3; l++)
 				{
 					for (int m = 0;m< 3;m++)
