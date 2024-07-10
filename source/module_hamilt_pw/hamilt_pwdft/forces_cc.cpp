@@ -25,7 +25,7 @@
 
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force_cc_new(ModuleBase::matrix& forcecc,
+void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                           ModulePW::PW_Basis* rho_basis,
                                           const Charge* const chr)
 {
