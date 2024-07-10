@@ -377,7 +377,7 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU>{
             else drhocg [igl] = FOUR_PI * rhocg1 / omega;
         }
 #ifdef _OPENMP
-        }
+}
 #endif
     }
 };
