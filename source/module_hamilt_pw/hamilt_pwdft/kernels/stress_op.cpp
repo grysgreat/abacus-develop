@@ -340,44 +340,51 @@ void Simpson_Integral
 }// end subroutine simpson
 
 template <typename FPTYPE>
-struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU>{
-    void operator()(
-        const FPTYPE* r, const FPTYPE* rhoc, 
-        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
-        const int mesh, const int igl0, const int ngg, const double omega,
-        int type
-    ){
-        const double FOUR_PI = 4.0 * 3.14159265358979323846;
-        FPTYPE rhocg1=0;
-        //printf("%d,%d,%lf\n",ngg,mesh,omega);
-        
+struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
+    void operator()(const FPTYPE* r,
+                    const FPTYPE* rhoc,
+                    const FPTYPE* gx_arr,
+                    const FPTYPE* rab,
+                    FPTYPE* drhocg,
+                    const int mesh,
+                    const int igl0,
+                    const int ngg,
+                    const double omega,
+                    int type) {
+    const double FOUR_PI = 4.0 * 3.14159265358979323846;
+    FPTYPE rhocg1 = 0;
+    // printf("%d,%d,%lf\n",ngg,mesh,omega);
 
 #ifdef _OPENMP
 #pragma omp parallel
-{
+    {
 #endif
 
 #ifdef _OPENMP
 #pragma omp for
 #endif
-        for(int igl = igl0;igl< ngg;igl++)
+        for(int igl = 0;igl< ngg;igl++)
         {
             FPTYPE *aux = new FPTYPE[mesh];
             for( int ir = 0;ir< mesh; ir++)
             {
                 if(type ==0 ){
                     aux [ir] = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[igl] * r [ir] ) / gx_arr[igl] - sin (gx_arr[igl] * r [ir] ) / pow(gx_arr[igl],2));
-                } else {
+                } else if(type == 1) {
                     aux [ir] = ir!=0 ? std::sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]) : 1.0;
                     aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
+                } else {
+                    aux [ir] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]);
                 }
             }//ir
             Simpson_Integral<FPTYPE>(mesh, aux, rab, rhocg1);
             if(type ==0 ) drhocg [igl] = FOUR_PI / omega * rhocg1;
-            else drhocg [igl] = FOUR_PI * rhocg1 / omega;
+            else if(type == 1) drhocg [igl] = FOUR_PI * rhocg1 / omega;
+            else drhocg [igl] = rhocg1;
+            delete [] aux;
         }
 #ifdef _OPENMP
-}
+        }
 #endif
     }
 };
