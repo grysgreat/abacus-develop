@@ -292,7 +292,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr.data(),+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
 
 	}
     delmem_var_op()(this->ctx, r_d);
