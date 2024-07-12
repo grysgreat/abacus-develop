@@ -4,7 +4,7 @@
 #include "module_base/memory.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 #include "vnl_tools.hpp"
-
+#include <vector>
 #include <iomanip>
 
 namespace hamilt
