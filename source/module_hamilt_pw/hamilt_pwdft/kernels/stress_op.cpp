@@ -365,7 +365,8 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 #endif
         for(int igl = 0;igl< ngg;igl++)
         {
-            FPTYPE *aux = new FPTYPE[mesh];
+            //FPTYPE *aux = new FPTYPE[mesh];
+            std::vector<FPTYPE> aux(mesh);
             for( int ir = 0;ir< mesh; ir++)
             {
                 if(type ==0 ){
@@ -377,11 +378,10 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                     aux [ir] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]);
                 }
             }//ir
-            Simpson_Integral<FPTYPE>(mesh, aux, rab, rhocg1);
+            Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
             if(type ==0 ) drhocg [igl] = FOUR_PI / omega * rhocg1;
             else if(type == 1) drhocg [igl] = FOUR_PI * rhocg1 / omega;
             else drhocg [igl] = rhocg1;
-            delete [] aux;
         }
 #ifdef _OPENMP
         }

@@ -213,12 +213,14 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 {
 	int  igl0;
 	double gx = 0, rhocg1 = 0;
-	double *aux = new double[mesh];
+	//double *aux = new double[mesh];
+	std::vector<double> aux(mesh);
 	this->device = base_device::get_device_type<Device>(this->ctx);
 	// the modulus of g for a given shell
 	// the fourier transform
 	// auxiliary memory for integration
-	double *gx_arr = new double[rho_basis->ngg];
+	//double *gx_arr = new double[rho_basis->ngg];
+	std::vector<double> gx_arr(rho_basis->ngg);
 	double *gx_arr_d = nullptr;
 	// counter on radial mesh points
 	// counter on g shells
@@ -244,7 +246,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 			{
 				aux [ir] = r [ir] * r [ir] * rhoc [ir];
 			}
-			ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
+			ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), rab, rhocg1);
 			drhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
 			igl0 = 1;
 		} 
@@ -277,7 +279,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 		resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg);
 		resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
 
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gx_arr_d, gx_arr, rho_basis->ngg);
+		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gx_arr_d, gx_arr.data(),, rho_basis->ngg);
 		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, mesh);
 		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, mesh);
 		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, rhoc, mesh);
@@ -290,7 +292,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+			r,rhoc,gx_arr.data(),+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
 
 	}
     delmem_var_op()(this->ctx, r_d);
@@ -298,8 +300,6 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
     delmem_var_op()(this->ctx, rab_d);
     delmem_var_op()(this->ctx, gx_arr_d);
     delmem_var_op()(this->ctx, drhocg_d);
-	delete [] gx_arr;
-    delete [] aux;
 	return;
 }
 
