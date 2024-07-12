@@ -279,7 +279,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 		resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg);
 		resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
 
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gx_arr_d, gx_arr.data(),, rho_basis->ngg);
+		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gx_arr_d, gx_arr.data(), rho_basis->ngg);
 		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, mesh);
 		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, mesh);
 		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, rhoc, mesh);
