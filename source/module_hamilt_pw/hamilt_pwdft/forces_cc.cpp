@@ -160,13 +160,11 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                         force[2] += ipol2.real();
                     }
 #ifdef _OPENMP
+#pragma omp critical  
                     if (omp_get_num_threads() > 1)
                     {
-#pragma omp atomic
                         forcecc(iat, 0) += force[0];
-#pragma omp atomic
                         forcecc(iat, 1) += force[1];
-#pragma omp atomic
                         forcecc(iat, 2) += force[2];
                     }
                     else
