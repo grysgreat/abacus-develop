@@ -355,11 +355,10 @@ __global__ void cal_vq_deri(
 
 
 template <typename FPTYPE>
-__global__ void cal_stress_drhoc_aux(
+__global__ void cal_stress_drhoc_aux0(
         const FPTYPE* r, const FPTYPE* rhoc, 
         const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
-        const int mesh, const int igl0, const int ngg, const double omega,
-        int type
+        const int mesh, const int igl0, const int ngg, const double omega
 ){
     const double FOUR_PI =  4.0 * 3.14159265358979323846;
 
@@ -372,13 +371,8 @@ __global__ void cal_stress_drhoc_aux(
     
     for( int ir = 0;ir< mesh; ir++)
     {
-        if(type ==0 ){
-            aux_d [ir%2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[idx] * r [ir] ) / gx_arr[idx] - sin (gx_arr[idx] * r [ir] ) / pow(gx_arr[idx],2));
-        }
-        else {
-            aux_d [ir%2] = ir!=0 ? sin(gx_arr[idx] * r[ir]) / (gx_arr[idx] * r[ir]) : 1.0;
-            aux_d [ir%2] = r[ir] * r[ir] * rhoc [ir] * aux_d [ir%2];
-        }
+        aux_d [ir%2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[idx] * r [ir] ) / gx_arr[idx] - sin (gx_arr[idx] * r [ir] ) / pow(gx_arr[idx],2));
+
         if(ir==0){
             f_0 = aux_d[ir%2]*rab[ir];
         } else if(ir==mesh-2){
@@ -396,11 +390,47 @@ __global__ void cal_stress_drhoc_aux(
     rhocg1 += f_0 + f_1;
     rhocg1/=3.0;
 
-    if(type ==0 ) drhocg [idx] = FOUR_PI / omega * rhocg1;
-    else drhocg [idx] = FOUR_PI * rhocg1 / omega;
+    drhocg [idx] = FOUR_PI / omega * rhocg1;
+}
 
+template <typename FPTYPE>
+__global__ void cal_stress_drhoc_aux1(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega
+){
+    const double FOUR_PI =  4.0 * 3.14159265358979323846;
+
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    FPTYPE aux_d[2];
+    FPTYPE rhocg1=0.0, f_0=0.0, f_2=0.0, f_1=0.0;
+
+    if (idx >= ngg) {return;}
     
+    for( int ir = 0;ir< mesh; ir++)
+    {
+        aux_d [ir%2] = ir!=0 ? sin(gx_arr[idx] * r[ir]) / (gx_arr[idx] * r[ir]) : 1.0;
+        aux_d [ir%2] = r[ir] * r[ir] * rhoc [ir] * aux_d [ir%2];
 
+        if(ir==0){
+            f_0 = aux_d[ir%2]*rab[ir];
+        } else if(ir==mesh-2){
+            f_2 = aux_d[ir%2]*rab[ir];
+        } else if(ir==mesh-1) {
+            f_1 = aux_d[ir%2]*rab[ir];
+        } else if(ir%2==0){
+            const double f1 = aux_d[1]*rab[ir-1];
+            rhocg1 += f1 + f1 + aux_d[0]*rab[ir];
+        }
+
+    }//ir
+    rhocg1 += f_2+f_2;
+    rhocg1 += rhocg1;
+    rhocg1 += f_0 + f_1;
+    rhocg1/=3.0;
+
+    drhocg [idx] = FOUR_PI * rhocg1 / omega;
 }
 
 
@@ -509,9 +539,17 @@ void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     )
 {
     const int block = (ngg + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    cal_stress_drhoc_aux<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
-        r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega,type
-    );
+    
+    if(type == 0) {
+        cal_stress_drhoc_aux0<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
+            r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
+        );
+    } else if(type == 1 ){
+        cal_stress_drhoc_aux1<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
+            r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
+        );        
+    }
+
     return ;
 }
 
