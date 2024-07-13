@@ -24,6 +24,8 @@ class K_Vectors
 
     K_Vectors();
     ~K_Vectors();
+    K_Vectors& operator=(const K_Vectors&) = default;
+    K_Vectors& operator=(K_Vectors&& rhs) = default;
 
     /**
      * @brief Set up the k-points for the system.
@@ -125,6 +127,11 @@ class K_Vectors
     int get_nkstot_full() const
     {
         return this->nkstot_full;
+    }
+
+    double get_koffset(const int i) const
+    {
+        return this->koffset[i];
     }
 
     void set_nks(int value)

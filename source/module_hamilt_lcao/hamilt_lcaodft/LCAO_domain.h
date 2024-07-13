@@ -7,7 +7,6 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
@@ -16,15 +15,7 @@
 namespace LCAO_domain
 {
 
-// can used in gamma algorithm.
-void build_Nonlocal_beta_new(LCAO_Matrix& lm,
-                             double* Hloc,
-                             const UnitCell& ucell,
-                             const LCAO_Orbitals& orb,
-                             const TwoCenterIntegrator& intor_orb_beta,
-                             Grid_Driver* GridD);
-
-void build_Nonlocal_mu_new(LCAO_Matrix& lm,
+void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr, // mohan 2024-06-16
                            double* HlocR,
                            const bool& calc_deri,
@@ -86,8 +77,7 @@ void set_stress(const Parallel_Orbitals& pv,
 /**
  * @brief set each element without derivatives
  */
-void single_overlap(LCAO_Matrix& lm,
-                    const LCAO_Orbitals& orb,
+void single_overlap(const LCAO_Orbitals& orb,
                     const TwoCenterBundle& two_center_bundle,
                     const Parallel_Orbitals& pv,
                     const UnitCell& ucell,
@@ -153,8 +143,7 @@ void single_derivative(ForceStressArrays& fsr,
 /**
  * @brief set the elements of S and T matrices
  */
-void build_ST_new(LCAO_Matrix& lm,
-                  ForceStressArrays& fsr,
+void build_ST_new(ForceStressArrays& fsr,
                   const char& dtype,
                   const bool& cal_deri,
                   const UnitCell& ucell,
@@ -170,6 +159,16 @@ void build_ST_new(LCAO_Matrix& lm,
  * @brief set zeros for HSR matrices
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
+
+void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv, const int& nks);
+
+template <typename T>
+void set_mat2d(const int& global_ir,
+                const int& global_ic,
+                const T& v,
+                const Parallel_Orbitals& pv,
+                T* mat);
+
 } // namespace LCAO_domain
 
 #endif

@@ -11,7 +11,7 @@ berryphase::berryphase()
 }
 
 #ifdef __LCAO
-berryphase::berryphase(Local_Orbital_Charge& loc_in) : loc(&loc_in)
+berryphase::berryphase(const Parallel_Orbitals* paraV_in) : paraV(paraV_in)
 {
     GDIR = INPUT.gdir;
 }
@@ -19,7 +19,6 @@ berryphase::berryphase(Local_Orbital_Charge& loc_in) : loc(&loc_in)
 
 berryphase::~berryphase()
 {
-    // GlobalV::ofs_running << "this is ~berryphase()" << std::endl;
 }
 
 void berryphase::get_occupation_bands()
@@ -43,7 +42,7 @@ void berryphase::get_occupation_bands()
 void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech)
 {
     ModuleBase::TITLE("berryphase", "lcao_init");
-    lcao_method.init(grid_tech, this->loc->wfc_k_grid, kv.get_nkstot());
+    lcao_method.init(grid_tech, kv.get_nkstot());
     lcao_method.cal_R_number();
     lcao_method.cal_orb_overlap();
     return;
@@ -89,8 +88,10 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
                 for (int ix = 0; ix < mp_x; ix++)
                 {
                     k_index[string_index][ix] = ix + iy * mp_x + iz * mp_x * mp_y;
-                    if (ix == (mp_x - 1))
-                        k_index[string_index][ix + 1] = k_index[string_index][0];
+                    if (ix == (mp_x - 1)) {
+                        k_index[string_index][ix + 1]
+                            = k_index[string_index][0];
+                    }
                 }
             }
         }
@@ -137,8 +138,10 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
                 for (int iy = 0; iy < mp_y; iy++)
                 {
                     k_index[string_index][iy] = ix + iy * mp_x + iz * mp_x * mp_y;
-                    if (iy == (mp_y - 1))
-                        k_index[string_index][iy + 1] = k_index[string_index][0];
+                    if (iy == (mp_y - 1)) {
+                        k_index[string_index][iy + 1]
+                            = k_index[string_index][0];
+                    }
                 }
             }
         }
@@ -185,8 +188,10 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
                 for (int iz = 0; iz < mp_z; iz++)
                 {
                     k_index[string_index][iz] = ix + iy * mp_x + iz * mp_x * mp_y;
-                    if (iz == (mp_z - 1))
-                        k_index[string_index][iz + 1] = k_index[string_index][0];
+                    if (iz == (mp_z - 1)) {
+                        k_index[string_index][iz + 1]
+                            = k_index[string_index][0];
+                    }
                 }
             }
         }
@@ -303,9 +308,15 @@ double berryphase::stringPhase(int index_str,
                             }
 
                             mat(nb, mb) = pw_method.unkdotp_soc_G0(rhopw, wfcpw, ik_1, ik_2, nb, mb, psi_in, G);
+                        } else {
+                            mat(nb, mb) = pw_method.unkdotp_soc_G(wfcpw,
+                                                                  ik_1,
+                                                                  ik_2,
+                                                                  nb,
+                                                                  mb,
+                                                                  npwx,
+                                                                  psi_in);
                         }
-                        else
-                            mat(nb, mb) = pw_method.unkdotp_soc_G(wfcpw, ik_1, ik_2, nb, mb, npwx, psi_in);
                     }
 
                 } // nb
@@ -318,10 +329,11 @@ double berryphase::stringPhase(int index_str,
             LapackConnector::zgetrf(nbands, nbands, mat, nbands, ipiv.data(), &info);
             for (int ib = 0; ib < nbands; ib++)
             {
-                if (ipiv[ib] != (ib + 1))
+                if (ipiv[ib] != (ib + 1)) {
                     det = -det * mat(ib, ib);
-                else
+                } else {
                     det = det * mat(ib, ib);
+                }
             }
 
             zeta = zeta * det;
@@ -334,7 +346,7 @@ double berryphase::stringPhase(int index_str,
             if (GlobalV::NSPIN != 4)
             {
                 // std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
-                zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, *this->loc->ParaV, psi_in, kv);
+                zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, *(this->paraV), psi_in, kv);
                 // test by jingan
                 // GlobalV::ofs_running << "methon 1: det = " << my_det << std::endl;
                 // test by jingan
@@ -401,8 +413,9 @@ void berryphase::Berry_Phase(int nbands,
     for (int istring = 0; istring < total_string; istring++)
     {
         wistring[istring] = 1.0 / total_string;
-        if (GlobalV::NSPIN == 2)
+        if (GlobalV::NSPIN == 2) {
             wistring[istring] = wistring[istring] * 2;
+        }
     }
 
     for (int istring = 0; istring < total_string; istring++)
@@ -561,10 +574,11 @@ void berryphase::Macroscopic_polarization(const int npwx,
 
     // calculate Macroscopic polarization modulus because berry phase
     int modulus = 0;
-    if ((!lodd) && (GlobalV::NSPIN == 1))
+    if ((!lodd) && (GlobalV::NSPIN == 1)) {
         modulus = 2;
-    else
+    } else {
         modulus = 1;
+    }
 
     // test by jingan
     // GlobalV::ofs_running << "ion polarization end" << std::endl;

@@ -1,5 +1,6 @@
 list(APPEND objects
     input.cpp
+    input_conv_tmp.cpp
     input_conv.cpp
     bessel_basis.cpp
     cal_test.cpp
@@ -19,7 +20,6 @@ list(APPEND objects
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
-    write_input.cpp
     write_cube.cpp
     write_rho.cpp
     write_pot.cpp
@@ -29,7 +29,6 @@ list(APPEND objects
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
-    #parameter_pool.cpp
     para_json.cpp
     parse_args.cpp
 )
@@ -53,14 +52,12 @@ if(ENABLE_LCAO)
       nscf_fermi_surf.cpp
       istate_charge.cpp
       istate_envelope.cpp
-      read_dm.cpp
       read_wfc_nao.cpp
       read_wfc_lcao.cpp
       write_wfc_nao.cpp
-      write_dm.cpp
+      io_dmk.cpp
       write_dmr.cpp
       dos_nao.cpp
-      output_dm.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
@@ -80,6 +77,20 @@ if(ENABLE_LCAO)
       output_mat_sparse.cpp
   )
 endif()
+
+add_library(
+    io_input
+    OBJECT
+    read_input_item_other.cpp
+    read_input_item_general.cpp
+    read_input_item_pw.cpp
+    read_input_item_sdft.cpp
+    read_input_item_relax.cpp
+    read_input_item_lcao.cpp
+    read_input_item_postprocess.cpp
+    read_input_item_md.cpp
+    read_input.cpp
+)
 
 add_library(
     io_basic

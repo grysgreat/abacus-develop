@@ -1,5 +1,6 @@
 ---
 Language: Cpp
+BasedOnStyle: Microsoft
 
 AlwaysBreakTemplateDeclarations: Yes
 
@@ -13,6 +14,8 @@ BreakBeforeTernaryOperators: true
 
 Cpp11BracedListStyle: true
 FixNamespaceComments: true
+
+# InsertBraces: true # only for clang-format version15.0.0 or later
 
 # About include
 IncludeBlocks: Regroup

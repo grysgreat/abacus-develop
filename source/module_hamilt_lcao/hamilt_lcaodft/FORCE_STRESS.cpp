@@ -32,7 +32,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
-                                          LCAO_Matrix& lm,
                                           Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                                           Gint_k& gint_k,         // mohan add 2024-04-01
                                           const TwoCenterBundle& two_center_bundle,
@@ -163,7 +162,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                         gint_k,
                         two_center_bundle,
                         pv,
-                        lm,
                         kv);
 
     //! forces and stress from vdw
@@ -240,7 +238,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         if (GlobalV::dft_plus_u == 2)
         {
             GlobalC::dftu.force_stress(pelec,
-                                       lm,
                                        pv,
                                        fsr, // mohan 2024-06-16
                                        force_dftu,
@@ -249,15 +246,13 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         else
         {
-            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(&lm,
+            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(nullptr, // HK and SK are not used for force&stress
                                                                    kv.kvec_d,
-                                                                   nullptr,
-                                                                   nullptr,
+                                                                   nullptr, // HR are not used for force&stress
                                                                    GlobalC::ucell,
                                                                    &GlobalC::GridD,
                                                                    two_center_bundle.overlap_orb_onsite.get(),
-                                                                   &GlobalC::dftu,
-                                                                   *(lm.ParaV));
+                                                                   &GlobalC::dftu);
 
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
         }
@@ -770,7 +765,6 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                                               Gint_k& gint_k,         // mohan add 2024-04-01
                                               const TwoCenterBundle& two_center_bundle,
                                               const Parallel_Orbitals& pv,
-                                              LCAO_Matrix& lm,
                                               const K_Vectors& kv)
 {
 
@@ -793,8 +787,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #endif
                gint_gamma,
                two_center_bundle,
-               pv,
-               lm);
+               pv);
     return;
 }
 
@@ -820,7 +813,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                                                             Gint_k& gint_k,
                                                             const TwoCenterBundle& two_center_bundle,
                                                             const Parallel_Orbitals& pv,
-                                                            LCAO_Matrix& lm,
                                                             const K_Vectors& kv)
 {
     flk.ftable(isforce,
@@ -843,7 +835,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                gint_k,
                two_center_bundle,
                pv,
-               lm,
                &kv,
                this->RA);
     return;

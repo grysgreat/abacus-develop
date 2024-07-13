@@ -85,6 +85,7 @@
 116_PW_scan_Si2
 116_PW_scan_Si2_nspin2
 117_PW_out_pot
+117_PW_out_pot_nscf
 118_PW_CHG_BINARY
 118_PW_WFC_BINARY
 120_PW_KP_MD_MSST
@@ -172,6 +173,7 @@
 215_NO_sol_H2
 216_NO_scan_Si2
 217_NO_out_pot
+217_NO_out_pot_nscf
 220_NO_KP_MD_MSST
 220_NO_KP_MD_MSST_level2
 220_NO_KP_MD_NVT
@@ -198,6 +200,7 @@
 #282_NO_RPA
 283_NO_restart
 284_NO_KP_symmetry
+291_NO_KP_LR
 301_NO_GO_15_CF_CS
 301_NO_GO_DJ_Si
 #303_NO_GO_HP_15
@@ -231,6 +234,7 @@
 384_NO_GO_S1_HSE_loop0_PU
 385_NO_GO_RE_S1_HSE
 386_NO_GO_MD_S1_HSE
+391_NO_GO_LR
 401_NP_KP_sp
 401_NP_KP_spd
 #501_NO_neighboring_GaAs512
@@ -250,6 +254,7 @@
 601_NO_TDDFT_H2_len_trape
 601_NO_TDDFT_H2_len_trigo
 601_NO_TDDFT_O3
+601_NO_TDDFT_H2_len_current
 601_NO_TDDFT_vel_H2
 601_NO_TDDFT_vel_Si
 701_LJ_MD_Anderson
@@ -268,8 +273,9 @@
 701_LJ_MD_rescale_v
 701_LJ_MD_rescaling
 #702_DP_Al
-703_LJ_RE
-704_LJ_CR
+703_LJ_RE_rule1
+704_LJ_CR_multi_ele
+705_LJ_single_rule2
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc
@@ -336,3 +342,4 @@
 920_OF_MD_LDA
 920_OF_MD_LibxcPBE
 921_OF_CR_LDA
+922_NO_FeBiTe

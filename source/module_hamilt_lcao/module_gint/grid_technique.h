@@ -3,25 +3,26 @@
 
 #include "grid_index.h"
 #include "grid_meshball.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include  "module_cell/unitcell.h"
 #include "module_basis/module_ao/ORB_read.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-#include <cuda_runtime.h>
-
-#include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gemm_selector.cuh"
+
+#include <cuda_runtime.h>
 #endif
 
 // Author: mohan
 // Date: 2009-10-17
-class Grid_Technique : public Grid_MeshBall
-{
+class Grid_Technique : public Grid_MeshBall {
     // public variables.
   public:
     Grid_Technique();
     ~Grid_Technique();
+
+    /// move operator for the next ESolver to directly use its infomation
+    Grid_Technique& operator=(Grid_Technique&& rhs) = default;
     //------------------------------------
     // 1: Info about atom number on grid.
     //------------------------------------
@@ -53,8 +54,8 @@ class Grid_Technique : public Grid_MeshBall
     //------------------------------------
     // 3: which atom on local grid.
     //------------------------------------
-    int lnat;      // local nat.  
-    int lgd;       // local grid dimension.  lgd * lgd symmetry matrix.
+    int lnat; // local nat.
+    int lgd;  // local grid dimension.  lgd * lgd symmetry matrix.
     std::vector<bool> in_this_processor;
     std::vector<int> trace_iat;
     std::vector<int> trace_lo; // trace local orbital.
@@ -64,7 +65,7 @@ class Grid_Technique : public Grid_MeshBall
     // each processor's real space grid.
     // use: GridT.in_this_processor
     //---------------------------------------
-    int nnrg;
+    int nnrg = 0;
     bool allocate_find_R2;
     std::vector<int> nlocdimg;
     std::vector<int> nlocstartg;
@@ -75,7 +76,7 @@ class Grid_Technique : public Grid_MeshBall
 
     int binary_search_find_R2_offset(int val, int iat) const;
 
-    //UnitCell and LCAO_Obrbitals
+    // UnitCell and LCAO_Obrbitals
     const UnitCell* ucell;
     const LCAO_Orbitals* orb;
 
@@ -86,7 +87,7 @@ class Grid_Technique : public Grid_MeshBall
 
     // LCAO Orbitals
     double dr_uniform;
-		std::vector<double> rcuts;
+    std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
@@ -94,12 +95,32 @@ class Grid_Technique : public Grid_MeshBall
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
-    void set_pbc_grid(const int& ncx_in, const int& ncy_in, const int& ncz_in, const int& bx_in, const int& by_in,
-                      const int& bz_in, const int& nbx_in, const int& nby_in, const int& nbz_in, const int& nbxx_in,
-                      const int& nbzp_start_in, const int& nbzp_in, const int& ny, const int& nplane,
-                      const int& startz_current, const UnitCell& ucell, const double& dr_uniform, 
-                      const std::vector<double>& rcuts,const std::vector<std::vector<double>>& psi_u,
-                      const std::vector<std::vector<double>>& dpsi_u,const std::vector<std::vector<double>>& d2psi_u,
+    // Determine whether the grid point integration is initialized.
+    bool  init_malloced;
+
+    bool get_init_malloced() const { return init_malloced; }
+
+    void set_pbc_grid(const int& ncx_in,
+                      const int& ncy_in,
+                      const int& ncz_in,
+                      const int& bx_in,
+                      const int& by_in,
+                      const int& bz_in,
+                      const int& nbx_in,
+                      const int& nby_in,
+                      const int& nbz_in,
+                      const int& nbxx_in,
+                      const int& nbzp_start_in,
+                      const int& nbzp_in,
+                      const int& ny,
+                      const int& nplane,
+                      const int& startz_current,
+                      const UnitCell& ucell,
+                      const double& dr_uniform,
+                      const std::vector<double>& rcuts,
+                      const std::vector<std::vector<double>>& psi_u,
+                      const std::vector<std::vector<double>>& dpsi_u,
+                      const std::vector<std::vector<double>>& d2psi_u,
                       const int& num_stream);
 
     /// number of elements(basis-pairs) in this processon
@@ -111,7 +132,6 @@ class Grid_Technique : public Grid_MeshBall
                        const int& iat2) const;
 
   private:
-    void cal_max_box_index(void);
 
     int maxB1;
     int maxB2;
@@ -127,14 +147,14 @@ class Grid_Technique : public Grid_MeshBall
 
     int nbox;
 
+    void cal_max_box_index();
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,
                             const int& startz_current,
                             const UnitCell& ucell);
-    void init_atoms_on_grid2(const int* index2normal,
-                            const UnitCell& ucell);
-    void cal_grid_integration_index(void);
+    void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
+    void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
@@ -152,6 +172,8 @@ class Grid_Technique : public Grid_MeshBall
     bool* atom_new_g;
     int* atom_ylm_g;
     int* atom_l_g;
+    double* rcut_g;
+    double*mcell_pos_g;
 
     int nstreams = 4;
     // streams[nstreams]

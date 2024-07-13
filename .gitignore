@@ -22,4 +22,5 @@ time.json
 *.pyc
 __pycache__
 abacus.json
-/example*
+*.npy
+

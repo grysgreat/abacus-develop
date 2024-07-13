@@ -1,17 +1,18 @@
 #include "esolver_ks.h"
 
-#include <time.h>
+#include <ctime>
 #ifdef __MPI
 #include <mpi.h>
 #else
 #include <chrono>
 #endif
+#include <iostream>
+
 #include "module_base/timer.h"
 #include "module_io/input.h"
 #include "module_io/json_output/init_info.h"
 #include "module_io/print_info.h"
-
-#include <iostream>
+#include "module_parameter/parameter.h"
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -152,8 +153,9 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
             while (!ifa.eof())
             {
                 getline(ifa, line);
-                if (line.find("PAW_FILES") != std::string::npos)
+                if (line.find("PAW_FILES") != std::string::npos) {
                     break;
+                }
             }
 
             for (int it = 0; it < ucell.ntype; it++)
@@ -211,6 +213,8 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
+    ucell.print_cell_cif("STRU.cif");
+
     //! 6) Setup the k points according to symmetry.
     this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
 
@@ -238,7 +242,8 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
     {
         MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     }
-    // qianrui add 2021-8-13 to make different kpar parameters can get the same results
+    // qianrui add 2021-8-13 to make different kpar parameters can get the same
+    // results
 #endif
 
     this->pw_wfc->ft.fft_mode = inp.fft_mode;
@@ -274,7 +279,8 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 #ifdef USE_PAW
     if (GlobalV::use_paw)
     {
-        GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc / 2.0, inp.ecutwfc / 2.0); // in Hartree
+        GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc / 2.0,
+                                          inp.ecutwfc / 2.0); // in Hartree
         GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,
                                          this->pw_wfc->ny,
                                          this->pw_wfc->nz,
@@ -385,16 +391,36 @@ template <typename T, typename Device>
 void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream& ofs)
 {
     ofs << "\n\n\n\n";
-    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    ofs << " |                                                                    |" << std::endl;
-    ofs << " | Setup plane waves of wave functions:                               |" << std::endl;
-    ofs << " | Use the energy cutoff and the lattice vectors to generate the      |" << std::endl;
-    ofs << " | dimensions of FFT grid. The number of FFT grid on each processor   |" << std::endl;
-    ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space is   |" << std::endl;
-    ofs << " | different for charege/potential and wave functions. We also set    |" << std::endl;
-    ofs << " | the 'sticks' for the parallel of FFT. The number of plane wave of  |" << std::endl;
-    ofs << " | each k-point is 'npwk[ik]' in each processor                       |" << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+           ">>>>"
+        << std::endl;
+    ofs << " |                                                                 "
+           "   |"
+        << std::endl;
+    ofs << " | Setup plane waves of wave functions:                            "
+           "   |"
+        << std::endl;
+    ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
+           "   |"
+        << std::endl;
+    ofs << " | dimensions of FFT grid. The number of FFT grid on each "
+           "processor   |"
+        << std::endl;
+    ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
+           "is   |"
+        << std::endl;
+    ofs << " | different for charege/potential and wave functions. We also set "
+           "   |"
+        << std::endl;
+    ofs << " | the 'sticks' for the parallel of FFT. The number of plane wave "
+           "of  |"
+        << std::endl;
+    ofs << " | each k-point is 'npwk[ik]' in each processor                    "
+           "   |"
+        << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+           "<<<<"
+        << std::endl;
     ofs << "\n\n\n\n";
     ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
 
@@ -402,7 +428,9 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream& ofs)
     if (std::abs(ecut - this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
     {
         ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
-        ofs << "Energy cutoff for wavefunc is incompatible with nx, ny, nz and it will be reduced!" << std::endl;
+        ofs << "Energy cutoff for wavefunc is incompatible with nx, ny, nz and "
+               "it will be reduced!"
+            << std::endl;
     }
     ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for wavefunc (unit:Ry)", ecut);
     ModuleBase::GlobalFunc::OUT(ofs,
@@ -458,7 +486,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->before_scf(istep);
 
     // 3) write charge density
-    if (GlobalV::dm_to_rho)
+    if (PARAM.inp.dm_to_rho)
     {
         ModuleBase::timer::tick(this->classname, "runner");
         return; // nothing further is needed
@@ -491,11 +519,15 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         this->hamilt2density(istep, iter, diag_ethr);
 
         // 8) for MPI: STOGROUP? need to rewrite
-        //<Temporary> It may be changed when more clever parallel algorithm is put forward.
-        // When parallel algorithm for bands are adopted. Density will only be treated in the first group.
-        //(Different ranks should have abtained the same, but small differences always exist in practice.)
-        // Maybe in the future, density and wavefunctions should use different parallel algorithms, in which
-        // they do not occupy all processors, for example wavefunctions uses 20 processors while density uses 10.
+        //<Temporary> It may be changed when more clever parallel algorithm is
+        // put forward.
+        // When parallel algorithm for bands are adopted. Density will only be
+        // treated in the first group.
+        //(Different ranks should have abtained the same, but small differences
+        // always exist in practice.)
+        // Maybe in the future, density and wavefunctions should use different
+        // parallel algorithms, in which they do not occupy all processors, for
+        // example wavefunctions uses 20 processors while density uses 10.
         if (GlobalV::MY_STOGROUP == 0)
         {
             // double drho = this->estate.caldr2();
@@ -524,7 +556,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 this->p_chgmix->mixing_restart_step = iter + 1;
             }
 
-            // drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
+            // drho will be 0 at this->p_chgmix->mixing_restart step, which is
+            // not ground state
             bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
             // SCF will continue if U is not converged for uramping calculation
             bool is_U_converged = true;
@@ -538,19 +571,24 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
             this->conv_elec = (drho < this->scf_thr && not_restart_step && is_U_converged);
 
-            // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
+            // If drho < hsolver_error in the first iter or drho < scf_thr, we
+            // do not change rho.
             if (drho < hsolver_error || this->conv_elec)
             {
                 if (drho < hsolver_error)
                 {
-                    GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
+                    GlobalV::ofs_warning << " drho < hsolver_error, keep "
+                                            "charge density unchanged."
+                                         << std::endl;
                 }
             }
             else
             {
                 //----------charge mixing---------------
-                // mixing will restart after this->p_chgmix->mixing_restart steps
-                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1)
+                // mixing will restart after this->p_chgmix->mixing_restart
+                // steps
+                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart_step - 1
+                    && drho <= GlobalV::MIXING_RESTART)
                 {
                     // do not mix charge density
                 }
@@ -560,7 +598,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 }
                 if (GlobalV::SCF_THR_TYPE == 2)
                 {
-                    pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
+                    pelec->charge->renormalize_rho(); // renormalize rho in R-space would
+                                                      // induce a error in K-space
                 }
                 //----------charge mixing done-----------
             }
@@ -624,15 +663,12 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
     } // end scf iterations
     std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
-
 #ifdef __RAPIDJSON
     // 14) add Json of efermi energy converge
     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_elec);
 #endif //__RAPIDJSON
-
     // 15) after scf
     this->after_scf(istep);
-
     ModuleBase::timer::tick(this->classname, "runner");
 
     // 16) Json again
@@ -649,7 +685,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::print_head(void)
+void ESolver_KS<T, Device>::print_head()
 {
     std::cout << " " << std::setw(7) << "ITER";
 
@@ -735,7 +771,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(int is, int iter, 
 {
     const int precision = 3;
     std::string tag = "CHG";
-    if (GlobalV::dm_to_rho)
+    if (PARAM.inp.dm_to_rho)
     {
         return ModuleIO::Output_Rho(this->pw_big,
                                     this->pw_rhod,

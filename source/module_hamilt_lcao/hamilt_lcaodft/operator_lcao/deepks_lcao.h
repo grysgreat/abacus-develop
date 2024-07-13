@@ -4,7 +4,6 @@
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "operator_lcao.h"
 
@@ -30,11 +29,9 @@ template <typename TK, typename TR>
 class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    DeePKS<OperatorLCAO<TK, TR>>(Local_Orbital_Charge* loc_in,
-                                 LCAO_Matrix* LM_in,
+    DeePKS<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                  HContainer<TR>* hR_in,
-                                 std::vector<TK>* hK_in,
                                  const UnitCell* ucell_in,
                                  Grid_Driver* GridD_in,
                                  const TwoCenterIntegrator* intor_orb_alpha,
@@ -57,8 +54,6 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 #endif
 
   private:
-    Local_Orbital_Charge* loc;
-
     elecstate::DensityMatrix<TK, double>* DM;
 
     const UnitCell* ucell = nullptr;
@@ -75,7 +70,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the DeePKS real space Hamiltonian correction with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD);
 
     /**
      * @brief calculate the DeePKS correction matrix with specific <I,J,R> atom-pairs

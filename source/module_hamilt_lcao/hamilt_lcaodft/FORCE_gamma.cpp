@@ -14,7 +14,6 @@
 
 template <>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
-                                  LCAO_Matrix& lm,
                                   ForceStressArrays& fsr, // mohan add 2024-06-15
                                   const TwoCenterBundle& two_center_bundle,
                                   const int& nks,
@@ -68,8 +67,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
         ModuleBase::Memory::record("Stress::dSH_GO", sizeof(double) * pv.nloc * 12);
     }
     // calculate dS in LCAO basis
-    LCAO_domain::build_ST_new(lm,
-                              fsr,
+    LCAO_domain::build_ST_new(fsr,
                               'S',
                               cal_deri,
                               GlobalC::ucell,
@@ -77,7 +75,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               pv,
                               two_center_bundle,
                               &GlobalC::GridD,
-                              lm.Sloc.data());
+                              nullptr);
 
     // calculate dT in LCAP
     // allocation dt
@@ -92,8 +90,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
-    LCAO_domain::build_ST_new(lm,
-                              fsr,
+    LCAO_domain::build_ST_new(fsr,
                               'T',
                               cal_deri,
                               GlobalC::ucell,
@@ -101,11 +98,11 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               pv,
                               two_center_bundle,
                               &GlobalC::GridD,
-                              lm.Hloc_fixed.data());
+                              nullptr);
 
-    LCAO_domain::build_Nonlocal_mu_new(lm,
+    LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr,
-                                       lm.Hloc_fixed.data(),
+                                       nullptr,
                                        cal_deri,
                                        GlobalC::ucell,
                                        GlobalC::ORB,
@@ -116,47 +113,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     if (INPUT.cal_syns)
     {
         cal_deri = false;
-
-        lm.zeros_HSgamma('S');
-
-        LCAO_domain::build_ST_new(lm,
-                                  fsr,
-                                  'S',
-                                  cal_deri,
-                                  GlobalC::ucell,
-                                  GlobalC::ORB,
-                                  pv,
-                                  two_center_bundle,
-                                  &GlobalC::GridD,
-                                  lm.Sloc.data(),
-                                  INPUT.cal_syns,
-                                  INPUT.dmax);
-
-        bool bit = false; // LiuXh, 2017-03-21
-
-        ModuleIO::save_mat(0,
-                           lm.Hloc.data(),
-                           GlobalV::NLOCAL,
-                           bit,
-                           GlobalV::out_ndigits,
-                           0,
-                           GlobalV::out_app_flag,
-                           "H",
-                           "data-" + std::to_string(0),
-                           pv,
-                           GlobalV::DRANK);
-
-        ModuleIO::save_mat(0,
-                           lm.Sloc.data(),
-                           GlobalV::NLOCAL,
-                           bit,
-                           GlobalV::out_ndigits,
-                           0,
-                           GlobalV::out_app_flag,
-                           "S",
-                           "data-" + std::to_string(0),
-                           pv,
-                           GlobalV::DRANK);
+        ModuleBase::WARNING_QUIT("cal_syns", "this function has been broken and will be fixed later.");
     }
 
     ModuleBase::timer::tick("Force_LCAO", "allocate");
@@ -236,7 +193,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
                                 const Parallel_Orbitals& pv,
-                                LCAO_Matrix& lm,
                                 const K_Vectors* kv,
                                 Record_adj* ra)
 {
@@ -251,10 +207,10 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(pv, lm, fsr, two_center_bundle);
+    this->allocate(pv, fsr, two_center_bundle);
 
     // calculate the force related to 'energy density matrix'.
-    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, lm, foverlap, soverlap);
+    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap);
 
     this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi);
 
@@ -277,7 +233,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 
-        GlobalC::ld.cal_projected_DM(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        //GlobalC::ld.cal_projected_DM(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
 
