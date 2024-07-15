@@ -269,7 +269,11 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
 	}
 
-	double *r_d = nullptr, *rhoc_d = nullptr, *rab_d = nullptr,*aux_d = nullptr,*drhocg_d = nullptr;
+	double *r_d = nullptr;
+	double *rhoc_d = nullptr;
+	double *rab_d = nullptr;
+	double *aux_d = nullptr;
+	double *drhocg_d = nullptr;
 	if(this->device == base_device::GpuDevice ) {
 		resmem_var_op()(this->ctx, r_d, mesh);
 		resmem_var_op()(this->ctx, rhoc_d, mesh);
