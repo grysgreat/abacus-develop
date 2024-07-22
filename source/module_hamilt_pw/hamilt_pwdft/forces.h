@@ -86,6 +86,13 @@ class Forces
                      FPTYPE* drhocg,
                      ModulePW::PW_Basis* rho_basis,
                      int type); // used in nonlinear core correction stress
+    void deriv_drhoc_scc(const bool& numeric,
+                     const int mesh,
+                     const FPTYPE* r,
+                     const FPTYPE* rab,
+                     const FPTYPE* rhoc,
+                     FPTYPE* drhocg,
+                     ModulePW::PW_Basis* rho_basis); // used in nonlinear core correction stress
   private:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
