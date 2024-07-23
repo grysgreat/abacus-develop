@@ -69,8 +69,8 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     }
 
     // work space
-    double* rhocgnt = new double[rho_basis->ngg];
-    ModuleBase::GlobalFunc::ZEROS(rhocgnt, rho_basis->ngg);
+	std::vector<double> rhocgnt(rho_basis->ngg);
+    ModuleBase::GlobalFunc::ZEROS(rhocgnt.data(), rho_basis->ngg);
 
     rho_basis->real2recip(psic, psic);
 
@@ -88,7 +88,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
                             GlobalC::ucell.atoms[nt].ncpp.r,
                             GlobalC::ucell.atoms[nt].ncpp.rab,
                             GlobalC::ucell.atoms[nt].ncpp.rho_at,
-                            rhocgnt,
+                            rhocgnt.data(),
                             rho_basis);        
         int iat = 0;
         for (int it = 0; it < GlobalC::ucell.ntype; it++) {
@@ -132,7 +132,6 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr * forcescc.nc);
 
     delete[] psic;    // mohan fix bug 2012-03-22
-    delete[] rhocgnt; // mohan fix bug 2012-03-22
 
     ModuleBase::timer::tick("Forces", "cal_force_scc");
     return;
@@ -147,13 +146,14 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
                                               const FPTYPE* rhoc,
                                               FPTYPE* drhocg,
                                               ModulePW::PW_Basis* rho_basis) {
-    int igl0;
-    double gx = 0, rhocg1 = 0;
+    int igl0 = 0;
+    double gx = 0;
+    double rhocg1 = 0;
     this->device = base_device::get_device_type<Device>(this->ctx);
     // the modulus of g for a given shell
     // the fourier transform
     // auxiliary memory for integration
-    double* gx_arr = new double[rho_basis->ngg];
+	std::vector<double> gx_arr(rho_basis->ngg);
     double* gx_arr_d = nullptr;
     // counter on radial mesh points
     // counter on g shells
@@ -181,8 +181,11 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
         gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * GlobalC::ucell.tpiba;
     }
 
-    double *r_d = nullptr, *rhoc_d = nullptr, *rab_d = nullptr,
-           *aux_d = nullptr, *drhocg_d = nullptr;
+	double *r_d = nullptr;
+    double *rhoc_d = nullptr;
+    double *rab_d = nullptr;
+    double *aux_d = nullptr;
+    double *drhocg_d = nullptr;
     if (this->device == base_device::GpuDevice) {
         resmem_var_op()(this->ctx, r_d, mesh);
         resmem_var_op()(this->ctx, rhoc_d, mesh);
@@ -195,7 +198,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
                              gx_arr_d,
-                             gx_arr,
+                             gx_arr.data(),
                              rho_basis->ngg);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, mesh);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, mesh);
@@ -209,12 +212,15 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,2);
+			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,2);
 
 	}
 
-	delete [] gx_arr;
-
+    delmem_var_op()(this->ctx, r_d);
+    delmem_var_op()(this->ctx, rhoc_d);
+    delmem_var_op()(this->ctx, rab_d);
+    delmem_var_op()(this->ctx, gx_arr_d);
+    delmem_var_op()(this->ctx, drhocg_d);
     return;
 }
 
