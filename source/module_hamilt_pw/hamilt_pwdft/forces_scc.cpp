@@ -153,18 +153,18 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     double gx = 0;
     double rhocg1 = 0;
     this->device = base_device::get_device_type<Device>(this->ctx);
-    // the modulus of g for a given shell
-    // the fourier transform
-    // auxiliary memory for integration
+    /// the modulus of g for a given shell
+    /// the fourier transform
+    /// auxiliary memory for integration
 	std::vector<double> gx_arr(rho_basis->ngg);
     double* gx_arr_d = nullptr;
-    // counter on radial mesh points
-    // counter on g shells
-    // lower limit for loop on ngl
+    /// counter on radial mesh points
+    /// counter on g shells
+    /// lower limit for loop on ngl
 
-    //
-    // G=0 term
-    //
+    ///
+    /// G=0 term
+    ///
     if (rho_basis->gg_uniq[0] < 1.0e-8) {
         drhocg[0] = 0.0;
         igl0 = 1;
@@ -173,9 +173,9 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
     }
     
 
-    //
-    // G <> 0 term
-    //]
+    ///
+    /// G <> 0 term
+    ///]
 
 #ifdef _OPENMP
 #pragma omp parallel for
