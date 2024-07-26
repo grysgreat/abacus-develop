@@ -371,15 +371,17 @@ __global__ void cal_stress_drhoc_aux0(
     
     for( int ir = 0;ir< mesh; ir++)
     {
-        aux_d [ir%2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_arr[idx] * r [ir] ) / gx_arr[idx] - sin (gx_arr[idx] * r [ir] ) / pow(gx_arr[idx],2));
+        const int ir_2 = ir%2;
+        const FPTYPE gx_r = gx_arr[idx] * r [ir];
+        aux_d [ir_2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_r) / gx_arr[idx] - sin (gx_r) / pow(gx_arr[idx],2));
 
         if(ir==0){
-            f_0 = aux_d[ir%2]*rab[ir];
+            f_0 = aux_d[ir_2]*rab[ir];
         } else if(ir==mesh-2){
-            f_2 = aux_d[ir%2]*rab[ir];
+            f_2 = aux_d[ir_2]*rab[ir];
         } else if(ir==mesh-1) {
-            f_1 = aux_d[ir%2]*rab[ir];
-        } else if(ir%2==0){
+            f_1 = aux_d[ir_2]*rab[ir];
+        } else if(ir_2==0){
             const double f1 = aux_d[1]*rab[ir-1];
             rhocg1 += f1 + f1 + aux_d[0]*rab[ir];
         }
@@ -410,16 +412,19 @@ __global__ void cal_stress_drhoc_aux1(
     
     for( int ir = 0;ir< mesh; ir++)
     {
-        aux_d [ir%2] = ir!=0 ? sin(gx_arr[idx] * r[ir]) / (gx_arr[idx] * r[ir]) : 1.0;
-        aux_d [ir%2] = r[ir] * r[ir] * rhoc [ir] * aux_d [ir%2];
+        const int ir_2 = ir%2;
+        const FPTYPE gx_r = gx_arr[idx] * r [ir];
+
+        aux_d [ir_2] = ir!=0 ? sin(gx_r) / (gx_r) : 1.0;
+        aux_d [ir_2] = r[ir] * r[ir] * rhoc [ir] * aux_d [ir_2];
 
         if(ir==0){
-            f_0 = aux_d[ir%2]*rab[ir];
+            f_0 = aux_d[ir_2]*rab[ir];
         } else if(ir==mesh-2){
-            f_2 = aux_d[ir%2]*rab[ir];
+            f_2 = aux_d[ir_2]*rab[ir];
         } else if(ir==mesh-1) {
-            f_1 = aux_d[ir%2]*rab[ir];
-        } else if(ir%2==0){
+            f_1 = aux_d[ir_2]*rab[ir];
+        } else if(ir_2==0){
             const double f1 = aux_d[1]*rab[ir-1];
             rhocg1 += f1 + f1 + aux_d[0]*rab[ir];
         }
@@ -451,14 +456,17 @@ __global__ void cal_stress_drhoc_aux2(
     
     for( int ir = 0;ir< mesh; ir++)
     {
-        aux_d [ir%2] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_arr[idx] * r[ir]) / (gx_arr[idx] * r[ir]);
+        const int ir_2 = ir%2;
+        const FPTYPE gx_r = gx_arr[idx] * r [ir];
+
+        aux_d [ir_2] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_r) / (gx_r);
         if(ir==0){
-            f_0 = aux_d[ir%2]*rab[ir];
+            f_0 = aux_d[ir_2]*rab[ir];
         } else if(ir==mesh-2){
-            f_2 = aux_d[ir%2]*rab[ir];
+            f_2 = aux_d[ir_2]*rab[ir];
         } else if(ir==mesh-1) {
-            f_1 = aux_d[ir%2]*rab[ir];
-        } else if(ir%2==0){
+            f_1 = aux_d[ir_2]*rab[ir];
+        } else if(ir_2==0){
             const double f1 = aux_d[1]*rab[ir-1];
             rhocg1 += f1 + f1 + aux_d[0]*rab[ir];
         }
