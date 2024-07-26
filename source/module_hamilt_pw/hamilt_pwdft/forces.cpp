@@ -168,7 +168,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // For PAW, calculated together in paw_cell.calculate_force
     if (!GlobalV::use_paw)
     {
-        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
+        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist,GlobalC::ucell);
     }
     else
     {

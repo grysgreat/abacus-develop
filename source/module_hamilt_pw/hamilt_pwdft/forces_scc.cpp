@@ -27,7 +27,8 @@ template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
                                            ModulePW::PW_Basis* rho_basis,
                                            const ModuleBase::matrix& vnew,
-                                           const bool vnew_exist) {
+                                           const bool vnew_exist,
+                                           const UnitCell& ucell_in) {
     ModuleBase::TITLE("Forces", "cal_force_scc");
     ModuleBase::timer::tick("Forces", "cal_force_scc");
 
@@ -62,9 +63,9 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 
     int ndm = 0;
 
-    for (int it = 0; it < GlobalC::ucell.ntype; it++) {
-        if (ndm < GlobalC::ucell.atoms[it].ncpp.msh) {
-            ndm = GlobalC::ucell.atoms[it].ncpp.msh;
+    for (int it = 0; it < ucell_in.ntype; it++) {
+        if (ndm < ucell_in.atoms[it].ncpp.msh) {
+            ndm = ucell_in.atoms[it].ncpp.msh;
         }
     }
 
@@ -80,22 +81,23 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
         igg0 = 1;
 
     double fact = 2.0;
-    for (int nt = 0; nt < GlobalC::ucell.ntype; nt++) {
+    for (int nt = 0; nt < ucell_in.ntype; nt++) {
         //		Here we compute the G.ne.0 term
-        const int mesh = GlobalC::ucell.atoms[nt].ncpp.msh;
+        const int mesh = ucell_in.atoms[nt].ncpp.msh;
         this->deriv_drhoc_scc(GlobalC::ppcell.numeric,
                             mesh,
-                            GlobalC::ucell.atoms[nt].ncpp.r,
-                            GlobalC::ucell.atoms[nt].ncpp.rab,
-                            GlobalC::ucell.atoms[nt].ncpp.rho_at,
+                            ucell_in.atoms[nt].ncpp.r,
+                            ucell_in.atoms[nt].ncpp.rab,
+                            ucell_in.atoms[nt].ncpp.rho_at,
                             rhocgnt.data(),
-                            rho_basis);        
+                            rho_basis,
+                            ucell_in);        
         int iat = 0;
-        for (int it = 0; it < GlobalC::ucell.ntype; it++) {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++) {
+        for (int it = 0; it < ucell_in.ntype; it++) {
+            for (int ia = 0; ia < ucell_in.atoms[it].na; ia++) {
                 if (nt == it) {
                     const ModuleBase::Vector3<double> pos
-                        = GlobalC::ucell.atoms[it].tau[ia];
+                        = ucell_in.atoms[it].tau[ia];
                     double &force0 = forcescc(iat, 0),
                            &force1 = forcescc(iat, 1),
                            &force2 = forcescc(iat, 2);
@@ -115,11 +117,11 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
                         const std::complex<double> cpm
                             = std::complex<double>(sinp, cosp) * conj(psic[ig]);
 
-                        force0 += fact * rhocgntigg * GlobalC::ucell.tpiba
+                        force0 += fact * rhocgntigg * ucell_in.tpiba
                                   * gv.x * cpm.real();
-                        force1 += fact * rhocgntigg * GlobalC::ucell.tpiba
+                        force1 += fact * rhocgntigg * ucell_in.tpiba
                                   * gv.y * cpm.real();
-                        force2 += fact * rhocgntigg * GlobalC::ucell.tpiba
+                        force2 += fact * rhocgntigg * ucell_in.tpiba
                                   * gv.z * cpm.real();
                     }
                 }
@@ -145,7 +147,8 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
                                               const FPTYPE* rab,
                                               const FPTYPE* rhoc,
                                               FPTYPE* drhocg,
-                                              ModulePW::PW_Basis* rho_basis) {
+                                              ModulePW::PW_Basis* rho_basis,
+                                              const UnitCell& ucell_in) {
     int igl0 = 0;
     double gx = 0;
     double rhocg1 = 0;
@@ -178,7 +181,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
 #pragma omp parallel for
 #endif
     for (int igl = igl0; igl < rho_basis->ngg; igl++) {
-        gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * GlobalC::ucell.tpiba;
+        gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * ucell_in.tpiba;
     }
 
 	double *r_d = nullptr;
@@ -207,12 +210,12 @@ void Forces<FPTYPE, Device>::deriv_drhoc_scc(const bool& numeric,
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,2);
+			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,2);
 		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,2);
+			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,2);
 
 	}
 
