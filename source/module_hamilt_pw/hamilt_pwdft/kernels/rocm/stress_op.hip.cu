@@ -372,7 +372,7 @@ __global__ void cal_stress_drhoc_aux0(
     {
         const int ir_2 = ir%2;
         const FPTYPE gx_r = gx_arr[idx] * r [ir];
-        aux_d [ir_2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_r) / gx_arr[idx] - sin (gx_r) / gx_arr[idx] * gx_arr[idx]);
+        aux_d [ir_2]  = r [ir] * rhoc [ir] * (r [ir] * cos (gx_r) / gx_arr[idx] - sin (gx_r) / (gx_arr[idx] * gx_arr[idx]));
 
         if(ir==0){
             f_0 = aux_d[ir_2]*rab[ir];
