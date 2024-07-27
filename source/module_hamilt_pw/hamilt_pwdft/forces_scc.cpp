@@ -38,7 +38,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
         return;
     }
 
-    std::complex<double>* psic = new std::complex<double>[rho_basis->nmaxgr];
+    std::vector<std::complex<double>> psic(rho_basis->nmaxgr);
 
     const int nrxx = vnew.nc;
     const int nspin = vnew.nr;
@@ -73,7 +73,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 	std::vector<double> rhocgnt(rho_basis->ngg);
     ModuleBase::GlobalFunc::ZEROS(rhocgnt.data(), rho_basis->ngg);
 
-    rho_basis->real2recip(psic, psic);
+    rho_basis->real2recip(psic.data(), psic.data());
 
     int igg0 = 0;
     const int ig0 = rho_basis->ig_gge0;
@@ -132,8 +132,6 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
 
 
     Parallel_Reduce::reduce_pool(forcescc.c, forcescc.nr * forcescc.nc);
-
-    delete[] psic;    // mohan fix bug 2012-03-22
 
     ModuleBase::timer::tick("Forces", "cal_force_scc");
     return;
