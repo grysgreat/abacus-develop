@@ -364,7 +364,6 @@ __global__ void cal_stress_drhoc_aux0(
 
     if (idx >= ngg) {return;}
 
-    FPTYPE aux_d[2];
     FPTYPE rhocg1=0.0;
     FPTYPE gx = gx_arr[idx];
 
@@ -400,7 +399,6 @@ __global__ void cal_stress_drhoc_aux1(
 
     if (idx >= ngg) {return;}
 
-    FPTYPE aux_d[2];
     FPTYPE rhocg1=0.0;
     FPTYPE gx = gx_arr[idx];
 
@@ -438,7 +436,6 @@ __global__ void cal_stress_drhoc_aux2(
 
     if (idx >= ngg) {return;}
 
-    FPTYPE aux_d[2];
     FPTYPE rhocg1=0.0;
     FPTYPE gx = gx_arr[idx];    
 
