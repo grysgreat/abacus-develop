@@ -480,6 +480,46 @@ __global__ void cal_stress_drhoc_aux2(
     drhocg [idx] = rhocg1;
 }
 
+template <typename FPTYPE>
+__global__ void cal_stress_drhoc_aux3(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega
+){
+
+
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (idx >= ngg) {return;}
+
+    FPTYPE rhocg1=0.0;
+    FPTYPE gx = gx_arr[idx];    
+
+    auto aux = [](FPTYPE r, FPTYPE rhoc, FPTYPE gx, FPTYPE rab) -> FPTYPE{
+        return rab * rhoc * (r * cos(gx * r)/gx - sin(gx * r)/(gx *gx));
+    };
+
+    FPTYPE f_0 = r[0] * r[0] * rhoc[0] * rab[0];
+    for( int ir = 1 ; ir< mesh - 2; ir+=2)
+    {
+        rhocg1 += 2 * aux(r[ir],rhoc[ir], gx, rab[ir]) + aux(r[ir+1],rhoc[ir+1], gx, rab[ir+1]);
+    }//ir
+    FPTYPE f_2 = aux(r[mesh - 2],rhoc[mesh - 2], gx, rab[mesh - 2]);
+    FPTYPE f_1 = aux(r[mesh - 1],rhoc[mesh - 1], gx, rab[mesh - 1]);
+    
+    rhocg1 += f_2+f_2;
+    rhocg1 += rhocg1;
+    rhocg1 += f_0 + f_1;
+    rhocg1/=3.0;
+
+    // calculations after Simpson Integral
+    const double g2a = (gx * gx) / 4.0;
+    rhocg1 *= FOUR_PI / omega / 2.0 / gx;
+    rhocg1 += FOUR_PI / omega * gx_arr[ngg] * exp(-g2a) * (g2a + 1) / pow(gx_arr[idx]*gx_arr[idx] , 2);
+    drhocg [idx] = rhocg1;
+}
+
+
 
 template <typename FPTYPE>
 void cal_vkb_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
