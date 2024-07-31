@@ -486,7 +486,7 @@ __global__ void cal_stress_drhoc_aux3(
         const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
         const int mesh, const int igl0, const int ngg, const double omega
 ){
-
+    const double FOUR_PI =  4.0 * 3.14159265358979323846;
 
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -636,6 +636,10 @@ void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         );        
     } else if(type == 2 ){
         cal_stress_drhoc_aux2<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
+            r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
+        );        
+    } else if(type == 3 ){
+        cal_stress_drhoc_aux3<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
             r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
         );        
     }
