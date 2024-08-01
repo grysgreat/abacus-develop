@@ -619,6 +619,10 @@ void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_stress_drhoc_aux2<FPTYPE>),block,THREADS_PER_BLOCK,0,0,
             r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
         );     
+    } else if(type == 3 ){
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_stress_drhoc_aux3<FPTYPE>),block,THREADS_PER_BLOCK,0,0,
+            r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
+        );     
     }
 
     return ;
