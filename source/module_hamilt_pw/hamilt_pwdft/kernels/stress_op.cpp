@@ -384,10 +384,10 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                 }
             }//ir
             Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
-            if(type ==0 ) drhocg [igl] = FOUR_PI / omega * rhocg1;
-            else if(type == 1) drhocg [igl] = FOUR_PI * rhocg1 / omega;
-            else if(type == 2) drhocg [igl] = rhocg1;
-            else if(type == 3) {
+            if(type ==0 ) { drhocg [igl] = FOUR_PI / omega * rhocg1;
+            } else if(type == 1) { drhocg [igl] = FOUR_PI * rhocg1 / omega;
+            } else if(type == 2) { drhocg [igl] = rhocg1;
+            } else if(type == 3) {
                 rhocg1 *= FOUR_PI / omega / 2.0 / gx_arr[igl];
                 FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
                 rhocg1 += FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx_arr[igl]*gx_arr[igl] , 2);
