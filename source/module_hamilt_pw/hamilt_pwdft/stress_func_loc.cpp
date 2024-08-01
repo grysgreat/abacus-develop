@@ -96,7 +96,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		// normal case: dvloc contains dV_loc(G)/dG
 		//
 			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab, atom->ncpp.r,
-					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc.data(), rho_basis);
+					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc.data(), rho_basis, GlobalC::ucell);
 		//
 		}
 #ifndef _OPENMP
@@ -173,7 +173,8 @@ const FPTYPE* r,
 const FPTYPE* vloc_at,
 const FPTYPE& zp,
 FPTYPE*  dvloc,
-ModulePW::PW_Basis* rho_basis
+ModulePW::PW_Basis* rho_basis,
+const UnitCell& ucell_in
 )
 {
   //----------------------------------------------------------------------
@@ -189,13 +190,14 @@ ModulePW::PW_Basis* rho_basis
 
 	int igl0;
 	this->device = base_device::get_device_type<Device>(this->ctx);
-    double* gx_arr = new double[rho_basis->ngg+1];
+
+	std::vector<double> gx_arr(rho_basis->ngg+1);
     double* gx_arr_d = nullptr;
 	// counter on erf functions or gaussians
 	// counter on g shells vectors
 	// first shell with g != 0
 	
-	std::vector<FPTYPE> aux1(msh);
+	std::vector<FPTYPE> aux(msh);
 
 	// the  G=0 component is not computed
 	if (rho_basis->gg_uniq[0] < 1.0e-8)
@@ -215,7 +217,7 @@ ModulePW::PW_Basis* rho_basis
 #pragma omp parallel for
 #endif
     for (int igl = igl0; igl < rho_basis->ngg; igl++) {
-        gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * GlobalC::ucell.tpiba;
+        gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * ucell_in.tpiba;
     }
 
 	gx_arr[rho_basis->ngg] = zp * ModuleBase::e2;
@@ -226,13 +228,16 @@ ModulePW::PW_Basis* rho_basis
 	//
 	for(int i = 0;i< msh; i++)
 	{
-		aux1[i] = r [i] * vloc_at [i] + zp * ModuleBase::e2 * erf(r[i]);
+		aux[i] = r [i] * vloc_at [i] + zp * ModuleBase::e2 * erf(r[i]);
 	}
 
 
 
-    double *r_d = nullptr, *rhoc_d = nullptr, *rab_d = nullptr,
-           *aux_d = nullptr, *drhocg_d = nullptr;
+    double *r_d = nullptr;
+	double *rhoc_d = nullptr;
+	double *rab_d = nullptr;
+    double *aux_d = nullptr;
+	double *drhocg_d = nullptr;
     if (this->device == base_device::GpuDevice) {
         resmem_var_op()(this->ctx, r_d, msh);
         resmem_var_op()(this->ctx, rhoc_d, msh);
@@ -245,23 +250,23 @@ ModulePW::PW_Basis* rho_basis
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
                              gx_arr_d,
-                             gx_arr,
+                             gx_arr.data(),
                              rho_basis->ngg+1);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, msh);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, msh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, aux1.data(), msh);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, aux.data(), msh);
     }
 
 
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,msh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,3);
+			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,msh,igl0,rho_basis->ngg-igl0,ucell_in.omega,3);
 		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, dvloc+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,aux1.data(),gx_arr+igl0,rab,dvloc+igl0,msh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,3);
+			r,aux.data(),gx_arr.data()+igl0,rab,dvloc+igl0,msh,igl0,rho_basis->ngg-igl0,ucell_in.omega,3);
 	}	
 
 	return;
