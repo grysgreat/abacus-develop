@@ -478,7 +478,7 @@ __global__ void cal_stress_drhoc_aux3(
     const FPTYPE pow_gx = gx * gx;
 
     auto aux = [](FPTYPE r, FPTYPE rhoc, FPTYPE gx, FPTYPE rab) -> FPTYPE{
-        return rab * rhoc * (r * cos(gx * r)/gx - sin(gx * r)/(pow_gx));
+        return rab * rhoc * (r * cos(gx * r)/gx - sin(gx * r)/(gx * gx));
     };
 
     FPTYPE f_0 = r[0] * r[0] * rhoc[0] * rab[0];
