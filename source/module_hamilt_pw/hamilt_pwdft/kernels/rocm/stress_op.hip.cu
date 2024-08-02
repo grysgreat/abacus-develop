@@ -460,6 +460,7 @@ __global__ void cal_stress_drhoc_aux2(
     drhocg [idx] = rhocg1;
 }
 
+
 template <typename FPTYPE>
 __global__ void cal_stress_drhoc_aux3(
         const FPTYPE* r, const FPTYPE* rhoc, 
@@ -474,9 +475,10 @@ __global__ void cal_stress_drhoc_aux3(
 
     FPTYPE rhocg1=0.0;
     FPTYPE gx = gx_arr[idx];    
+    const FPTYPE pow_gx = gx * gx;
 
     auto aux = [](FPTYPE r, FPTYPE rhoc, FPTYPE gx, FPTYPE rab) -> FPTYPE{
-        return rab * rhoc * (r * cos(gx * r)/gx - sin(gx * r)/(gx *gx));
+        return rab * rhoc * (r * cos(gx * r)/gx - sin(gx * r)/(pow_gx));
     };
 
     FPTYPE f_0 = r[0] * r[0] * rhoc[0] * rab[0];
@@ -493,9 +495,9 @@ __global__ void cal_stress_drhoc_aux3(
     rhocg1/=3.0;
 
     // calculations after Simpson Integral
-    const double g2a = (gx * gx) / 4.0;
+    const double g2a = pow_gx / 4.0;
     rhocg1 *= FOUR_PI / omega / 2.0 / gx;
-    rhocg1 += FOUR_PI / omega * gx_arr[ngg] * exp(-g2a) * (g2a + 1) / pow(gx_arr[idx]*gx_arr[idx] , 2);
+    rhocg1 += FOUR_PI / omega * gx_arr[ngg] * exp(-g2a) * (g2a + 1) / (pow_gx*pow_gx);
     drhocg [idx] = rhocg1;
 }
 
