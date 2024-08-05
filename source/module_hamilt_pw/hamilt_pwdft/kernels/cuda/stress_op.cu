@@ -599,6 +599,15 @@ void cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     return ;
 }
 
+
+/**
+ * The implementation of this operator is detailed in stress_op.h.
+ * The function is called by the module as follows
+ *      Type = 0 -> stress_cc
+ *      Type = 1 -> stress_cc, force_cc
+ *      Type = 2 -> force_scc
+ *      Type = 3 -> stress_loc
+ */
 template <typename FPTYPE>
 void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         const FPTYPE* r, const FPTYPE* rhoc,  
