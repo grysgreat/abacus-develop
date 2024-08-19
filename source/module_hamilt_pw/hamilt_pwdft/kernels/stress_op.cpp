@@ -401,6 +401,46 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 };
 
 
+template <typename FPTYPE>
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_z,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba) {
+        const double TWO_PI = 2.0 * 3.14159265358979323846;
+        // printf("%d,%d,%lf\n",ngg,mesh,omega);
+
+        // printf("iminininininin\n\n\n\n");
+#ifdef _OPENMP
+#pragma omp for nowait
+#endif
+        for (int ig = 0; ig < npw; ig++)
+        {
+            const std::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
+
+            const FPTYPE arg = TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
+            FPTYPE sinp, cosp;
+            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+            const std::complex<FPTYPE> expiarg = std::complex<FPTYPE>(sinp, cosp);
+
+            auto ipol0
+                = tpiba * omega * rhocgigg_vec[ig] * gv_x[ig] * psiv_conj * expiarg;
+            force[0] += ipol0.real();
+
+            auto ipol1
+                = tpiba * omega * rhocgigg_vec[ig] * gv_y[ig] * psiv_conj * expiarg;
+            force[1] += ipol1.real();
+
+            auto ipol2
+                = tpiba * omega * rhocgigg_vec[ig] * gv_z[ig] * psiv_conj * expiarg;
+            force[2] += ipol2.real();
+        }
+    }
+};
+
 // // cpu version first, gpu version later
 // template <typename FPTYPE>
 // struct prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_CPU>{
@@ -475,6 +515,10 @@ template struct cal_vq_deri_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_stress_drhoc_aux_op<float, base_device::DEVICE_CPU>;
 template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_CPU>;
+
+template struct cal_force_npw_op<float, base_device::DEVICE_CPU>;
+template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
+
 
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_CPU>;
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_CPU>;

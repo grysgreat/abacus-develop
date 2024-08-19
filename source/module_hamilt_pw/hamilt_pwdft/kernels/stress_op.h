@@ -190,6 +190,19 @@ struct cal_stress_drhoc_aux_op{
     );
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_force_npw_op{
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba
+    );
+};
+
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
 struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>
@@ -339,6 +352,17 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
     );
 };
 
+template <typename FPTYPE>
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba
+    );
+};
 
 
 
