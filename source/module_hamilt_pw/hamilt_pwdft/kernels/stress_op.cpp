@@ -429,13 +429,13 @@ struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
             const std::complex<FPTYPE> tmp_var = psiv_conj * expiarg * tpiba * omega * rhocgigg_vec[ig];
 
             const std::complex<FPTYPE> ipol0 = tmp_var * gv_x[ig];
-            t_force0 += ipol0.real();
+            force[0] += ipol0.real();
 
             const std::complex<FPTYPE> ipol1 = tmp_var * gv_y[ig];
-            t_force1 += ipol1.real();
+            force[1] += ipol1.real();
 
             const std::complex<FPTYPE> ipol2 = tmp_var * gv_z[ig];
-            t_force2 += ipol2.real();
+            force[2] += ipol2.real();
         }
     }
 };
