@@ -352,6 +352,16 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
     );
 };
 
+
+/**
+ * This operator is used to compute the force force in three directions for each atom in force_cc 
+ * in parallel on GPU [0~3], which is:
+ * Force_p =    (2* pi * tpiba * omega * rhocg[ig] * gv_p[ig] 
+ *              * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z)
+ *              * complex(sinp, cosp) * psiv[ig]).real()
+ *
+ * The operator splits NPW into blocks on the GPU in parallel, and the block size is t_size = 1024.
+ */
 template <typename FPTYPE>
 struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>{
     void operator()(const std::complex<FPTYPE> *psiv,

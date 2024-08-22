@@ -530,20 +530,19 @@ __global__ void cal_force_npw(
         const thrust::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
 
         const FPTYPE arg = TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
-        FPTYPE sinp = sin(arg);
-        FPTYPE cosp = cos(arg);
+        const FPTYPE sinp = sin(arg);
+        const FPTYPE cosp = cos(arg);
         const thrust::complex<FPTYPE> expiarg = thrust::complex<FPTYPE>(sinp, cosp);
 
-        auto ipol0
-            = tpiba * omega * rhocgigg_vec[ig] * gv_x[ig] * psiv_conj * expiarg;
+        const thrust::complex<FPTYPE> tmp_var = psiv_conj * expiarg * tpiba * omega * rhocgigg_vec[ig];
+
+        const thrust::complex<FPTYPE> ipol0 = tmp_var * gv_x[ig];
         t_force0 += ipol0.real();
 
-        auto ipol1
-            = tpiba * omega * rhocgigg_vec[ig] * gv_y[ig] * psiv_conj * expiarg;
+        const thrust::complex<FPTYPE> ipol1 = tmp_var * gv_y[ig];
         t_force1 += ipol1.real();
 
-        auto ipol2
-            = tpiba * omega * rhocgigg_vec[ig] * gv_z[ig] * psiv_conj * expiarg;
+        const thrust::complex<FPTYPE> ipol2 = tmp_var * gv_z[ig];
         t_force2 += ipol2.real();
     }
     atomicAdd(&force[0], t_force0);
@@ -697,9 +696,9 @@ void cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         const FPTYPE omega, const FPTYPE tpiba
     )
 {
+    // Divide the npw size range into blocksize 1024 blocks
     int t_size = 1024;
     int t_num = (npw%t_size) ? (npw/t_size + 1) : (npw/t_size);
-
     dim3 npwgrid(((t_num%THREADS_PER_BLOCK) ? (t_num/THREADS_PER_BLOCK + 1) : (t_num/THREADS_PER_BLOCK)));
 
     cal_force_npw << < npwgrid, THREADS_PER_BLOCK >> > (

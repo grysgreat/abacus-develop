@@ -27,7 +27,8 @@
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                           ModulePW::PW_Basis* rho_basis,
-                                          const Charge* const chr)
+                                          const Charge* const chr,
+                                           UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_cc");
     // recalculate the exchange-correlation potential.
@@ -35,11 +36,11 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     int total_works = 0;
     // cal total works for skipping preprocess
-    for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+    for (int it = 0; it < ucell_in.ntype; ++it)
     {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        if (ucell_in.atoms[it].ncpp.nlcc)
         {
-            total_works += GlobalC::ucell.atoms[it].na;
+            total_works += ucell_in.atoms[it].na;
         }
     }
     if (total_works == 0)
@@ -54,7 +55,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
-            = XC_Functional::v_xc_meta(rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr);
+            = XC_Functional::v_xc_meta(rho_basis->nrxx, ucell_in.omega, ucell_in.tpiba, chr);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -66,9 +67,9 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     else
     {
         if (GlobalV::NSPIN == 4) {
-            GlobalC::ucell.cal_ux();
+            ucell_in.cal_ux();
 }
-        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
+        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -143,25 +144,26 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 	}
 
 
-    for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+    for (int it = 0; it < ucell_in.ntype; ++it)
     {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        if (ucell_in.atoms[it].ncpp.nlcc)
         {
 
             // chr->non_linear_core_correction(GlobalC::ppcell.numeric,
-            //                                 GlobalC::ucell.atoms[it].ncpp.msh,
-            //                                 GlobalC::ucell.atoms[it].ncpp.r,
-            //                                 GlobalC::ucell.atoms[it].ncpp.rab,
-            //                                 GlobalC::ucell.atoms[it].ncpp.rho_atc,
+            //                                 ucell_in.atoms[it].ncpp.msh,
+            //                                 ucell_in.atoms[it].ncpp.r,
+            //                                 ucell_in.atoms[it].ncpp.rab,
+            //                                 ucell_in.atoms[it].ncpp.rho_atc,
             //                                 rhocg);
             this->deriv_drhoc(GlobalC::ppcell.numeric,
-                              GlobalC::ucell.atoms[it].ncpp.msh,
-                              GlobalC::ucell.atoms[it].ncpp.r.data(),
-                              GlobalC::ucell.atoms[it].ncpp.rab.data(),
-                              GlobalC::ucell.atoms[it].ncpp.rho_atc.data(),
+                              ucell_in.atoms[it].ncpp.msh,
+                              ucell_in.atoms[it].ncpp.r.data(),
+                              ucell_in.atoms[it].ncpp.rab.data(),
+                              ucell_in.atoms[it].ncpp.rho_atc.data(),
                               rhocg,
                               rho_basis,
-                              1);
+                              1,
+                              ucell_in);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -174,25 +176,25 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
             if(this->device == base_device::GpuDevice ) {
                 syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhocgigg_vec_d, rhocgigg_vec.data(), rho_basis->npw);
             }
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
+            for (int ia = 0; ia < ucell_in.atoms[it].na; ++ia)
             {
-                const ModuleBase::Vector3<double> pos = GlobalC::ucell.atoms[it].tau[ia];
+                const ModuleBase::Vector3<double> pos = ucell_in.atoms[it].tau[ia];
                 // get iat form table
-                int iat = GlobalC::ucell.itia2iat(it, ia);
+                int iat = ucell_in.itia2iat(it, ia);
                 double force[3] = {0, 0, 0};
 
                 if(this->device == base_device::GpuDevice ) {
                     syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, force_d, force, 3);
                     hamilt::cal_force_npw_op<FPTYPE, Device>()(
                         psiv_d, gv_x_d, gv_y_d, gv_z_d, rhocgigg_vec_d, force_d, pos.x, pos.y, pos.z, 
-                        rho_basis->npw, GlobalC::ucell.omega, GlobalC::ucell.tpiba
+                        rho_basis->npw, ucell_in.omega, ucell_in.tpiba
                     );      
                     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, force, force_d, 3);	          
                 
                 } else {
                     hamilt::cal_force_npw_op<FPTYPE, Device>()(
                         psiv, gv_x.data(), gv_y.data(), gv_z.data(), rhocgigg_vec.data(), force, pos.x, pos.y, pos.z, 
-                        rho_basis->npw, GlobalC::ucell.omega, GlobalC::ucell.tpiba
+                        rho_basis->npw, ucell_in.omega, ucell_in.tpiba
                     );  
                 }
 
@@ -234,7 +236,8 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 	const FPTYPE *rhoc,
 	FPTYPE *drhocg,
 	ModulePW::PW_Basis* rho_basis,
-	int type
+	int type,
+    const UnitCell& ucell_in
 )
 {
 	int  igl0;
@@ -273,7 +276,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 				aux [ir] = r [ir] * r [ir] * rhoc [ir];
 			}
 			ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), rab, rhocg1);
-			drhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
+			drhocg [0] = ModuleBase::FOUR_PI * rhocg1 / ucell_in.omega;
 			igl0 = 1;
 		} 
 		else
@@ -292,7 +295,7 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 #endif
 	for(int igl = igl0;igl< rho_basis->ngg;igl++)
 	{
-		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
+		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl] * ucell_in.tpiba2);
 	}
 
 	double *r_d = nullptr;
@@ -317,14 +320,14 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,type);
 		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,type);
     }
 
     delmem_var_op()(this->ctx, r_d);
